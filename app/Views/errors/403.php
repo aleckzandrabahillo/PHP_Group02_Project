@@ -1,0 +1,1 @@
+<div class="error-page"><span class="eyebrow">403</span><h1>That page is not available to your role.</h1><p>Avela checks permissions on the server, not just in the menu.</p><a class="btn btn-primary" href="<?= e(\App\Middleware\AuthGuard::dashboardPath()) ?>">Back to my dashboard</a></div>

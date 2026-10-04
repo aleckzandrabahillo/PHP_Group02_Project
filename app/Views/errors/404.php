@@ -1,0 +1,1 @@
+<div class="error-page"><span class="eyebrow">404</span><h1>We couldn't find that page.</h1><p>Check the address or return to Avela.</p><a class="btn btn-primary" href="<?= e(url('/')) ?>">Go home</a></div>
