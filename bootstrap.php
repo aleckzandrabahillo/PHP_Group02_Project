@@ -8,6 +8,7 @@ use App\Core\Session;
 require __DIR__ . '/app/Core/Env.php';
 Env::load(__DIR__ . '/.env');
 
+
 spl_autoload_register(function (string $class): void {
     $prefix = 'App\\';
     if (!str_starts_with($class, $prefix)) {

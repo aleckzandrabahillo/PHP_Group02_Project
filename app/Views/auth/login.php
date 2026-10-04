@@ -27,11 +27,22 @@
   </label>
 
   <div class="captcha-block <?= isset($errors['captcha']) ? 'has-error' : '' ?>">
-    <div class="captcha-label"><span>Security check</span><button class="text-button captcha-refresh" type="button" data-csrf="<?= e(\App\Core\Csrf::token()) ?>">New code</button></div>
-    <img class="captcha-image" src="<?= e(url('/captcha.svg')) ?>" alt="CAPTCHA code">
-    <input name="captcha" maxlength="5" autocomplete="off" autocapitalize="characters" placeholder="Type the 5-character code" required aria-invalid="<?= isset($errors['captcha']) ? 'true' : 'false' ?>">
-    <small class="field-error"><?= e($errors['captcha'] ?? '') ?></small>
-  </div>
+
+    <div
+        class="g-recaptcha"
+        data-sitekey="<?= e($recaptchaSiteKey ?? '') ?>">
+    </div>
+
+     <?php if (isset($errors['captcha'])): ?>
+        <small class="field-error">
+            <?= e($errors['captcha']) ?>
+        </small>
+    <?php endif; ?>
+
+    <small class="field-error">
+        <?= e($errors['captcha'] ?? '') ?>
+    </small>
+</div>
 
   <button class="btn btn-primary w-full" type="submit">Sign in</button>
 </form>

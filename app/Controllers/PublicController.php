@@ -198,10 +198,13 @@ final class PublicController
 
         $userId = (int) $current['id'];
         return [
-            'favoriteIds' => $this->favorites->idsForUser($userId),
-            'favoriteCount' => $this->favorites->countForUser($userId),
+            // Favorites temporarily disabled until the favorites table is created.
+            'favoriteIds' => [],
+            'favoriteCount' => 0,
+
+            // Cart can continue working normally.
             'cartCount' => $this->cart->countForUser($userId),
-        ];
+            ];
     }
 
     private function storeNavigation(array $options): array
