@@ -1,0 +1,12 @@
+*   [33m926eac5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Merge origin/main and update customer features
+[31m|[m[32m\[m  
+[31m|[m *   [33m015a59c[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge remote-tracking branch 'origin/main'
+[31m|[m [33m|[m[34m\[m  
+[31m|[m * [34m|[m [33m4d90e0a[m Add customer profile updates with OTP verification
+* [34m|[m [34m|[m [33mb5cc390[m Update recaptcha
+[34m|[m [34m|[m[34m/[m  
+[34m|[m[34m/[m[34m|[m   
+* [34m|[m [33mc6ad7f7[m Fix login and register reCAPTCHA
+[34m|[m[34m/[m  
+* [33mbb62f9d[m Fix GitHub language detection
+* [33m7bb9b0d[m Add Avela foundation
