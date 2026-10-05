@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS customer_profiles (
   full_name VARCHAR(120) NOT NULL,
   contact_no VARCHAR(25) NOT NULL,
   delivery_address VARCHAR(500) NULL,
+  profile_image VARCHAR(255) NULL,
   created_at DATETIME NOT NULL,
   updated_at DATETIME NOT NULL,
   CONSTRAINT fk_customer_profile_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -204,7 +205,7 @@ CREATE TABLE IF NOT EXISTS routine_items (
 CREATE TABLE IF NOT EXISTS otp_codes (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id BIGINT UNSIGNED NOT NULL,
-  purpose ENUM('activation','login') NOT NULL,
+  purpose ENUM('activation','login', 'profile_update') NOT NULL,
   otp_hash VARCHAR(255) NOT NULL,
   expires_at DATETIME NOT NULL,
   attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,

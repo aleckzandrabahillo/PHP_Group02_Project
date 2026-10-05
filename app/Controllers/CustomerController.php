@@ -14,6 +14,7 @@ use App\Models\Routine;
 use App\Models\User;
 use App\Services\DashboardService;
 use InvalidArgumentException;
+use App\Services\OtpService;
 
 final class CustomerController
 {
@@ -24,7 +25,8 @@ final class CustomerController
         private readonly Favorite $favorites,
         private readonly Cart $cart,
         private readonly Routine $routines,
-    ) {}
+        private readonly OtpService $otp,
+    ) {}  
 
     public function dashboard(): void
     {
@@ -280,5 +282,266 @@ final class CustomerController
             return $fallback;
         }
         return $path;
+    }
+    public function updateProfileImage(): void
+    {
+        $user = AuthGuard::roles(['customer']);
+        Csrf::enforce($_POST['_token'] ?? null);
+        $userId = (int) $user['id'];
+        
+        if (!isset($_FILES['profile_image']) || $_FILES['profile_image']['error'] !== UPLOAD_ERR_OK) {
+            Session::flash('warning', 'Please choose a valid profile picture.');
+            Response::redirect('/profile');
+            }
+            
+            $file = $_FILES['profile_image'];
+            if ($file['size'] > 2 * 1024 * 1024) {
+                Session::flash('warning', 'Profile picture must not exceed 2 MB.');
+                Response::redirect('/profile');
+                }
+                
+                if (!is_uploaded_file($file['tmp_name'])) {
+                    Session::flash('warning', 'Invalid file upload.');
+                    Response::redirect('/profile');
+                    }
+                    
+                    $imageInfo = @getimagesize($file['tmp_name']);
+                    
+                    if ($imageInfo === false) {
+                        
+                    Session::flash('warning', 'The uploaded file is not a valid image.');
+                    Response::redirect('/profile');
+                    }
+                    
+                    $mime = $imageInfo['mime'] ?? '';
+                    $allowedTypes = [
+                        'image/jpeg' => 'jpg',
+                        'image/png' => 'png',
+                        'image/webp' => 'webp',
+                        ];
+                        
+                        if (!isset($allowedTypes[$mime])) {
+                            
+                        Session::flash('warning', 'Only JPG, PNG, and WebP images are allowed.');
+                        Response::redirect('/profile');
+                        }
+                        
+                        $extension = $allowedTypes[$mime];
+                        
+                        $uploadDirectory = dirname(__DIR__, 2) . '/public/uploads/profile';
+                        
+                        if (!is_dir($uploadDirectory) && !mkdir($uploadDirectory, 0755, true)) {
+                        
+                        Session::flash('warning', 'Unable to prepare the profile picture folder.');
+                        Response::redirect('/profile'); }
+
+                        $filename = bin2hex(random_bytes(16)) . '.' . $extension;
+                        $destination = $uploadDirectory . '/' . $filename;
+
+                        if (!move_uploaded_file($file['tmp_name'], $destination)) {
+                            
+                        Session::flash('warning', 'Unable to save the profile picture.');
+                        Response::redirect('/profile');
+                        }
+                        
+                        $profileImagePath = 'uploads/profile/' . $filename;
+
+                        $this->users->updateProfileImage($userId, $profileImagePath);
+
+                        Session::flash('success', 'Profile picture updated successfully.');
+                        Response::redirect('/profile');
+}
+
+public function profileOtpForm(): void
+    {
+        $user = AuthGuard::roles(['customer']);
+
+        $flow = Session::get('profile_update_flow');
+
+        if (!is_array($flow) || (int) ($flow['user_id'] ?? 0) !== (int) $user['id']) {
+            Session::flash('warning', 'There is no profile update waiting for verification.');
+            Response::redirect('/profile');
+        }
+
+        $email = (string) ($flow['current_email'] ?? '');
+
+        if ($email === '') {
+            Session::flash('warning', 'The profile update verification session is invalid.');
+            Session::forget('profile_update_flow');
+            Response::redirect('/profile');
+        }
+
+        View::render('customer/profile-verify-otp', [
+            'pageTitle' => 'Confirm Profile Update',
+            'maskedEmail' => $this->maskEmail($email),
+            'purpose' => 'profile_update',
+        ], 'auth');
+    }
+
+    public function updateProfile(): void
+    {
+        $user = AuthGuard::roles(['customer']);
+        Csrf::enforce($_POST['_token'] ?? null);
+
+        $userId = (int) $user['id'];
+
+        $fullName = trim((string) ($_POST['full_name'] ?? ''));
+        $email = strtolower(trim((string) ($_POST['email'] ?? '')));
+        $contactNo = trim((string) ($_POST['contact_no'] ?? ''));
+        $deliveryAddress = trim((string) ($_POST['delivery_address'] ?? ''));
+
+        if ($fullName === '' || mb_strlen($fullName) > 100) {
+            Session::flash('warning', 'Please enter a valid full name.');
+            Response::redirect('/profile');
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 255) {
+            Session::flash('warning', 'Please enter a valid email address.');
+            Response::redirect('/profile');
+        }
+
+        if ($contactNo !== '') {
+            if (mb_strlen($contactNo) > 30 || !preg_match('/^[0-9+\-\s().]+$/', $contactNo)) {
+                Session::flash('warning', 'Please enter a valid contact number.');
+                Response::redirect('/profile');
+            }
+        }
+
+        if ($deliveryAddress !== '' && mb_strlen($deliveryAddress) > 255) {
+            Session::flash('warning', 'Delivery address is too long.');
+            Response::redirect('/profile');
+        }
+
+        $currentProfile = $this->users->profileFor($userId);
+
+        $currentFullName = trim((string) ($currentProfile['full_name'] ?? ''));
+        $currentEmail = strtolower(trim((string) ($currentProfile['email'] ?? '')));
+        $currentContactNo = trim((string) ($currentProfile['contact_no'] ?? ''));
+        $currentDeliveryAddress = trim((string) ($currentProfile['delivery_address'] ?? ''));
+
+        $hasChanges =
+            $fullName !== $currentFullName
+            || $email !== $currentEmail
+            || $contactNo !== $currentContactNo
+            || $deliveryAddress !== $currentDeliveryAddress;
+
+        if (!$hasChanges) {
+            Session::flash('warning', 'No profile changes were made.');
+            Response::redirect('/profile');
+        }
+
+        if ($email !== $currentEmail && $this->users->emailExistsForOtherUser($email, $userId)) {
+            Session::flash('warning', 'That email address is already in use.');
+            Response::redirect('/profile');
+        }
+
+        Session::put('profile_update_flow', [
+            'user_id' => $userId,
+            'current_email' => $currentEmail,
+            'full_name' => $fullName,
+            'email' => $email,
+            'contact_no' => $contactNo,
+            'delivery_address' => $deliveryAddress,
+            'sent_at' => time(),
+        ]);
+
+        try {
+            $this->otp->issue($userId, $currentEmail, 'profile_update');
+        } catch (\Throwable $e) {
+            Session::forget('profile_update_flow');
+            Session::flash('warning', 'We could not send the verification code. Please try again.');
+            Response::redirect('/profile');
+        }
+
+        Session::flash(
+            'success',
+            'A verification code was sent to your current email address.'
+        );
+
+        Response::redirect('/profile/verify-otp');
+    }
+
+        private function maskEmail(string $email): string
+    {
+        $parts = explode('@', $email, 2);
+
+        if (count($parts) !== 2) {
+            return $email;
+        }
+
+        [$local, $domain] = $parts;
+
+        if ($local === '') {
+            return $email;
+        }
+
+        $visible = substr($local, 0, 1);
+
+        return $visible . str_repeat('*', max(2, strlen($local) - 1)) . '@' . $domain;
+    }
+        public function verifyProfileOtp(): void
+    {
+        $user = AuthGuard::roles(['customer']);
+        Csrf::enforce($_POST['_token'] ?? null);
+
+        $userId = (int) $user['id'];
+        $code = preg_replace('/\D+/', '', (string) ($_POST['otp'] ?? ''));
+
+        if (strlen($code) !== 6) {
+            Session::put('errors', ['otp' => 'Enter the 6-digit code.']);
+            Response::redirect('/profile/verify-otp');
+        }
+
+        $flow = Session::get('profile_update_flow');
+
+        if (!is_array($flow) || (int) ($flow['user_id'] ?? 0) !== $userId) {
+            Session::flash('warning', 'Your profile update verification session has expired.');
+            Response::redirect('/profile');
+        }
+
+        $result = $this->otp->verify($userId, 'profile_update', $code);
+
+        if (!$result['ok']) {
+            $message = match ($result['reason'] ?? '') {
+                'expired' => 'The verification code has expired. Please request a new code.',
+                'attempt_limit' => 'Too many incorrect attempts. Please request a new code.',
+                'missing' => 'No active verification code was found. Please request a new code.',
+                default => 'The verification code is incorrect. Please try again.',
+                };
+
+                Session::put('errors', ['otp' => $message]);
+                Response::redirect('/profile/verify-otp');
+                }
+                
+                try {
+                $this->users->updateCustomerProfile(
+                $userId,
+                (string) $flow['full_name'],
+                (string) $flow['email'],
+                (string) $flow['contact_no'],
+                $flow['delivery_address'] !== ''
+                    ? (string) $flow['delivery_address']
+                    : null
+            );
+
+            $authUser = Session::get('auth_user');
+            if (is_array($authUser)) { 
+                $authUser['email'] = (string) $flow['email'];
+                Session::put('auth_user', $authUser);
+                }
+
+        } catch (\Throwable $e) {
+            Session::flash(
+                'warning',
+                'Your profile could not be updated. Please try again.'
+            );
+            Response::redirect('/profile');
+        }
+
+        Session::forget('profile_update_flow');
+        Session::put('errors', []);
+
+        Session::flash('success', 'Your profile has been updated successfully.');
+        Response::redirect('/profile');
     }
 }

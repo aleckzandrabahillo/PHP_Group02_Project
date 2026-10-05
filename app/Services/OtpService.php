@@ -10,9 +10,9 @@ final class OtpService
 
     public function issue(int $userId, string $email, string $purpose): void
     {
-        if (!in_array($purpose, ['activation', 'login'], true)) {
+        if (!in_array($purpose, ['activation', 'login', 'profile_update'], true)) {
             throw new \InvalidArgumentException('Invalid OTP purpose.');
-        }
+            }
 
         $pdo = Database::connection();
         $pdo->prepare('UPDATE otp_codes SET used_at = NOW() WHERE user_id = :user_id AND purpose = :purpose AND used_at IS NULL')

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Core\Env;
 use App\Core\Session;
 
+require __DIR__ . '/vendor/autoload.php';
 require __DIR__ . '/app/Core/Env.php';
 Env::load(__DIR__ . '/.env');
 
