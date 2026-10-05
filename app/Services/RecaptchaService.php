@@ -45,7 +45,6 @@ final class RecaptchaService
 
         $data = json_decode($result, true);
 
-        return is_array($data)
-            && ($data['success'] ?? false) === true;
+        return is_array($data) && ($data['success'] ?? false) === true;
     }
 }

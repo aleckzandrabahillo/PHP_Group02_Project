@@ -2,7 +2,6 @@
 
 namespace App\Controllers;
 
-use App\Core\Captcha;
 use App\Core\Csrf;
 use App\Core\Response;
 use App\Core\Session;
@@ -10,17 +9,23 @@ use App\Core\Validator;
 use App\Core\View;
 use App\Middleware\AuthGuard;
 use App\Services\AuthService;
+use App\Services\RecaptchaService;
 
 final class AuthController
 {
-    public function __construct(private readonly AuthService $auth) {}
+    public function __construct(private readonly AuthService $auth, private readonly RecaptchaService $recaptcha) {}
 
     public function loginForm(): void
     {
         AuthGuard::guest();
         Session::forget('_auth_expired_notice');
-        Captcha::refresh();
-        View::render('auth/login', ['pageTitle' => 'Sign in'], 'auth');
+        $siteKey = env('RECAPTCHA_SITE_KEY', '');
+
+
+    View::render('auth/login', [
+        'pageTitle' => 'Sign in',
+        'recaptchaSiteKey' => $siteKey,
+    ], 'auth');
     }
 
     public function login(): void
@@ -28,7 +33,11 @@ final class AuthController
         AuthGuard::guest();
         Csrf::enforce($_POST['_token'] ?? null);
         $errors = Validator::login($_POST);
-        if (!Captcha::verify((string) ($_POST['captcha'] ?? ''))) $errors['captcha'] = 'The CAPTCHA code did not match.';
+       $recaptchaResponse = (string) ($_POST['g-recaptcha-response'] ?? '');
+
+        if (!$this->recaptcha->verify($recaptchaResponse)) {
+            $errors['captcha'] = 'Please complete the CAPTCHA verification.';
+        }
         if ($errors) {
             Session::keepOld($_POST);
             Session::put('errors', $errors);
@@ -51,8 +60,7 @@ final class AuthController
     public function registerForm(): void
     {
         AuthGuard::guest();
-        Captcha::refresh();
-        View::render('auth/register', ['pageTitle' => 'Create account'], 'auth');
+        View::render('auth/register', ['pageTitle' => 'Create account', 'recaptchaSiteKey' => env('RECAPTCHA_SITE_KEY', ''), ],'auth');
     }
 
     public function register(): void
@@ -60,7 +68,12 @@ final class AuthController
         AuthGuard::guest();
         Csrf::enforce($_POST['_token'] ?? null);
         $errors = Validator::registration($_POST);
-        if (!Captcha::verify((string) ($_POST['captcha'] ?? ''))) $errors['captcha'] = 'The CAPTCHA code did not match.';
+        
+        $recaptchaResponse = (string) ($_POST['g-recaptcha-response'] ?? '');
+        if (!$this->recaptcha->verify($recaptchaResponse)) {
+            $errors['captcha'] = 'Please complete the CAPTCHA verification.';
+        }
+        
         if ($errors) {
             Session::keepOld($_POST);
             Session::put('errors', $errors);
@@ -76,19 +89,6 @@ final class AuthController
         Response::redirect('/verify-otp');
     }
 
-    public function captchaSvg(): void
-    {
-        header('Content-Type: image/svg+xml; charset=utf-8');
-        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-        echo Captcha::svg();
-    }
-
-    public function refreshCaptcha(): void
-    {
-        Csrf::enforce($_POST['_token'] ?? null);
-        Captcha::refresh();
-        Response::json(['ok' => true, 'url' => url('/captcha.svg') . '?v=' . time()]);
-    }
 
     public function otpForm(): void
     {

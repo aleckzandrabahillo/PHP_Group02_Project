@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($pageTitle ?? 'Account') ?> · Avela</title>
 <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body class="auth-body">
 <a class="auth-logo" href="<?= e(url('/')) ?>"><img src="<?= e(asset('images/avela-logo.png')) ?>" alt="Avela"></a>

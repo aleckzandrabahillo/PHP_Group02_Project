@@ -55,10 +55,8 @@ final class Validator
         if ((string) ($input['password'] ?? '') === '') {
             $errors['password'] = 'Enter your password.';
         }
-        if (trim((string) ($input['captcha'] ?? '')) === '') {
-            $errors['captcha'] = 'Enter the CAPTCHA code.';
-        }
         return $errors;
+       
     }
 
     /**

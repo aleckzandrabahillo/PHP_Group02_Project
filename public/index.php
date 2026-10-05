@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+
 require dirname(__DIR__) . '/bootstrap.php';
 
 use App\Controllers\AdminController;
@@ -21,6 +25,7 @@ use App\Services\DashboardService;
 use App\Services\LogService;
 use App\Services\MailService;
 use App\Services\OtpService;
+use App\Services\RecaptchaService;
 
 $users = new User();
 $products = new Product();
@@ -33,8 +38,9 @@ $mail = new MailService();
 $otp = new OtpService($mail, $logs);
 $authService = new AuthService($users, $otp, $logs);
 $dashboard = new DashboardService();
+$recaptcha = new RecaptchaService();
 
-$auth = new AuthController($authService);
+$auth = new AuthController($authService, $recaptcha);
 $public = new PublicController($products, $favorites, $cart, $reviews);
 $customer = new CustomerController($dashboard, $users, $products, $favorites, $cart, $routines, $otp);
 $catalog = new CatalogController($dashboard, $users, $products);
@@ -51,8 +57,8 @@ $router->get('/search/suggest', [$public, 'searchSuggestions']);
 $router->get('/product', [$public, 'product']);
 $router->get('/register', [$auth, 'registerForm']);
 $router->post('/register', [$auth, 'register']);
-$router->get('/captcha.svg', [$auth, 'captchaSvg']);
-$router->post('/captcha/refresh', [$auth, 'refreshCaptcha']);
+
+
 $router->get('/verify-otp', [$auth, 'otpForm']);
 $router->post('/verify-otp', [$auth, 'verifyOtp']);
 $router->post('/otp/resend', [$auth, 'resendOtp']);
