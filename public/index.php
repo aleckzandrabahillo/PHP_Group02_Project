@@ -36,7 +36,7 @@ $dashboard = new DashboardService();
 
 $auth = new AuthController($authService);
 $public = new PublicController($products, $favorites, $cart, $reviews);
-$customer = new CustomerController($dashboard, $users, $products, $favorites, $cart, $routines);
+$customer = new CustomerController($dashboard, $users, $products, $favorites, $cart, $routines, $otp);
 $catalog = new CatalogController($dashboard, $users, $products);
 $admin = new AdminController($dashboard, $users);
 
@@ -68,6 +68,10 @@ $router->post('/cart/update', [$customer, 'updateCart']);
 $router->post('/cart/remove', [$customer, 'removeFromCart']);
 $router->get('/orders', fn() => $customer->page('orders','My Orders'));
 $router->get('/profile', fn() => $customer->page('profile','Profile'));
+$router->post('/profile/image', [$customer, 'updateProfileImage']);
+$router->post('/profile/update', [$customer, 'updateProfile']);
+$router->get('/profile/verify-otp', [$customer, 'profileOtpForm']);
+$router->post('/profile/verify-otp', [$customer, 'verifyProfileOtp']);
 $router->get('/favorites', [$customer, 'favorites']);
 $router->post('/favorites/toggle', [$customer, 'toggleFavorite']);
 

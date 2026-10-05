@@ -131,8 +131,71 @@ select {font:inherit}
 .profile-card {display:flex;gap:22px;align-items:center;padding:28px}
 .avatar {display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--mist);color:var(--berry);font-weight:700}
 .avatar.large {width:72px;height:72px;font-size:24px}
+.profile-avatar-form {position: relative; display: inline-block; width: 72px; height: 72px; flex-shrink: 0; margin: 0;}
+.profile-avatar-edit { position: relative; display: block; width: 72px; height: 72px; cursor: pointer;}
+.profile-avatar-edit .avatar.large {width: 72px; height: 72px; overflow: hidden;}
+.profile-avatar-edit .avatar.large img {display: block; width: 72px; height: 72px; object-fit: cover;}
+.profile-avatar-pen {position: absolute; right: 2px; bottom: 2px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--berry); color: #fff; border: 2px solid #fff;
+  box-sizing: border-box;  font-size: 12px; font-weight: 700; line-height: 1; z-index: 5;}
+.profile-avatar-edit:hover .profile-avatar-pen {background: var(--berry-dark);}
 .profile-card h2 {margin:0 0 2px}
 .profile-card p {margin:0;color:var(--muted)}
+
+/* Profile information */
+.profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Full Name
+   Editable but ALWAYS transparent and borderless */
+.profile-full-name[contenteditable="true"],
+.profile-email[contenteditable="true"] {
+  border: none;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Email, Contact Number, Delivery Address
+   Show the Avela button color as the editing border */
+.profile-contact[contenteditable="true"],
+.profile-address[contenteditable="true"] {
+  border: 1px solid #944D63;
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* Keep the same border color when focused */
+.profile-contact[contenteditable="true"]:focus,
+.profile-address[contenteditable="true"]:focus {
+  border-color: #944D63;
+  outline: none;
+  box-shadow: none;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.profile-edit-button {
+  width: 110px;
+  height: 38px;
+  border: none;
+  border-radius: 6px;
+  background: #944D63;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+
+.profile-edit-button:hover {
+  background: #7f4054;
+}
+
 .profile-meta {display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .profile-meta span {background:#faf4f7;border:1px solid var(--line);border-radius:999px;padding:5px 9px;font-size:12px;color:#66565d}
 .staff-shell {display:grid;grid-template-columns:235px 1fr;min-height:100vh}

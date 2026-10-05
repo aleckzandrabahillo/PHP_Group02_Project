@@ -204,7 +204,7 @@ CREATE TABLE IF NOT EXISTS routine_items (
 CREATE TABLE IF NOT EXISTS otp_codes (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id BIGINT UNSIGNED NOT NULL,
-  purpose ENUM('activation','login') NOT NULL,
+  purpose ENUM('activation','login', 'profile_update') NOT NULL,
   otp_hash VARCHAR(255) NOT NULL,
   expires_at DATETIME NOT NULL,
   attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,

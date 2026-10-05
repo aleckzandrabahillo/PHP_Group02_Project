@@ -116,8 +116,90 @@ final class User
     public function profileFor(int $id): array
     {
         $pdo = Database::connection();
-        $stmt = $pdo->prepare('SELECT u.id, u.email, u.username, u.role, u.status, u.created_at, COALESCE(cp.full_name, sp.full_name, u.username) AS full_name, cp.contact_no, cp.delivery_address FROM users u LEFT JOIN customer_profiles cp ON cp.user_id = u.id LEFT JOIN staff_profiles sp ON sp.user_id = u.id WHERE u.id = :id LIMIT 1');
+        $stmt = $pdo->prepare('SELECT u.id, u.email, u.username, u.role, u.status, u.created_at, COALESCE(cp.full_name, sp.full_name, u.username) AS full_name, cp.contact_no, cp.delivery_address, cp.profile_image FROM users u LEFT JOIN customer_profiles cp ON cp.user_id = u.id LEFT JOIN staff_profiles sp ON sp.user_id = u.id WHERE u.id = :id LIMIT 1');
         $stmt->execute(['id' => $id]);
         return $stmt->fetch() ?: [];
     }
+
+    public function emailExistsForOtherUser(string $email, int $userId): bool
+{
+    $stmt = Database::connection()->prepare(
+        'SELECT 1
+         FROM users
+         WHERE email = :email
+           AND id <> :user_id
+         LIMIT 1'
+    );
+
+    $stmt->execute([
+        'email' => strtolower(trim($email)),
+        'user_id' => $userId,
+    ]);
+
+    return (bool) $stmt->fetchColumn();
+}
+
+public function updateCustomerProfile(
+    int $userId,
+    string $fullName,
+    string $email,
+    string $contactNo,
+    ?string $deliveryAddress
+): void {
+    Database::transaction(function (PDO $pdo) use (
+        $userId,
+        $fullName,
+        $email,
+        $contactNo,
+        $deliveryAddress
+    ): void {
+        $userStmt = $pdo->prepare(
+            'UPDATE users
+             SET email = :email,
+                 updated_at = NOW()
+             WHERE id = :user_id
+               AND role = "customer"'
+        );
+
+        $userStmt->execute([
+            'email' => strtolower(trim($email)),
+            'user_id' => $userId,
+        ]);
+
+        $profileStmt = $pdo->prepare(
+            'UPDATE customer_profiles
+             SET full_name = :full_name,
+                 contact_no = :contact_no,
+                 delivery_address = :delivery_address,
+                 updated_at = NOW()
+             WHERE user_id = :user_id'
+        );
+
+        $profileStmt->execute([
+            'full_name' => trim($fullName),
+            'contact_no' => trim($contactNo) !== '' ? trim($contactNo) : null,
+            'delivery_address' => trim($deliveryAddress ?? '') !== ''
+                ? trim($deliveryAddress)
+                : null,
+            'user_id' => $userId,
+        ]);
+    });
+}
+
+    public function updateProfileImage(int $userId, string $profileImage): void
+{
+    $pdo = Database::connection();
+
+    $stmt = $pdo->prepare(
+        'UPDATE customer_profiles
+         SET profile_image = :profile_image,
+             updated_at = NOW()
+         WHERE user_id = :user_id'
+    );
+
+    $stmt->execute([
+        'profile_image' => $profileImage,
+        'user_id' => $userId,
+    ]);
+}
 }
