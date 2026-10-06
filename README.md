@@ -16,7 +16,7 @@ This repository is the Group 02 project for **Open-Source Programming**.
 
 1. Aleckzandra Bahillo - @aleckzandrabahillo
 2. Jasmine Iris Eva - @EvaIris5892
-3. Alexzis Mae Tutor - @AlexzisMae
+3. Alexzis Mae Tutor - @alexzismaetutor
 4. Angela Nicole Zurbano - @zurbanoangelanicole
 
 ## Technology Stack
