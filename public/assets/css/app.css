@@ -77,7 +77,9 @@ select {font:inherit}
 .password-icon[hidden] {display:none!important}
 .password-wrap input::-ms-reveal,
 .password-wrap input::-ms-clear {display:none}
-.captcha-block {background:#fff9fb;border:1px solid #f0d9e1;border-radius:var(--radius);padding:14px;display:grid;grid-template-columns:220px 1fr;gap:10px 14px;align-items:center}
+.captcha-block {width: fit-content; background: #fff9fb;border:1px solid #f0d9e1;border-radius:var(--radius);padding:14px;display:flex;gap:10px 14px;align-items:flex-end;justify-content: center}
+.captcha-block .g-recaptcha {width: 437px; height: 115px}
+.g-recaptcha {transform: scale(1.5); transform-origin: left top;}
 .captcha-label {grid-column:1/-1;display:flex;justify-content:space-between;font-size:13px;font-weight:700}
 .captcha-image {width:220px;height:70px;border-radius:var(--radius-sm)}
 .captcha-block input {width:100%}
