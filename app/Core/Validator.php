@@ -2,6 +2,8 @@
 
 namespace App\Core;
 
+use App\Services\SecuritySettings;
+
 final class Validator
 {
     public static function registration(array $input): array
@@ -28,21 +30,40 @@ final class Validator
         } elseif (self::normalizePhilippineMobile($contact) === null) {
             $errors['contact_no'] = 'Enter a valid Philippine mobile number, such as 09XXXXXXXXX.';
         }
+        if ($msg = self::password($password)) $errors['password'] = $msg;
 
-        $min = (int) env('PASSWORD_MIN_LENGTH', 12);
-        if (
-            strlen($password) < $min ||
-            !preg_match('/[A-Z]/', $password) ||
-            !preg_match('/[a-z]/', $password) ||
-            !preg_match('/\d/', $password) ||
-            !preg_match('/[^A-Za-z0-9]/', $password)
-        ) {
-            $errors['password'] = "Use at least {$min} characters with uppercase, lowercase, a number, and a special character.";
-        }
-        if ($password !== $confirm) {
-            $errors['password_confirmation'] = 'Passwords do not match.';
-        }
+        return $errors;
+    }
 
+public static function password(string $password): ?string
+{
+    $min = SecuritySettings::get('password_min_length');
+    if (
+        strlen($password) < $min ||
+        !preg_match('/[A-Z]/', $password) ||
+        !preg_match('/[a-z]/', $password) ||
+        !preg_match('/\d/', $password) ||
+        !preg_match('/[^A-Za-z0-9]/', $password)
+    ) {
+        return "Use at least {$min} characters with uppercase, lowercase, a number, and a special character.";
+    }
+    return null;
+}
+
+    public static function staff(array $input): array
+    {
+        $errors = [];
+        $fullName = trim((string) ($input['full_name'] ?? ''));
+        $email    = trim((string) ($input['email'] ?? ''));
+        $username = trim((string) ($input['username'] ?? ''));
+        $password = (string) ($input['password'] ?? '');
+
+        if (!in_array($input['role'] ?? '', ['admin', 'catalog_manager'], true)) $errors['role'] = 'Choose a valid role.';
+        if (strlen($fullName) < 2 || strlen($fullName) > 120) $errors['full_name'] = 'Enter the staff member\'s full name.';
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 190) $errors['email'] = 'Enter a valid email address.';
+        if (!preg_match('/^[A-Za-z0-9._-]{4,40}$/', $username)) $errors['username'] = 'Use 4–40 letters, numbers, dots, underscores, or hyphens.';
+        if ($msg = self::password($password)) $errors['password'] = $msg;
+        if ($password !== (string) ($input['password_confirmation'] ?? '')) $errors['password_confirmation'] = 'Passwords do not match.';
         return $errors;
     }
 

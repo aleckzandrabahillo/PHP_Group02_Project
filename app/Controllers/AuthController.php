@@ -10,6 +10,7 @@ use App\Core\View;
 use App\Middleware\AuthGuard;
 use App\Services\AuthService;
 use App\Services\RecaptchaService;
+use App\Services\SecuritySettings;
 
 final class AuthController
 {
@@ -60,7 +61,7 @@ final class AuthController
     public function registerForm(): void
     {
         AuthGuard::guest();
-        View::render('auth/register', ['pageTitle' => 'Create account', 'recaptchaSiteKey' => env('RECAPTCHA_SITE_KEY', ''), ],'auth');
+        View::render('auth/register', ['pageTitle' => 'Create account', 'recaptchaSiteKey' => env('RECAPTCHA_SITE_KEY', ''), 'captchaEnabled' => SecuritySettings::get('captcha_enabled') === 1],'auth');
     }
 
     public function register(): void

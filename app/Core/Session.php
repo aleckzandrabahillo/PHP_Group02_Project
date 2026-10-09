@@ -2,6 +2,8 @@
 
 namespace App\Core;
 
+use App\Services\SecuritySettings;
+
 final class Session
 {
     public static function start(): void
@@ -21,7 +23,7 @@ final class Session
         session_start();
 
         if (isset($_SESSION['auth_user'])) {
-            $timeout = (int) env('SESSION_TIMEOUT_MINUTES', 30) * 60;
+            $timeout = SecuritySettings::get('session_timeout_minutes') * 60;
             $last = (int) ($_SESSION['last_activity'] ?? time());
             if ($timeout > 0 && (time() - $last) > $timeout) {
                 self::forgetAuth();

@@ -26,7 +26,7 @@
         <span><?= e($product['category_name']) ?></span>
         <span>₱<?= e(number_format((float) $product['price'], 2)) ?></span>
         <span><?= (int) $product['stock_qty'] ?></span>
-        <span><?= (int) $product['stock_qty'] > 0 ? 'Active' : 'Out of stock' ?></span>
+        <span><?= $product['status'] !== 'active' ? 'Inactive' : ((int) $product['stock_qty'] > 0 ? 'Active' : 'Out of stock') ?></span>
       </div>
     <?php endforeach; ?>
   </div>

@@ -13,6 +13,7 @@ use App\Controllers\AuthController;
 use App\Controllers\CatalogController;
 use App\Controllers\CustomerController;
 use App\Controllers\PublicController;
+use App\Models\Order;
 use App\Core\Router;
 use App\Models\User;
 use App\Models\Product;
@@ -26,6 +27,8 @@ use App\Services\LogService;
 use App\Services\MailService;
 use App\Services\OtpService;
 use App\Services\RecaptchaService;
+use App\Services\AuditService;
+use App\Services\SecuritySettings;
 
 $users = new User();
 $products = new Product();
@@ -39,12 +42,17 @@ $otp = new OtpService($mail, $logs);
 $authService = new AuthService($users, $otp, $logs);
 $dashboard = new DashboardService();
 $recaptcha = new RecaptchaService();
+$audit = new AuditService();
+$security = new SecuritySettings();
 
 $auth = new AuthController($authService, $recaptcha);
 $public = new PublicController($products, $favorites, $cart, $reviews);
 $customer = new CustomerController($dashboard, $users, $products, $favorites, $cart, $routines, $otp);
 $catalog = new CatalogController($dashboard, $users, $products);
-$admin = new AdminController($dashboard, $users);
+$orders   = new Order();
+$audit    = new AuditService();
+$settings = new SecuritySettings();
+$admin    = new AdminController($dashboard, $users, $products, $orders, $logs, $audit, $settings);
 
 $router = new Router();
 $router->get('/', [$public, 'landing']);
@@ -87,13 +95,20 @@ $router->get('/catalog/categories', fn() => $catalog->page('categories','Categor
 $router->get('/catalog/inventory', fn() => $catalog->page('inventory','Inventory'));
 $router->get('/catalog/profile', fn() => $catalog->page('profile','Profile'));
 
-$router->get('/admin', [$admin, 'dashboard']);
-$router->get('/admin/users', fn() => $admin->page('users','Users'));
-$router->get('/admin/staff', fn() => $admin->page('staff','Staff & Roles'));
-$router->get('/admin/orders', fn() => $admin->page('orders','Orders'));
-$router->get('/admin/security', fn() => $admin->page('security','Security'));
-$router->get('/admin/auth-logs', fn() => $admin->page('auth_logs','Authentication Logs'));
-$router->get('/admin/audit-logs', fn() => $admin->page('audit_logs','Audit Logs'));
-$router->get('/admin/profile', fn() => $admin->page('profile','Profile'));
+$router->get ('/admin',               [$admin, 'dashboard']);
+$router->get ('/admin/users',         [$admin, 'users']);
+$router->post('/admin/users/status',  [$admin, 'setCustomerStatus']);
+$router->post('/admin/users/unlock',  [$admin, 'unlockUser']);
+$router->get ('/admin/staff',         [$admin, 'staff']);
+$router->post('/admin/staff/create',  [$admin, 'createStaff']);
+$router->post('/admin/staff/update',  [$admin, 'updateStaff']);
+$router->get ('/admin/orders',        [$admin, 'orders']);
+$router->get ('/admin/orders/view',   [$admin, 'orderView']);
+$router->post('/admin/orders/status', [$admin, 'updateOrderStatus']);
+$router->get ('/admin/security',      [$admin, 'security']);
+$router->post('/admin/security',      [$admin, 'updateSecurity']);
+$router->get ('/admin/auth-logs',     [$admin, 'authLogs']);
+$router->get ('/admin/audit-logs',    [$admin, 'auditLogs']);
+$router->get ('/admin/profile',       fn() => $admin->page('profile', 'Profile'));
 
 $router->dispatch($_SERVER['REQUEST_METHOD'] ?? 'GET', $_SERVER['REQUEST_URI'] ?? '/');

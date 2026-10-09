@@ -1,10 +1,10 @@
 <?php
-
 declare(strict_types=1);
 
 require dirname(__DIR__) . '/bootstrap.php';
 
 use App\Models\User;
+use App\Core\Validator;
 
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
@@ -27,25 +27,17 @@ if (!in_array($role, ['admin', 'catalog_manager'], true)) {
     exit(1);
 }
 
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    fwrite(STDERR, "Invalid email.\n");
-    exit(1);
-}
+$errors = Validator::staff([
+    'role' => $role,
+    'email' => $email,
+    'username' => $username,
+    'full_name' => $fullName,
+    'password' => $password,
+    'password_confirmation' => $password,
+]);
 
-if (!preg_match('/^[A-Za-z0-9._-]{4,40}$/', $username)) {
-    fwrite(STDERR, "Invalid username.\n");
-    exit(1);
-}
-
-$minimumLength = (int) env('PASSWORD_MIN_LENGTH', 12);
-$passwordIsValid = strlen($password) >= $minimumLength
-    && preg_match('/[A-Z]/', $password)
-    && preg_match('/[a-z]/', $password)
-    && preg_match('/\d/', $password)
-    && preg_match('/[^A-Za-z0-9]/', $password);
-
-if (!$passwordIsValid) {
-    fwrite(STDERR, "Password does not meet the Avela password policy.\n");
+if ($errors) {
+    fwrite(STDERR, implode(PHP_EOL, $errors) . PHP_EOL);
     exit(1);
 }
 

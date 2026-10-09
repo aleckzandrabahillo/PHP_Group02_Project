@@ -20,7 +20,29 @@
       <a href="<?= e(url('/admin/auth-logs')) ?>">View logs</a>
     </div>
     <div class="table-empty">
-      <p>Authentication activity will be shown here once the log table is connected to this dashboard.</p>
+      <?php if (!empty($recentLogs)): ?>
+        <?php foreach ($recentLogs as $log): ?>
+          <p>
+            <?= e($log['email'] ?? 'Unknown') ?> · <?= e($log['event']) ?> · <?= e($log['result']) ?>
+            <small class="muted"><?= e(date('M j, g:i A', strtotime((string) $log['created_at']))) ?></small>
+          </p>
+        <?php endforeach; ?>
+      <?php else: ?>
+        <div class="table-empty"><p>No authentication activity yet.</p></div>
+      <?php endif; ?>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Catalog health</h2>
+        <a href="<?= e(url('/catalog/products')) ?>">Open catalog</a>
+      </div>
+      <?php $cs = $catalogStats ?? []; ?>
+      <p><?= (int) ($cs['active_products'] ?? 0) ?> of <?= (int) ($cs['products'] ?? 0) ?> products active ·
+        <?= (int) ($cs['low_stock'] ?? 0) ?> low stock ·
+        <?= (int) ($cs['out_of_stock'] ?? 0) ?> out of stock</p>
+      <?php foreach (($stockAlerts ?? []) as $p): ?>
+        <p><?= e($p['name']) ?> <small class="muted"><?= e($p['sku']) ?> · <?= e($p['status'] === 'active' ? 'Out of stock' : 'Inactive') ?></small></p>
+      <?php endforeach; ?>
     </div>
   </div>
 

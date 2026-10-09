@@ -21,7 +21,7 @@
         <span><?= e($product['name']) ?></span>
         <span><?= e($product['sku']) ?></span>
         <span><?= (int) $product['stock_qty'] ?></span>
-        <span><?= (int) $product['stock_qty'] === 0 ? 'Out of stock' : ((int) $product['stock_qty'] <= 5 ? 'Low stock' : 'In stock') ?></span>
+        <span><?= $product['status'] !== 'active' ? 'Inactive' : ((int) $product['stock_qty'] === 0 ? 'Out of stock' : ((int) $product['stock_qty'] <= 5 ? 'Low stock' : 'In stock')) ?></span> <= 5 ? 'Low stock' : 'In stock') ?></span>
       </div>
     <?php endforeach; ?>
   </div>

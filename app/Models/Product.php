@@ -77,15 +77,17 @@ final class Product
     /**
      * Public catalog query. Filter groups are ANDed together; values inside one group are ORed.
      */
-    public function catalog(string $search = '', array $filters = [], string $sort = 'newest'): array
+    public function catalog(string $search = '', array $filters = [], string $sort = 'newest', bool $includeInactive = false): array
     {
         $sql = 'SELECT p.id, p.sku, p.name, p.description, p.price, p.stock_qty, p.image_path, p.routine_step,
-                       c.name AS category_name
+                       p.status, c.name AS category_name
                 FROM products p
-                INNER JOIN categories c ON c.id = p.category_id
-                WHERE p.status = "active" AND c.status = "active"';
+                INNER JOIN categories c ON c.id = p.category_id';
+        $sql .= $includeInactive
+            ? ' WHERE 1 = 1'
+            : ' WHERE p.status = "active" AND c.status = "active"';
         $params = [];
-
+        
         $search = trim($search);
         if ($search !== '') {
             $sql .= ' AND (p.name LIKE :search_name OR p.description LIKE :search_description OR c.name LIKE :search_category OR p.sku LIKE :search_sku)';

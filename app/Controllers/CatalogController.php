@@ -31,7 +31,7 @@ final class CatalogController
         $user = AuthGuard::roles(['catalog_manager','admin']);
         $data = ['pageTitle'=>$title, 'profile'=>$this->users->profileFor((int)$user['id'])];
         if ($view === 'products' || $view === 'inventory') {
-            $data['products'] = $this->products->catalog();
+            $data['products'] = $this->products->catalog('', [], 'newest', true);
         }
         if ($view === 'categories') {
             $data['categories'] = $this->products->categoryRows();

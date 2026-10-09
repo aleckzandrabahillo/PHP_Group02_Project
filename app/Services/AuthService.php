@@ -44,7 +44,10 @@ final class AuthService
         if (!password_verify($password, (string) $user['password_hash'])) {
             $failure = $this->users->recordFailure((int) $user['id']);
             if (!empty($failure['locked_until'])) {
-                $this->logs->auth((int) $user['id'], 'lockout', 'success');
+                $this->logs->auth((int) $user['id'], 'lockout', 'failure', [
+                    'attempts' => $failure['attempts'],
+                    'locked_until' => $failure['locked_until'],
+                ]);
                 return ['ok' => false, 'message' => 'Too many failed sign-in attempts. This account is temporarily locked.'];
             }
             $this->logs->auth((int) $user['id'], 'login', 'failure', ['reason' => 'invalid_credentials']);
@@ -62,7 +65,10 @@ final class AuthService
             return ['ok' => true, 'next' => 'otp'];
         }
 
-        $requiresMfa = (bool) $user['mfa_enabled'] || in_array($user['role'], ['admin', 'catalog_manager'], true);
+        $isStaff = in_array($user['role'], ['admin', 'catalog_manager'], true);
+        $requiresMfa = $isStaff
+            ? SecuritySettings::get('staff_mfa_required') === 1
+            : (bool) $user['mfa_enabled'];
         if ($requiresMfa) {
             $this->otp->issue((int) $user['id'], (string) $user['email'], 'login');
             Session::put('pending_flow', ['user_id' => (int) $user['id'], 'purpose' => 'login', 'email' => $user['email'], 'sent_at' => time()]);

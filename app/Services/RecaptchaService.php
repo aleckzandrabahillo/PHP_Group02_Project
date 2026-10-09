@@ -4,10 +4,16 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Services\SecuritySettings;
+
 final class RecaptchaService
 {
     public function verify(string $response): bool
     {
+        if (SecuritySettings::get('captcha_enabled') === 0) {
+            return true;
+        }
+
         if ($response === '') {
             return false;
         }
