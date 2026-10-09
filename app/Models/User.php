@@ -16,12 +16,25 @@ final class User
         return $user ?: null;
     }
 
-    public function findById(int $id): ?array
+    public function findById(int $id, bool $forUpdate = false): ?array
     {
-        $stmt = Database::connection()->prepare('SELECT * FROM users WHERE id = :id LIMIT 1');
+        $stmt = Database::connection()->prepare('SELECT * FROM users WHERE id = :id LIMIT 1' . ($forUpdate ? ' FOR UPDATE' : ''));
         $stmt->execute(['id' => $id]);
         $user = $stmt->fetch();
         return $user ?: null;
+    }
+
+    public static function isLocked(array $user): bool
+    {
+        return !empty($user['locked_until']) && strtotime((string) $user['locked_until']) > time();
+    }
+
+    public static function canAuthenticate(?array $user): bool
+    {
+        return $user !== null
+            && ($user['status'] ?? '') === 'active'
+            && in_array($user['role'] ?? '', ['customer', 'catalog_manager', 'admin'], true)
+            && !self::isLocked($user);
     }
 
     public function emailExists(string $email): bool

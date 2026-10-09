@@ -79,6 +79,10 @@ final class Session
 
     public static function forgetAuth(): void
     {
-        unset($_SESSION['auth_user'], $_SESSION['last_activity']);
+        unset(
+            $_SESSION['auth_user'], $_SESSION['last_activity'],
+            $_SESSION['pending_flow'], $_SESSION['profile_update_flow'],
+            $_SESSION['_old'], $_SESSION['errors']
+        );
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Core\Session;
+use App\Core\Database;
 use App\Core\Validator;
 use App\Models\User;
 
@@ -36,7 +37,7 @@ final class AuthService
             return ['ok' => false, 'message' => 'Invalid email/username or password.'];
         }
 
-        if (!empty($user['locked_until']) && strtotime((string) $user['locked_until']) > time()) {
+        if (User::isLocked($user)) {
             $this->logs->auth((int) $user['id'], 'login', 'failure', ['reason' => 'locked']);
             return ['ok' => false, 'message' => 'This account is temporarily locked. Try again later or contact an administrator.'];
         }
@@ -57,19 +58,23 @@ final class AuthService
         }
 
         if ($user['status'] === 'pending') {
-            $this->otp->issue((int) $user['id'], (string) $user['email'], 'activation');
+            $issued = $this->otp->issue((int) $user['id'], (string) $user['email'], 'activation');
+            if (!$issued['issued'] && !$issued['reusable']) return $this->cooldownResult($issued);
             Session::put('pending_flow', ['user_id' => (int) $user['id'], 'purpose' => 'activation', 'email' => $user['email'], 'sent_at' => time()]);
+            if (!$issued['issued']) Session::flash('warning', 'Use the verification code already sent to your email. ' . $this->cooldownResult($issued)['message']);
             return ['ok' => true, 'next' => 'otp'];
         }
 
         $requiresMfa = (bool) $user['mfa_enabled'] || in_array($user['role'], ['admin', 'catalog_manager'], true);
         if ($requiresMfa) {
-            $this->otp->issue((int) $user['id'], (string) $user['email'], 'login');
+            $issued = $this->otp->issue((int) $user['id'], (string) $user['email'], 'login');
+            if (!$issued['issued'] && !$issued['reusable']) return $this->cooldownResult($issued);
             Session::put('pending_flow', ['user_id' => (int) $user['id'], 'purpose' => 'login', 'email' => $user['email'], 'sent_at' => time()]);
+            if (!$issued['issued']) Session::flash('warning', 'Use the verification code already sent to your email. ' . $this->cooldownResult($issued)['message']);
             return ['ok' => true, 'next' => 'otp'];
         }
 
-        $this->finalizeLogin($user);
+        if (!$this->finalizeLogin($user)) return $this->unavailableResult();
         return ['ok' => true, 'next' => 'dashboard'];
     }
 
@@ -81,8 +86,30 @@ final class AuthService
         }
         $userId = (int) $flow['user_id'];
         $purpose = (string) $flow['purpose'];
-        $verification = $this->otp->verify($userId, $purpose, $code);
+        $verification = Database::transaction(function () use ($userId, $purpose, $code): array {
+            $user = $this->users->findById($userId, true);
+            $eligible = $purpose === 'activation'
+                ? $user && $user['status'] === 'pending' && !User::isLocked($user)
+                    && in_array($user['role'], ['customer', 'catalog_manager', 'admin'], true)
+                : $purpose === 'login' && User::canAuthenticate($user);
+            if (!$eligible) {
+                $this->logs->auth($user ? $userId : null, 'otp_verify', 'failure', ['purpose' => $purpose, 'reason' => 'account_unavailable']);
+                return ['ok' => false, 'reason' => 'account_unavailable'];
+            }
+            $result = $this->otp->verify($userId, $purpose, $code);
+            if (!$result['ok']) return $result;
+            if ($purpose === 'activation') {
+                $this->users->activate($userId);
+                $this->logs->auth($userId, 'activation', 'success');
+            } else {
+                // Eligibility and role remain authoritative under the account lock.
+                $this->users->resetFailures($userId);
+                $this->logs->auth($userId, 'login', 'success');
+            }
+            return $result + ['user' => $user];
+        });
         if (!$verification['ok']) {
+            if ($verification['reason'] === 'account_unavailable') return $this->unavailableResult();
             $message = match ($verification['reason']) {
                 'expired' => 'This verification code has expired. Request a new code.',
                 'attempt_limit' => 'Too many incorrect code attempts. Request a new code.',
@@ -96,17 +123,12 @@ final class AuthService
             };
             return ['ok' => false, 'field' => 'otp', 'message' => $message];
         }
-        $user = $this->users->findById($userId);
-        if (!$user) return ['ok' => false, 'message' => 'Account not found.'];
-
         if ($purpose === 'activation') {
-            $this->users->activate($userId);
-            $this->logs->auth($userId, 'activation', 'success');
             Session::forget('pending_flow');
             return ['ok' => true, 'next' => 'login', 'message' => 'Your account is active. You can sign in now.'];
         }
 
-        $this->finalizeLogin($user);
+        $this->completeSession($verification['user']);
         Session::forget('pending_flow');
         return ['ok' => true, 'next' => 'dashboard'];
     }
@@ -115,24 +137,39 @@ final class AuthService
     {
         $flow = Session::get('pending_flow');
         if (!is_array($flow) || empty($flow['user_id'])) return ['ok' => false, 'message' => 'Start the sign-in or activation flow again.'];
-        $wait = max(1, (int) env('OTP_RESEND_SECONDS', 60));
-        $elapsed = time() - (int) ($flow['sent_at'] ?? 0);
-        if ($elapsed < $wait) {
-            $remaining = max(1, $wait - $elapsed);
-            return ['ok' => false, 'message' => "Please wait {$remaining} seconds before requesting another code."];
-        }
         $user = $this->users->findById((int) $flow['user_id']);
-        if (!$user) return ['ok' => false, 'message' => 'Account not found.'];
-        $this->otp->issue((int) $user['id'], (string) $user['email'], (string) $flow['purpose']);
+        $purpose = (string) ($flow['purpose'] ?? '');
+        $eligible = $purpose === 'activation'
+            ? $user && $user['status'] === 'pending' && !User::isLocked($user)
+            : $purpose === 'login' && User::canAuthenticate($user);
+        if (!$eligible) return $this->unavailableResult();
+        $issued = $this->otp->issue((int) $user['id'], (string) $user['email'], $purpose);
+        if (!$issued['issued']) return $this->cooldownResult($issued);
         $flow['sent_at'] = time();
         Session::put('pending_flow', $flow);
         return ['ok' => true, 'message' => 'A new code was sent.'];
     }
 
-    public function finalizeLogin(array $user): void
+    public function finalizeLogin(array $user): bool
     {
+        $current = Database::transaction(function () use ($user): ?array {
+            $current = $this->users->findById((int) $user['id'], true);
+            if (!User::canAuthenticate($current)
+                || (bool) $current['mfa_enabled']
+                || in_array($current['role'], ['admin', 'catalog_manager'], true)) return null;
+            $this->users->resetFailures((int) $current['id']);
+            $this->logs->auth((int) $current['id'], 'login', 'success');
+            return $current;
+        });
+        if (!$current) return false;
+        $this->completeSession($current);
+        return true;
+    }
+
+    private function completeSession(array $user): void
+    {
+        Session::forgetAuth();
         session_regenerate_id(true);
-        $this->users->resetFailures((int) $user['id']);
         Session::put('auth_user', [
             'id' => (int) $user['id'],
             'email' => $user['email'],
@@ -140,7 +177,19 @@ final class AuthService
             'role' => $user['role'],
         ]);
         Session::put('last_activity', time());
-        $this->logs->auth((int) $user['id'], 'login', 'success');
+    }
+
+    private function cooldownResult(array $issued): array
+    {
+        return ['ok' => false, 'message' => "Please wait {$issued['retry_after']} seconds before requesting another code."];
+    }
+
+    private function unavailableResult(): array
+    {
+        Session::forgetAuth();
+        session_regenerate_id(true);
+        Session::flash('warning', 'Please sign in to continue.');
+        return ['ok' => false, 'message' => 'Verification could not be completed. Please sign in again.'];
     }
 
     public function logout(): void
@@ -148,7 +197,6 @@ final class AuthService
         $user = Session::get('auth_user');
         if (is_array($user) && isset($user['id'])) $this->logs->auth((int) $user['id'], 'logout', 'success');
         Session::forgetAuth();
-        Session::forget('pending_flow');
         session_regenerate_id(true);
     }
 }
