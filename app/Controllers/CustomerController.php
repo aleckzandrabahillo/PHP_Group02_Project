@@ -446,7 +446,12 @@ public function profileOtpForm(): void
         ]);
 
         try {
-            $this->otp->issue($userId, $currentEmail, 'profile_update');
+            $issued = $this->otp->issue($userId, $currentEmail, 'profile_update');
+            if (!$issued['issued']) {
+                Session::forget('profile_update_flow');
+                Session::flash('warning', "Please wait {$issued['retry_after']} seconds before requesting another code.");
+                Response::redirect('/profile');
+            }
         } catch (\Throwable $e) {
             Session::forget('profile_update_flow');
             Session::flash('warning', 'We could not send the verification code. Please try again.');
