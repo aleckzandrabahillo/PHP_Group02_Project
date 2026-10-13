@@ -59,7 +59,13 @@ function is_active_path(string $path): bool
     if ($base !== '' && str_starts_with($current, $base)) {
         $current = substr($current, strlen($base)) ?: '/';
     }
-    return $current === $path || ($path !== '/' && str_starts_with($current, rtrim($path, '/') . '/'));
+    if ($current === $path) {
+        return true;
+    }
+    if ($path === '/catalog' || $path === '/admin') {
+        return false;
+    }
+    return $path !== '/' && str_starts_with($current, rtrim($path, '/') . '/');
 }
 
 function current_relative_uri(): string

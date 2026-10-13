@@ -20,6 +20,16 @@ final class AdminController
     public function page(string $view, string $title): void
     {
         $user = AuthGuard::roles(['admin']);
-        View::render('admin/' . $view, ['pageTitle'=>$title, 'profile'=>$this->users->profileFor((int)$user['id'])]);
+        $data = ['pageTitle'=>$title, 'profile'=>$this->users->profileFor((int)$user['id'])];
+        if ($view === 'audit_logs') {
+            $data['auditLogs'] = Database::connection()->query(
+                'SELECT a.id, a.action, a.target_type, a.target_id, a.details, a.created_at,
+                        COALESCE(sp.full_name, u.username, "Former user") AS actor_name
+                 FROM audit_logs a LEFT JOIN users u ON u.id=a.actor_id
+                 LEFT JOIN staff_profiles sp ON sp.user_id=u.id
+                 ORDER BY a.created_at DESC, a.id DESC LIMIT 200'
+            )->fetchAll();
+        }
+        View::render('admin/' . $view, $data);
     }
 }
