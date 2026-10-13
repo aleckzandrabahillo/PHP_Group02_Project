@@ -7,10 +7,14 @@
 </section>
 
 <div class="table-card">
-  <div class="table-toolbar">
-    <div class="search-shell">Search audit logs</div>
-    <div class="filter-chip">All status</div>
-  </div>
+  <form class="table-toolbar" method="get" action="<?= e(url('/admin/audit-logs')) ?>" role="search">
+    <input class="search-shell" type="search" name="q" value="<?= e($term ?? '') ?>" maxlength="100"
+           placeholder="Search by action, target, details or actor email" aria-label="Search audit logs">
+    <button class="btn btn-secondary btn-sm" type="submit">Search</button>
+    <?php if (($term ?? '') !== ''): ?>
+      <a class="btn btn-secondary btn-sm" href="<?= e(url('/admin/audit-logs')) ?>">Clear</a>
+    <?php endif; ?>
+  </form>
 
   <div class="data-table">
     <div class="data-row header">
@@ -20,9 +24,22 @@
       <span>Target</span>
       <span>Details</span>
     </div>
+    <?php foreach (($logs ?? []) as $log): ?>
+      <div class="data-row">
+        <span><?= e($log['created_at']) ?></span>
+        <span><?= e($log['actor_email'] ?? 'System / deleted user') ?></span>
+        <span><?= e($log['action']) ?></span>
+        <span><?= e($log['target_type'] . ($log['target_id'] !== null ? ' #' . $log['target_id'] : '')) ?></span>
+        <span><?= e($log['details'] ?? '') ?></span>
+      </div>
+    <?php endforeach; ?>
   </div>
 
-  <div class="table-empty">
-    <p>No audit records to display yet.</p>
-  </div>
+  <?php if (empty($logs)): ?>
+    <div class="table-empty">
+      <p><?= ($term ?? '') !== '' ? 'No audit records match your search.' : 'No audit records to display yet.' ?></p>
+    </div>
+  <?php endif; ?>
+
+  <?php require __DIR__ . '/../partials/pagination.php'; ?>
 </div>

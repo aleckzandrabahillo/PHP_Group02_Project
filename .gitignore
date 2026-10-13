@@ -11,3 +11,5 @@ public/uploads/*
 .vscode/
 .DS_Store
 Thumbs.db
+
+docs/IMPLEMENTATION_PLAN.md

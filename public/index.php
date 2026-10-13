@@ -21,6 +21,7 @@ use App\Models\Cart;
 use App\Models\Routine;
 use App\Models\Review;
 use App\Services\AuthService;
+use App\Services\AuditService;
 use App\Services\DashboardService;
 use App\Services\LogService;
 use App\Services\MailService;
@@ -39,12 +40,13 @@ $otp = new OtpService($mail, $logs);
 $authService = new AuthService($users, $otp, $logs);
 $dashboard = new DashboardService();
 $recaptcha = new RecaptchaService();
+$audit = new AuditService();
 
 $auth = new AuthController($authService, $recaptcha);
 $public = new PublicController($products, $favorites, $cart, $reviews);
 $customer = new CustomerController($dashboard, $users, $products, $favorites, $cart, $routines, $otp);
 $catalog = new CatalogController($dashboard, $users, $products);
-$admin = new AdminController($dashboard, $users);
+$admin = new AdminController($dashboard, $users, $audit);
 
 $router = new Router();
 $router->get('/', [$public, 'landing']);
@@ -93,7 +95,7 @@ $router->get('/admin/staff', fn() => $admin->page('staff','Staff & Roles'));
 $router->get('/admin/orders', fn() => $admin->page('orders','Orders'));
 $router->get('/admin/security', fn() => $admin->page('security','Security'));
 $router->get('/admin/auth-logs', fn() => $admin->page('auth_logs','Authentication Logs'));
-$router->get('/admin/audit-logs', fn() => $admin->page('audit_logs','Audit Logs'));
+$router->get('/admin/audit-logs', [$admin, 'auditLogs']);
 $router->get('/admin/profile', fn() => $admin->page('profile','Profile'));
 
 $router->dispatch($_SERVER['REQUEST_METHOD'] ?? 'GET', $_SERVER['REQUEST_URI'] ?? '/');

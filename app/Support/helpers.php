@@ -102,3 +102,13 @@ function product_placeholder_url(string $categoryName): string
     return asset('images/placeholders/' . product_visual_key($categoryName) . '.svg');
 }
 
+/**
+ * Builds a safe LIKE pattern ("%term%") from user input.
+ * Escapes the LIKE wildcards (% and _) and the escape character itself with "!",
+ * so queries must use: LIKE :param ESCAPE '!'
+ */
+function like_pattern(string $term): string
+{
+    $escaped = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $term);
+    return '%' . $escaped . '%';
+}
