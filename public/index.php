@@ -82,12 +82,14 @@ $router->get('/favorites', [$customer, 'favorites']);
 $router->post('/favorites/toggle', [$customer, 'toggleFavorite']);
 
 $router->get('/catalog', [$catalog, 'dashboard']);
+$router->get('/catalog/products', fn() => $catalog->page('products','Products'));
 $router->get('/catalog/products', [$catalog, 'products']);
 $router->post('/catalog/products', [$catalog, 'manageProduct']);
+$router->get('/catalog/categories', fn() => $catalog->page('categories','Categories'));
 $router->get('/catalog/categories', [$catalog, 'categories']);
 $router->post('/catalog/categories', [$catalog, 'manageCategory']);
 $router->get('/catalog/inventory', [$catalog, 'inventory']);
-$router->post('/catalog/inventory', [$catalog, 'updateStock']);
+$router->post('/catalog/inventory', [$catalog, 'manageStock']);
 $router->get('/catalog/profile', fn() => $catalog->page('profile','Profile'));
 
 $router->get('/admin', [$admin, 'dashboard']);
@@ -100,3 +102,4 @@ $router->get('/admin/audit-logs', fn() => $admin->page('audit_logs','Audit Logs'
 $router->get('/admin/profile', fn() => $admin->page('profile','Profile'));
 
 $router->dispatch($_SERVER['REQUEST_METHOD'] ?? 'GET', $_SERVER['REQUEST_URI'] ?? '/');
+

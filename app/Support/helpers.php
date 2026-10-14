@@ -58,8 +58,13 @@ function is_active_path(string $path): bool
     $base = base_path();
     if ($base !== '' && str_starts_with($current, $base)) {
         $current = substr($current, strlen($base)) ?: '/';
+    }if ($current === $path) {
+        return true;
     }
-    return $current === $path || ($path !== '/' && str_starts_with($current, rtrim($path, '/') . '/'));
+    if ($path === '/catalog' || $path === '/admin') {
+        return false;
+    }
+    return $path !== '/' && str_starts_with($current, rtrim($path, '/') . '/');
 }
 
 function current_relative_uri(): string
@@ -101,4 +106,3 @@ function product_placeholder_url(string $categoryName): string
 {
     return asset('images/placeholders/' . product_visual_key($categoryName) . '.svg');
 }
-
