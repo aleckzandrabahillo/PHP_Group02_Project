@@ -30,6 +30,7 @@ final class CatalogController
         View::render('catalog/dashboard', [
             'pageTitle'=>'Catalog Dashboard',
             'stats'=>$this->dashboard->catalog(),
+            'activity'=>$this->products->recentCatalogActivity(),
             'profile'=>$this->users->profileFor((int)$user['id'])
         ]);
     }
@@ -40,30 +41,64 @@ final class CatalogController
         if ($view === 'inventory') { $this->inventory(); return; }
         $user = AuthGuard::roles(['catalog_manager','admin']);
         $data = ['pageTitle'=>$title, 'profile'=>$this->users->profileFor((int)$user['id'])];
+
         View::render('catalog/' . $view, $data);
     }
 
     public function products(): void
-    {
-        $user = AuthGuard::roles(['catalog_manager', 'admin']);
-        $current = null;
-        $errors = [];
-        $form = ProductValidator::defaults();
-        $showForm = ($_GET['form'] ?? '') === 'add';
-        if (isset($_GET['edit'])) {
-            $id = $this->categoryId($_GET['edit']);
-            $current = $id === null ? null : $this->products->managementFind($id);
-            if ($current === null) {
-                http_response_code(404);
-                $errors['form'] = 'That product no longer exists. Choose a product from the list.';
-                $showForm = false;
-            } else {
-                foreach ($form as $key => $default) $form[$key] = $current[$key] ?? $default;
-                $form['expected_stock'] = (string) $current['stock_qty'];
-                $showForm = true;
+{
+    $user = AuthGuard::roles(['catalog_manager', 'admin']);
+
+    $current = null;
+    $errors = [];
+    $form = ProductValidator::defaults();
+    $showForm = ($_GET['form'] ?? '') === 'add';
+
+    if (isset($_GET['edit'])) {
+        $id = $this->categoryId($_GET['edit']);
+
+        $current = $id === null
+            ? null
+            : $this->products->managementFind($id);
+
+        if ($current === null) {
+            http_response_code(404);
+
+            $errors['form'] =
+                'That product no longer exists. Choose a product from the list.';
+
+            $showForm = false;
+        } else {
+            foreach ($form as $key => $default) {
+                $form[$key] = $current[$key] ?? $default;
             }
+
+            $form['expected_stock'] =
+                (string) $current['stock_qty'];
+
+            $showForm = true;
         }
-        $this->renderProducts($user, $form, $errors, $current, $showForm);
+    }
+
+    $this->renderProducts(
+        $user,
+        $form,
+        $errors,
+        $current,
+        $showForm
+    );
+}
+
+    private function emptyProductForm(): array
+    {
+        return ['category_id'=>'','sku'=>'','name'=>'','description'=>'','price'=>'','stock_qty'=>'0','status'=>'active','routine_step'=>'','tag_ids'=>['concern'=>[],'texture'=>[],'scalp'=>[],'condition'=>[]]];
+    }
+
+    private function positiveId(mixed $value): ?int
+    {
+        if (!is_string($value) && !is_int($value)) return null;
+        $id = filter_var((string)$value, FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]]);
+        return $id === false ? null : (int)$id;
     }
 
     public function manageProduct(): void
@@ -138,21 +173,37 @@ final class CatalogController
         $this->renderProducts($user, $form, $errors, $current, $saving && ($action === 'create' || $current !== null));
     }
 
+    
     public function inventory(): void
     {
         $user = AuthGuard::roles(['catalog_manager', 'admin']);
         $current = null;
         $errors = [];
+
+        $form = [
+            'stock_qty' => '',
+            'reason' => '',
+        ];
+
         if (isset($_GET['stock'])) {
             $id = $this->categoryId($_GET['stock']);
-            $current = $id === null ? null : $this->products->managementFind($id);
+
+            $current = $id === null
+                ? null
+                : $this->products->managementFind($id);
+
             if ($current === null) {
                 http_response_code(404);
-                $errors['form'] = 'That product no longer exists. Choose a product from the list.';
+                $errors['form'] =
+                    'That product no longer exists. Choose a product from the list.';
+            } else {
+                $form['stock_qty'] = (string) $current['stock_qty'];
             }
         }
-        $this->renderInventory($user, $current, ['mode' => 'add', 'stock_qty' => '', 'expected_stock' => (string) ($current['stock_qty'] ?? '')], $errors);
+
+        $this->renderInventory($user, $current, $form, $errors);
     }
+
 
     public function updateStock(): void
     {
@@ -212,7 +263,194 @@ final class CatalogController
             'pageTitle' => 'Inventory', 'profile' => $this->users->profileFor((int) $user['id']),
             'products' => $this->products->managementRows(), 'currentProduct' => $current, 'form' => $form, 'errors' => $errors,
         ]);
+        $user = AuthGuard::roles(['catalog_manager','admin']);
+        Csrf::enforce(is_string($_POST['_token'] ?? null) ? $_POST['_token'] : null);
+        $action = is_string($_POST['action'] ?? null) ? $_POST['action'] : '';
+        $id = $this->positiveId($_POST['id'] ?? null);
+        if (!in_array($action, ['create','update','deactivate','activate','delete'], true) || ($action !== 'create' && $id === null)) {
+            Session::flash('error','Invalid product action.');
+            Response::redirect('/catalog/products');
+        }
+        if ($action === 'delete') {
+            try { $this->products->deleteManagedProduct((int)$id,(int)$user['id']); Session::flash('success','Product deleted.'); }
+            catch (\Throwable $e) { Session::flash('error',$e instanceof InvalidArgumentException ? $e->getMessage() : 'Product could not be deleted.'); }
+            Response::redirect('/catalog/products');
+        }
+        if (in_array($action,['deactivate','activate'],true)) {
+            try {
+                $row = $this->products->managerProductById((int)$id);
+                if (!$row) throw new InvalidArgumentException('Product not found.');
+                $data = $row;
+                $data['status'] = $action === 'activate' ? 'active' : 'inactive';
+                $this->products->saveManagedProduct($id,$data,$row['tag_ids'] ?? [],null,(int)$user['id']);
+                Session::flash('success',$action === 'activate' ? 'Product activated.' : 'Product deactivated.');
+            } catch (\Throwable $e) { Session::flash('error','Could not update product status.'); }
+            Response::redirect('/catalog/products');
+        }
+
+        $form = $this->emptyProductForm();
+        $errors = [];
+        foreach (['category_id','sku','name','description','price','stock_qty','status','routine_step'] as $field) {
+            $v = $_POST[$field] ?? '';
+            $form[$field] = is_string($v) ? trim($v) : '';
+        }
+        $form['tag_ids'] = [];
+        foreach (['concern','texture','scalp','condition'] as $type) {
+            $values = $_POST['tags'][$type] ?? [];
+            $form['tag_ids'][$type] = is_array($values) ? array_values(array_filter($values,'is_string')) : [];
+        }
+        $categoryId = $this->positiveId($form['category_id']);
+        if (!$categoryId) $errors['category_id']='Choose a category.';
+        else {
+            $cat = $this->products->categoryById($categoryId);
+            if (!$cat || $cat['status'] !== 'active') $errors['category_id']='Choose an active category.';
+        }
+        if (!preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]{1,49}$/',$form['sku'])) $errors['sku']='Use 2–50 letters, numbers, dots, underscores, or hyphens for the SKU.';
+        if ($form['name']==='' || mb_strlen($form['name'])>160) $errors['name']='Product name is required (maximum 160 characters).';
+        if (mb_strlen($form['description'])>5000) $errors['description']='Description must be 5,000 characters or fewer.';
+        if (!is_numeric($form['price']) || (float)$form['price']<0 || !preg_match('/^\\d{1,8}(?:\\.\\d{1,2})?$/',$form['price'])) $errors['price']='Enter a valid non-negative price with up to 2 decimal places.';
+        if (!in_array($form['status'],['active','inactive'],true)) $errors['status']='Choose a valid status.';
+        if (!in_array($form['routine_step'],['','cleanse','condition','treat','finish'],true)) $errors['routine_step']='Choose a valid routine step.';
+        if ($action==='create' && filter_var($form['stock_qty'],FILTER_VALIDATE_INT,['options'=>['min_range'=>0,'max_range'=>2147483647]])===false) $errors['stock_qty']='Stock must be a whole number of 0 or greater.';
+        if ($this->products->skuExists($form['sku'],$action==='update'?$id:null)) $errors['sku']='That SKU is already in use.';
+        $knownTags = [];
+        foreach ($this->products->managerTags() as $tag) $knownTags[$tag['tag_type']][]=$tag['code'];
+        foreach ($form['tag_ids'] as $type=>$codes) {
+            foreach ($codes as $code) if (!in_array($code,$knownTags[$type] ?? [],true)) $errors['tags']='One or more selected tags are invalid.';
+        }
+        $uploadedPath = null;
+        $file = $_FILES['image'] ?? null;
+        if (is_array($file) && ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) $errors['image']='Image upload failed. Please try again.';
+            elseif (($file['size'] ?? 0) > 3*1024*1024) $errors['image']='Image must be 3 MB or smaller.';
+            else {
+                $tmp = (string)($file['tmp_name'] ?? '');
+                $mime = $tmp !== '' && is_uploaded_file($tmp) ? (new \finfo(FILEINFO_MIME_TYPE))->file($tmp) : false;
+                $extensions = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'];
+                if (!$mime || !isset($extensions[$mime]) || @getimagesize($tmp) === false) $errors['image']='Upload a valid JPG, PNG, or WebP image.';
+                else {
+                    $dir = dirname(__DIR__,2).'/public/uploads/products';
+                    if (!is_dir($dir) && !mkdir($dir,0755,true) && !is_dir($dir)) $errors['image']='Upload folder could not be created.';
+                    else {
+                        $filename = bin2hex(random_bytes(16)).'.'.$extensions[$mime];
+                        if (!move_uploaded_file($tmp,$dir.'/'.$filename)) $errors['image']='Image could not be saved.';
+                        else $uploadedPath='uploads/products/'.$filename;
+                    }
+                }
+            }
+        }
+        if (!$errors) {
+            try {
+                $data = ['category_id'=>$categoryId,'sku'=>$form['sku'],'name'=>$form['name'],'description'=>$form['description'],
+                    'price'=>number_format((float)$form['price'],2,'.',''),'stock_qty'=>(int)$form['stock_qty'],'status'=>$form['status'],'routine_step'=>$form['routine_step']];
+                $this->products->saveManagedProduct($action==='update'?$id:null,$data,$form['tag_ids'],$uploadedPath,(int)$user['id']);
+                Session::flash('success',$action==='create'?'Product created.':'Product updated.');
+                Response::redirect('/catalog/products');
+            } catch (PDOException $e) {
+                if ((int)($e->errorInfo[1]??0)===1062) $errors['sku']='That SKU is already in use.';
+                else $errors['form']='The product could not be saved. Check the form and try again.';
+            } catch (\Throwable $e) { $errors['form']='The product could not be saved. Check the form and try again.'; }
+        }
+        http_response_code(422);
+        View::render('catalog/products',['pageTitle'=>'Products','profile'=>$this->users->profileFor((int)$user['id']),
+            'products'=>$this->products->managerRows(),'categories'=>$this->products->managerCategories(),'tags'=>$this->products->managerTags(),
+            'errors'=>$errors,'showForm'=>true,'editId'=>$action==='update'?$id:null,'form'=>$form]);
     }
+
+    
+    public function manageStock(): void
+    {
+        $user = AuthGuard::roles(['catalog_manager', 'admin']);
+
+        Csrf::enforce(
+            is_string($_POST['_token'] ?? null)
+                ? $_POST['_token']
+                : null
+        );
+
+        $id = $this->categoryId($_POST['id'] ?? null);
+
+        $current = $id === null
+            ? null
+            : $this->products->managementFind($id);
+
+        $form = [
+            'stock_qty' => is_string($_POST['stock_qty'] ?? null)
+                ? trim($_POST['stock_qty'])
+                : '',
+            'reason' => is_string($_POST['reason'] ?? null)
+                ? trim($_POST['reason'])
+                : '',
+        ];
+
+        $errors = [];
+
+        if ($current === null) {
+            $errors['form'] =
+                'Choose an existing product from the inventory list.';
+        }
+
+        $quantity = filter_var(
+            $form['stock_qty'],
+            FILTER_VALIDATE_INT,
+            ['options' => [
+                'min_range' => 0,
+                'max_range' => 4294967295,
+            ]]
+        );
+
+        if ($quantity === false) {
+            $errors['stock_qty'] =
+                'Enter a whole number from 0 to 4,294,967,295.';
+        }
+
+        if ($form['reason'] === '') {
+            $errors['reason'] =
+                'Please provide a reason for the stock update.';
+        } elseif (
+            !mb_check_encoding($form['reason'], 'UTF-8')
+            || mb_strlen($form['reason'], 'UTF-8') > 500
+        ) {
+            $errors['reason'] =
+                'The reason must be valid text with a maximum of 500 characters.';
+        }
+
+        if (!$errors) {
+            try {
+                $this->products->updateManagedStock(
+                    (int) $id,
+                    (int) $quantity,
+                    (int) $user['id'],
+                    $form['reason']
+                );
+
+                Session::flash(
+                    'success',
+                    'Stock updated and audit event recorded.'
+                );
+
+                Response::redirect('/catalog/inventory');
+                return;
+
+            } catch (InvalidArgumentException $e) {
+                $errors['form'] = $e->getMessage();
+
+            } catch (\Throwable $e) {
+                $errors['form'] =
+                    'Stock could not be updated. Refresh and try again.';
+            }
+        }
+
+        http_response_code(422);
+
+        $this->renderInventory(
+            $user,
+            $current,
+            $form,
+            $errors
+        );
+    }
+
 
     public function categories(): void
     {
