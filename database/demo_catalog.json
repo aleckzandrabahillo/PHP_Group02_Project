@@ -1,0 +1,430 @@
+{
+  "catalog_id": "avela-demo-v1",
+  "version": 1,
+  "currency": "PHP",
+  "notice": "Fictional Avela demonstration catalog. Descriptions and suitability tags are illustrative cosmetic shopping metadata, not verified formulations, ingredient claims or medical advice. Suggested image filenames are plans only; no asset paths are installed.",
+  "products": [
+    {
+      "kind": "existing",
+      "sku": "AVE-SMP-001",
+      "name": "Gentle Hydrating Shampoo",
+      "category": "Shampoo",
+      "description": "A mild daily shampoo for cleansing without leaving the hair feeling stripped.",
+      "price": "329.00",
+      "stock_qty": 24,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:dry_scalp",
+        "concern:dryness"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-smp-001.webp"
+    },
+    {
+      "kind": "existing",
+      "sku": "AVE-CON-001",
+      "name": "Repair Conditioner",
+      "category": "Conditioner",
+      "description": "A smoothing conditioner made for dry, frizzy, or easily tangled hair.",
+      "price": "349.00",
+      "stock_qty": 18,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:dry_scalp",
+        "concern:dryness",
+        "concern:frizz",
+        "concern:damage",
+        "concern:tangling"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-con-001.webp"
+    },
+    {
+      "kind": "existing",
+      "sku": "AVE-TRT-001",
+      "name": "Intensive Hair Mask",
+      "category": "Treatment",
+      "description": "A weekly treatment for hair that feels dry, rough, or overworked.",
+      "price": "429.00",
+      "stock_qty": 12,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:dry_scalp",
+        "concern:dryness",
+        "concern:frizz",
+        "concern:damage"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-trt-001.webp"
+    },
+    {
+      "kind": "existing",
+      "sku": "AVE-SER-001",
+      "name": "Smoothing Serum",
+      "category": "Serum",
+      "description": "A lightweight finishing serum that helps keep frizz manageable.",
+      "price": "299.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "concern:frizz",
+        "concern:tangling"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-ser-001.webp"
+    },
+    {
+      "kind": "existing",
+      "sku": "AVE-OIL-001",
+      "name": "Nourishing Hair Oil",
+      "category": "Hair Oil",
+      "description": "A light hair oil for adding softness and shine to the lengths and ends.",
+      "price": "319.00",
+      "stock_qty": 16,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:dry_scalp",
+        "concern:dryness",
+        "concern:frizz",
+        "concern:damage"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-oil-001.webp"
+    },
+    {
+      "kind": "existing",
+      "sku": "AVE-TOL-001",
+      "name": "Wide-Tooth Comb",
+      "category": "Hair Tools",
+      "description": "A simple detangling comb suited for use on damp or dry hair.",
+      "price": "149.00",
+      "stock_qty": 30,
+      "status": "active",
+      "routine_step": "",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "concern:tangling"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-tol-001.webp"
+    },
+    {
+      "kind": "new",
+      "sku": "AVE-SMP-002",
+      "name": "Avela Everyday Fresh Shampoo",
+      "category": "Shampoo",
+      "description": "A 250 mL wash-day shampoo for hair that feels weighed down between washes. Lather at the roots, rinse well, and follow with conditioner on the lengths.",
+      "price": "279.00",
+      "stock_qty": 32,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:oily_scalp",
+        "concern:oiliness"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-smp-002.webp"
+    },
+    {
+      "kind": "new",
+      "sku": "AVE-SMP-003",
+      "name": "Avela Soft Curl Shampoo",
+      "category": "Shampoo",
+      "description": "A 250 mL shampoo for a gentle start to a curl-care routine. Work through wet roots and rinse before conditioning; intended for curls and coils that feel dry.",
+      "price": "359.00",
+      "stock_qty": 24,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:dry_scalp",
+        "concern:dryness",
+        "concern:frizz"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-smp-003.webp"
+    },
+    {
+      "kind": "new",
+      "sku": "AVE-SMP-004",
+      "name": "Avela Light Wash Shampoo",
+      "category": "Shampoo",
+      "description": "A 250 mL everyday shampoo for straight or wavy hair that prefers a light wash. Massage a small amount into wet roots, rinse thoroughly, and condition the ends as needed.",
+      "price": "299.00",
+      "stock_qty": 28,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "scalp:normal_scalp",
+        "scalp:oily_scalp",
+        "concern:oiliness"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-smp-004.webp"
+    },
+    {
+      "kind": "new",
+      "sku": "AVE-CON-002",
+      "name": "Avela Lightweight Conditioner",
+      "category": "Conditioner",
+      "description": "A 250 mL rinse-out conditioner for lengths that need slip without a rich finish. Spread through mid-lengths and ends, then rinse thoroughly.",
+      "price": "319.00",
+      "stock_qty": 26,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "scalp:normal_scalp",
+        "scalp:oily_scalp",
+        "concern:tangling",
+        "concern:frizz"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-con-002.webp"
+    },
+    {
+      "kind": "new",
+      "sku": "AVE-CON-003",
+      "name": "Avela Curl Comfort Conditioner",
+      "category": "Conditioner",
+      "description": "A 250 mL conditioner for unhurried wash-day detangling. Smooth over wet curls in sections and use fingers or a wide-tooth comb before rinsing.",
+      "price": "379.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:dry_scalp",
+        "concern:dryness",
+        "concern:tangling",
+        "concern:frizz"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-con-003.webp"
+    },
+    {
+      "kind": "new",
+      "sku": "AVE-TRT-002",
+      "name": "Avela Soft Lengths Mask",
+      "category": "Treatment",
+      "description": "A 200 mL rinse-out mask for a weekly care step when the lengths feel rough. Apply after shampooing, leave briefly, and rinse; follow the routine that suits your hair.",
+      "price": "449.00",
+      "stock_qty": 18,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:dry_scalp",
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-trt-002.webp"
+    },
+    {
+      "kind": "new",
+      "sku": "AVE-TRT-003",
+      "name": "Avela Wash-Day Detangling Cream",
+      "category": "Treatment",
+      "description": "A 200 mL rinse-out cream for working through knots on wet hair. Apply in sections and gently detangle from the ends upward before rinsing.",
+      "price": "399.00",
+      "stock_qty": 22,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:dry_scalp",
+        "concern:tangling",
+        "concern:dryness"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-trt-003.webp"
+    },
+    {
+      "kind": "new",
+      "sku": "AVE-SER-002",
+      "name": "Avela Daily Leave-In Milk",
+      "category": "Serum",
+      "description": "A 150 mL leave-in styling milk for damp lengths. Start with a small amount, spread evenly, and let hair air-dry or style as usual; avoid applying directly to the scalp.",
+      "price": "329.00",
+      "stock_qty": 24,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "concern:frizz",
+        "concern:dryness",
+        "concern:tangling"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-ser-002.webp"
+    },
+    {
+      "kind": "new",
+      "sku": "AVE-SER-003",
+      "name": "Avela Sleek Finish Serum",
+      "category": "Serum",
+      "description": "A 50 mL finishing serum for smoothing the look of flyaways. Rub a small amount between palms and lightly work over dry lengths and ends.",
+      "price": "349.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "concern:frizz"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-ser-003.webp"
+    },
+    {
+      "kind": "new",
+      "sku": "AVE-OIL-002",
+      "name": "Avela Lightweight Finishing Oil",
+      "category": "Hair Oil",
+      "description": "A 50 mL hair oil for a restrained finishing step. Use a few drops on the ends and add more only if needed; intended for shine and a softer feel rather than scalp treatment.",
+      "price": "289.00",
+      "stock_qty": 24,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "concern:frizz",
+        "concern:dryness"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-oil-002.webp"
+    },
+    {
+      "kind": "new",
+      "sku": "AVE-OIL-003",
+      "name": "Avela Soft Ends Hair Oil",
+      "category": "Hair Oil",
+      "description": "A 60 mL oil for dry-feeling lengths and ends. Warm a little in the palms and distribute through sections; skip the roots if they already feel oily.",
+      "price": "339.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "texture:curly",
+        "texture:coily",
+        "concern:dryness",
+        "concern:frizz"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-oil-003.webp"
+    },
+    {
+      "kind": "new",
+      "sku": "AVE-TOL-002",
+      "name": "Avela Sectioning Clips Set",
+      "category": "Hair Tools",
+      "description": "Four reusable clips for holding sections apart while washing, detangling, or styling. Open each clip fully before placing it and release gently to avoid pulling.",
+      "price": "129.00",
+      "stock_qty": 40,
+      "status": "active",
+      "routine_step": "",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-tol-002.webp"
+    },
+    {
+      "kind": "new",
+      "sku": "AVE-TOL-003",
+      "name": "Avela Microfiber Hair Wrap",
+      "category": "Hair Tools",
+      "description": "A lightweight wrap for gathering wet hair after washing. Squeeze out excess water first, wrap loosely, and fasten without twisting tightly at the roots.",
+      "price": "199.00",
+      "stock_qty": 28,
+      "status": "active",
+      "routine_step": "",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "concern:frizz"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-tol-003.webp"
+    },
+    {
+      "kind": "new",
+      "sku": "AVE-TOL-004",
+      "name": "Avela Satin Scrunchie Trio",
+      "category": "Hair Tools",
+      "description": "Three soft fabric-covered hair ties for loose ponytails and buns. Choose a comfortable hold and avoid winding the tie tightly around the same section.",
+      "price": "159.00",
+      "stock_qty": 36,
+      "status": "active",
+      "routine_step": "",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "concern:tangling"
+      ],
+      "image_path": null,
+      "suggested_image": "avela-ave-tol-004.webp"
+    }
+  ]
+}
