@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Core\Database;
+use InvalidArgumentException;
+use PDO;
 
 final class Product
 {
@@ -238,6 +240,81 @@ final class Product
                 GROUP BY c.id, c.name, c.description, c.status
                 ORDER BY c.name ASC';
         return Database::connection()->query($sql)->fetchAll();
+    }
+
+    public function categoryById(int $id): ?array
+    {
+        $stmt = Database::connection()->prepare('SELECT id, name, description, status FROM categories WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        return $stmt->fetch() ?: null;
+    }
+
+    public function categoryNameExists(string $name, ?int $exceptId = null): bool
+    {
+        // Use the database collation, matching the existing UNIQUE name constraint.
+        $sql = 'SELECT id FROM categories WHERE name = :name';
+        $params = ['name' => $name];
+        if ($exceptId !== null) {
+            $sql .= ' AND id <> :id';
+            $params['id'] = $exceptId;
+        }
+        $stmt = Database::connection()->prepare($sql . ' LIMIT 1');
+        $stmt->execute($params);
+        return $stmt->fetchColumn() !== false;
+    }
+
+    public function saveCategory(?int $id, array $data, int $actorId): void
+    {
+        Database::transaction(function (PDO $pdo) use ($id, $data, $actorId): void {
+            $creating = $id === null;
+            $params = ['name' => $data['name'], 'description' => $data['description'] === '' ? null : $data['description'], 'status' => $data['status']];
+            if ($creating) {
+                $sql = 'INSERT INTO categories (name, description, status) VALUES (:name, :description, :status)';
+            } else {
+                $this->lockCategory($pdo, $id);
+                $sql = 'UPDATE categories SET name = :name, description = :description, status = :status WHERE id = :id';
+                $params['id'] = $id;
+            }
+            $pdo->prepare($sql)->execute($params);
+            $categoryId = $creating ? (int) $pdo->lastInsertId() : $id;
+            $this->auditCategory($pdo, $actorId, $creating ? 'category.create' : 'category.update', $categoryId);
+        });
+    }
+
+    public function removeCategory(int $id, int $actorId, bool $archive): void
+    {
+        Database::transaction(function (PDO $pdo) use ($id, $actorId, $archive): void {
+            // Lock the parent first: a concurrent product FK insert must wait for this transaction.
+            $this->lockCategory($pdo, $id);
+            if ($archive) {
+                $sql = 'UPDATE categories SET status = "inactive" WHERE id = :id';
+            } else {
+                $linked = $pdo->prepare('SELECT id FROM products WHERE category_id = :id LIMIT 1 FOR UPDATE');
+                $linked->execute(['id' => $id]);
+                if ($linked->fetchColumn() !== false) {
+                    throw new InvalidArgumentException('This category has products and cannot be deleted. Archive it instead.');
+                }
+                $sql = 'DELETE FROM categories WHERE id = :id';
+            }
+            $pdo->prepare($sql)->execute(['id' => $id]);
+            $this->auditCategory($pdo, $actorId, $archive ? 'category.archive' : 'category.delete', $id);
+        });
+    }
+
+    private function lockCategory(PDO $pdo, int $id): void
+    {
+        $stmt = $pdo->prepare('SELECT id FROM categories WHERE id = :id FOR UPDATE');
+        $stmt->execute(['id' => $id]);
+        if ($stmt->fetchColumn() === false) {
+            throw new InvalidArgumentException('That category no longer exists. Refresh the list and try again.');
+        }
+    }
+
+    private function auditCategory(PDO $pdo, int $actorId, string $action, int $id): void
+    {
+        // The mutation and its bounded, secret-free audit entry commit or roll back together.
+        $stmt = $pdo->prepare('INSERT INTO audit_logs (actor_id, action, target_type, target_id, details) VALUES (:actor, :action, "category", :target, :details)');
+        $stmt->execute(['actor' => $actorId, 'action' => $action, 'target' => $id, 'details' => 'Catalog / Category Management']);
     }
 
     public function findActive(int $id): ?array
