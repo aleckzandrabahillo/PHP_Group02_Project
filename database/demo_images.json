@@ -1,0 +1,22 @@
+{
+  "manifest_id": "avela-demo-images-v1",
+  "version": 1,
+  "images": [
+    {
+      "sku": "AVE-SMP-002",
+      "name": "Avela Everyday Fresh Shampoo",
+      "path": "assets/images/products/demo/avela-ave-smp-002.webp",
+      "sha256": "41b58600e266d917eb8377fee4830fb4636c0d5857db75275808b6c50006aa9d",
+      "width": 1200,
+      "height": 1500
+    },
+    {
+      "sku": "AVE-TOL-001",
+      "name": "Wide-Tooth Comb",
+      "path": "assets/images/products/demo/avela-ave-tol-001.webp",
+      "sha256": "d4a3594c91240d61e6e455f77f09eaf500fb39e16120f1709bf76a5b7fcb2cb8",
+      "width": 1200,
+      "height": 1500
+    }
+  ]
+}
