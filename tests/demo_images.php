@@ -53,6 +53,7 @@ try{
         ||($url['host']??'')!=='127.0.0.1'||($url['scheme']??'')!=='http'||in_array((int)($url['port']??80),[80,18080],true))
         throw new RuntimeException('Disposable-only test guard stopped.');
     $map=App\Services\DemoImageAssigner::readManifest($root.'/database/demo_images.json');
+    $imageCount=count($map['images']);
     $service=new App\Services\DemoImageAssigner($pdo,$root.'/public');
     $actor='image_catalog_manager';
     $confirm=['host'=>'127.0.0.1','port'=>(int)$s['port'],'database'=>$s['db'],'server'=>$s['server'],'server_id'=>(int)$s['server_id'],'datadir'=>$s['datadir']];
@@ -64,7 +65,7 @@ try{
     $guards=['--actor='.$actor,'--expect-host=127.0.0.1','--expect-port='.$s['port'],'--expect-database='.$s['db'],'--expect-server='.$s['server'],'--expect-server-id='.$s['server_id'],'--expect-datadir='.$s['datadir']];
     $apply=['--apply',...$guards];foreach($ids as $sku=>$id)$apply[]='--expect-product='.$sku.':'.$id;
     $dry=imageCli($guards);
-    imageCheck('CLI defaults to guarded dry-run',$dry['code']===0&&($dry['data']['mode']??'')==='dry-run'&&($dry['data']['planned_assignments']??0)===2);
+    imageCheck('CLI defaults to guarded dry-run',$dry['code']===0&&($dry['data']['mode']??'')==='dry-run'&&($dry['data']['planned_assignments']??0)===$imageCount);
     imageCheck('Dry-run reports expected SKU and installation-specific IDs',array_column($dry['data']['products']??[],'id','sku')===$ids);
     imageCheck('Dry-run changes no rows',imageFingerprint($pdo)===$baseline);
     imageCheck('Explicit dry-run succeeds',imageCli(['--dry-run',...$guards])['code']===0);
@@ -76,7 +77,7 @@ try{
     }
     imageReject('Customer actor denied',fn()=>$service->run($map,true,'image_customer',$confirm,$ids),$pdo);
     imageReject('Unknown actor denied',fn()=>$service->run($map,false,'missing_image_actor',$confirm),$pdo);
-    imageCheck('Administrator actor accepted for dry-run',$service->run($map,false,'image_admin',$confirm)['planned_assignments']===2);
+    imageCheck('Administrator actor accepted for dry-run',$service->run($map,false,'image_admin',$confirm)['planned_assignments']===$imageCount);
     $q=$pdo->prepare('SELECT status,locked_until,updated_at FROM users WHERE username=?');$q->execute([$actor]);$saved=$q->fetch();
     foreach(['inactive','locked'] as $kind){
         $q=$pdo->prepare('UPDATE users SET status=?,locked_until=? WHERE username=?');
@@ -146,11 +147,11 @@ try{
         [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC,PDO::ATTR_EMULATE_PREPARES=>false,PDO::ATTR_STATEMENT_CLASS=>[ImageAuditFaultStatement::class,[]]]);
     $before=imageFingerprint($pdo);$failed=false;
     try{(new App\Services\DemoImageAssigner($fault,$root.'/public'))->run($map,true,$actor,$confirm,$ids);}catch(PDOException){$failed=true;}
-    imageCheck('Actual second-audit failure rolls back both product updates and first audit',$failed&&imageFingerprint($pdo)===$before);
+    imageCheck('Actual second-audit failure rolls back all product updates and first audit',$failed&&imageFingerprint($pdo)===$before);
     imageCheck('All preflight tests restore original baseline rows',imageFingerprint($pdo)===$baseline);
     $first=imageLaunch($apply);$second=imageLaunch($apply);$a=imageFinish($first);$b=imageFinish($second);
     $counts=[$a['data']['assigned']??-1,$b['data']['assigned']??-1];sort($counts);
-    imageCheck('Concurrent real CLI applies serialize to two assignments total',$a['code']===0&&$b['code']===0&&$counts===[0,2]);
+    imageCheck('Concurrent real CLI applies serialize to the manifest image count',$a['code']===0&&$b['code']===0&&$counts===[0,$imageCount]);
     $after=imageFingerprint($pdo);$changed=[];foreach($baseline as $table=>$hash)if($after[$table]!==$hash)$changed[]=$table;sort($changed);
     imageCheck('Only product rows and audit rows changed',$changed===['audit_logs','products']);
     $now=$pdo->query('SELECT * FROM products ORDER BY id')->fetchAll();
@@ -164,9 +165,9 @@ try{
     $logs=$pdo->query("SELECT actor_id,target_id,details FROM audit_logs WHERE action='product.image.assign' ORDER BY target_id")->fetchAll();
     $actorId=$pdo->query("SELECT id FROM users WHERE username='image_catalog_manager'")->fetchColumn();
     $loggedIds=array_map('intval',array_column($logs,'target_id'));sort($loggedIds);$expected=array_values($ids);sort($expected);
-    imageCheck('Exactly two appropriate assignment audits',count($logs)===2&&$loggedIds===$expected&&array_filter($logs,fn($l)=>(int)$l['actor_id']!==(int)$actorId)===[]);
+    imageCheck('Exactly the manifest image count of appropriate assignment audits',count($logs)===$imageCount&&$loggedIds===$expected&&array_filter($logs,fn($l)=>(int)$l['actor_id']!==(int)$actorId)===[]);
     imageCheck('Audit details include approved mapping/checksum',array_filter($logs,fn($l)=>!str_contains($l['details'],'NULL -> assets/images/products/demo/')||!str_contains($l['details'],'SHA256 '))===[]);
-    $again=imageCli($apply);imageCheck('Repeat apply skips both images and writes no rows',$again['code']===0&&$again['data']['assigned']===0&&$again['data']['unchanged']===2&&imageFingerprint($pdo)===$after);
+    $again=imageCli($apply);imageCheck('Repeat apply skips every assigned image and writes no rows',$again['code']===0&&$again['data']['assigned']===0&&$again['data']['unchanged']===$imageCount&&imageFingerprint($pdo)===$after);
     $again=imageCli($guards);imageCheck('Repeat dry-run plans zero changes',$again['code']===0&&$again['data']['planned_assignments']===0&&imageFingerprint($pdo)===$after);
     $http=static function(string $path)use($base):array{
         $headers=[];$ctx=stream_context_create(['http'=>['timeout'=>10,'ignore_errors'=>true]]);
@@ -174,8 +175,8 @@ try{
         return ['body'=>$body,'headers'=>$headers,'ok'=>isset($headers[0])&&str_contains($headers[0],' 200 ')];
     };
     $shop=$http('/shop');
-    imageCheck('Real public catalog shows exactly two product images',$shop['ok']&&substr_count($shop['body'],'class="product-image"')===2);
-    imageCheck('Other eighteen catalog products retain placeholders',substr_count($shop['body'],'class="product-placeholder ')===18);
+    imageCheck('Real public catalog shows exactly the manifest image count',$shop['ok']&&substr_count($shop['body'],'class="product-image"')===$imageCount);
+    imageCheck('Unmapped catalog products retain placeholders',substr_count($shop['body'],'class="product-placeholder ')===count($original)-$imageCount);
     foreach($map['images'] as $img){
         imageCheck('Catalog correct image source: '.$img['sku'],str_contains($shop['body'],'src="/'.$img['path'].'"'));
         $detail=$http('/product?id='.$ids[$img['sku']]);
