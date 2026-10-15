@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use App\Core\Database;
+use InvalidArgumentException;
+use PDO;
 
 final class Product
 {
+    public const MAX_STOCK = 4294967295;
     private const DEFAULT_RECOMMENDATION_LIMIT = 5;
 
     private const RECOMMENDATION_WEIGHTS = [
@@ -238,6 +241,234 @@ final class Product
                 GROUP BY c.id, c.name, c.description, c.status
                 ORDER BY c.name ASC';
         return Database::connection()->query($sql)->fetchAll();
+    }
+
+    public function categoryById(int $id): ?array
+    {
+        $stmt = Database::connection()->prepare('SELECT id, name, description, status FROM categories WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        return $stmt->fetch() ?: null;
+    }
+
+    public function categoryNameExists(string $name, ?int $exceptId = null): bool
+    {
+        // Use the database collation, matching the existing UNIQUE name constraint.
+        $sql = 'SELECT id FROM categories WHERE name = :name';
+        $params = ['name' => $name];
+        if ($exceptId !== null) {
+            $sql .= ' AND id <> :id';
+            $params['id'] = $exceptId;
+        }
+        $stmt = Database::connection()->prepare($sql . ' LIMIT 1');
+        $stmt->execute($params);
+        return $stmt->fetchColumn() !== false;
+    }
+
+    public function saveCategory(?int $id, array $data, int $actorId): void
+    {
+        Database::transaction(function (PDO $pdo) use ($id, $data, $actorId): void {
+            $creating = $id === null;
+            $params = ['name' => $data['name'], 'description' => $data['description'] === '' ? null : $data['description'], 'status' => $data['status']];
+            if ($creating) {
+                $sql = 'INSERT INTO categories (name, description, status) VALUES (:name, :description, :status)';
+            } else {
+                $this->lockCategory($pdo, $id);
+                $sql = 'UPDATE categories SET name = :name, description = :description, status = :status WHERE id = :id';
+                $params['id'] = $id;
+            }
+            $pdo->prepare($sql)->execute($params);
+            $categoryId = $creating ? (int) $pdo->lastInsertId() : $id;
+            $this->auditCategory($pdo, $actorId, $creating ? 'category.create' : 'category.update', $categoryId);
+        });
+    }
+
+    public function removeCategory(int $id, int $actorId, bool $archive): void
+    {
+        Database::transaction(function (PDO $pdo) use ($id, $actorId, $archive): void {
+            // Lock the parent first: a concurrent product FK insert must wait for this transaction.
+            $this->lockCategory($pdo, $id);
+            if ($archive) {
+                $sql = 'UPDATE categories SET status = "inactive" WHERE id = :id';
+            } else {
+                $linked = $pdo->prepare('SELECT id FROM products WHERE category_id = :id LIMIT 1 FOR UPDATE');
+                $linked->execute(['id' => $id]);
+                if ($linked->fetchColumn() !== false) {
+                    throw new InvalidArgumentException('This category has products and cannot be deleted. Archive it instead.');
+                }
+                $sql = 'DELETE FROM categories WHERE id = :id';
+            }
+            $pdo->prepare($sql)->execute(['id' => $id]);
+            $this->auditCategory($pdo, $actorId, $archive ? 'category.archive' : 'category.delete', $id);
+        });
+    }
+
+    private function lockCategory(PDO $pdo, int $id): void
+    {
+        $stmt = $pdo->prepare('SELECT id FROM categories WHERE id = :id FOR UPDATE');
+        $stmt->execute(['id' => $id]);
+        if ($stmt->fetchColumn() === false) {
+            throw new InvalidArgumentException('That category no longer exists. Refresh the list and try again.');
+        }
+    }
+
+    private function auditCategory(PDO $pdo, int $actorId, string $action, int $id): void
+    {
+        // The mutation and its bounded, secret-free audit entry commit or roll back together.
+        $stmt = $pdo->prepare('INSERT INTO audit_logs (actor_id, action, target_type, target_id, details) VALUES (:actor, :action, "category", :target, :details)');
+        $stmt->execute(['actor' => $actorId, 'action' => $action, 'target' => $id, 'details' => 'Catalog / Category Management']);
+    }
+
+    public function managementRows(): array
+    {
+        // Staff must see inactive and zero-stock records; the public catalog query stays unchanged.
+        return Database::connection()->query(
+            'SELECT p.*, c.name AS category_name, c.status AS category_status,
+                    NOT (EXISTS(SELECT 1 FROM cart_items ci WHERE ci.product_id=p.id)
+                      OR EXISTS(SELECT 1 FROM order_items oi WHERE oi.product_id=p.id)
+                      OR EXISTS(SELECT 1 FROM favorites f WHERE f.product_id=p.id)
+                      OR EXISTS(SELECT 1 FROM product_reviews r WHERE r.product_id=p.id)
+                      OR EXISTS(SELECT 1 FROM routine_items ri WHERE ri.product_id=p.id)) AS can_delete
+             FROM products p INNER JOIN categories c ON c.id=p.category_id ORDER BY p.id DESC'
+        )->fetchAll();
+    }
+
+    public static function availability(array $product): string
+    {
+        if ($product['status'] !== 'active') return 'Inactive';
+        if (($product['category_status'] ?? 'active') !== 'active') return 'Inactive category';
+        if ((int) $product['stock_qty'] === 0) return 'Out of stock';
+        return (int) $product['stock_qty'] <= 5 ? 'Low stock' : 'In stock';
+    }
+
+    public function managementFind(int $id): ?array
+    {
+        $stmt = Database::connection()->prepare('SELECT p.*, c.name AS category_name, c.status AS category_status FROM products p JOIN categories c ON c.id=p.category_id WHERE p.id=:id');
+        $stmt->execute(['id' => $id]);
+        $product = $stmt->fetch();
+        if (!$product) return null;
+        $tags = Database::connection()->prepare('SELECT tag_id FROM product_tags WHERE product_id=:id ORDER BY tag_id');
+        $tags->execute(['id' => $id]);
+        $product['tag_ids'] = array_map('strval', $tags->fetchAll(PDO::FETCH_COLUMN));
+        return $product;
+    }
+
+    public function suitabilityTags(): array
+    {
+        return Database::connection()->query('SELECT id, tag_type, display_name FROM tags ORDER BY tag_type, display_name')->fetchAll();
+    }
+
+    public function skuExists(string $sku, ?int $exceptId): bool
+    {
+        $sql = 'SELECT id FROM products WHERE sku=:sku';
+        $params = ['sku' => $sku];
+        if ($exceptId !== null) { $sql .= ' AND id<>:id'; $params['id'] = $exceptId; }
+        $stmt = Database::connection()->prepare($sql . ' LIMIT 1');
+        $stmt->execute($params);
+        return $stmt->fetchColumn() !== false;
+    }
+
+    public function saveProduct(?int $id, array $data, ?string $newImage, int $actorId): array
+    {
+        return Database::transaction(function (PDO $pdo) use ($id, $data, $newImage, $actorId): array {
+            // Same category-first lock order as Category Management, retaining existing inactive links.
+            $category = $pdo->prepare('SELECT status FROM categories WHERE id=:id FOR UPDATE');
+            $category->execute(['id' => $data['category_id']]);
+            $categoryStatus = $category->fetchColumn();
+            $current = $id === null ? null : $this->lockProduct($pdo, $id);
+            if ($categoryStatus === false || ($categoryStatus !== 'active' && (int) ($current['category_id'] ?? 0) !== (int) $data['category_id'])) {
+                throw new InvalidArgumentException('Choose an active category; an existing inactive category may only be retained.');
+            }
+            if ($current !== null && (int) $current['stock_qty'] !== (int) $data['expected_stock']) {
+                throw new InvalidArgumentException('Stock changed while this form was open. Reload the Edit form before saving.');
+            }
+            $tagIds = array_values(array_unique(array_map('intval', $data['tag_ids'])));
+            if ($tagIds) {
+                $checkTags = $pdo->prepare('SELECT id FROM tags WHERE id IN (' . implode(',', array_fill(0, count($tagIds), '?')) . ') FOR UPDATE');
+                $checkTags->execute($tagIds);
+                if (count($checkTags->fetchAll()) !== count($tagIds)) throw new InvalidArgumentException('A selected tag no longer exists. Reload the form.');
+            }
+            $params = [
+                'name' => $data['name'], 'sku' => $data['sku'], 'category' => $data['category_id'],
+                'description' => $data['description'] === '' ? null : $data['description'], 'price' => $data['price'],
+                'stock' => $data['stock_qty'], 'status' => $data['status'],
+                'step' => $data['routine_step'] === '' ? null : $data['routine_step'],
+                'image' => $newImage ?? ($current['image_path'] ?? null),
+            ];
+            if ($id === null) {
+                $sql = 'INSERT INTO products (name,sku,category_id,description,price,stock_qty,status,routine_step,image_path) VALUES (:name,:sku,:category,:description,:price,:stock,:status,:step,:image)';
+            } else {
+                $sql = 'UPDATE products SET name=:name,sku=:sku,category_id=:category,description=:description,price=:price,stock_qty=:stock,status=:status,routine_step=:step,image_path=:image WHERE id=:id';
+                $params['id'] = $id;
+            }
+            $pdo->prepare($sql)->execute($params);
+            $productId = $id ?? (int) $pdo->lastInsertId();
+            $pdo->prepare('DELETE FROM product_tags WHERE product_id=:id')->execute(['id' => $productId]);
+            $insertTag = $pdo->prepare('INSERT INTO product_tags (product_id,tag_id) VALUES (:product,:tag)');
+            foreach ($tagIds as $tagId) $insertTag->execute(['product' => $productId, 'tag' => $tagId]);
+            $this->auditProduct($pdo, $actorId, $id === null ? 'product.create' : 'product.update', $productId,
+                'Catalog / Product Management; stock ' . (int) ($current['stock_qty'] ?? 0) . ' to ' . (int) $data['stock_qty']);
+            return ['id' => $productId, 'old_image' => $current['image_path'] ?? null, 'image_path' => $params['image']];
+        });
+    }
+
+    public function removeProduct(int $id, int $actorId, bool $archive): ?string
+    {
+        return Database::transaction(function (PDO $pdo) use ($id, $actorId, $archive): ?string {
+            $product = $this->lockProduct($pdo, $id);
+            if ($archive) {
+                $sql = 'UPDATE products SET status="inactive" WHERE id=:id';
+            } else {
+                // Protect customer data/history even where existing FKs would CASCADE or SET NULL.
+                foreach (['cart_items', 'order_items', 'favorites', 'product_reviews', 'routine_items'] as $table) {
+                    $linked = $pdo->prepare('SELECT product_id FROM ' . $table . ' WHERE product_id=:id LIMIT 1 FOR UPDATE');
+                    $linked->execute(['id' => $id]);
+                    if ($linked->fetchColumn() !== false) {
+                        throw new InvalidArgumentException('This product has related customer or history records and cannot be deleted. Archive it instead.');
+                    }
+                }
+                // Product suitability metadata alone is safe to remove via the existing cascade.
+                $sql = 'DELETE FROM products WHERE id=:id';
+            }
+            $pdo->prepare($sql)->execute(['id' => $id]);
+            $this->auditProduct($pdo, $actorId, $archive ? 'product.archive' : 'product.delete', $id, 'Catalog / Product Management');
+            return $archive ? null : $product['image_path'];
+        });
+    }
+
+    public function changeStock(int $id, int $quantity, bool $add, ?int $expected, int $actorId): void
+    {
+        if ($quantity < ($add ? 1 : 0) || $quantity > self::MAX_STOCK) throw new InvalidArgumentException('Choose a valid stock quantity.');
+        Database::transaction(function (PDO $pdo) use ($id, $quantity, $add, $expected, $actorId): void {
+            $product = $this->lockProduct($pdo, $id);
+            $before = (int) $product['stock_qty'];
+            if (!$add && $expected !== $before) throw new InvalidArgumentException('Stock changed while this form was open. Reload the stock form before setting a quantity.');
+            $after = $add ? $before + $quantity : $quantity;
+            if ($after > self::MAX_STOCK) throw new InvalidArgumentException('Restock would exceed the maximum stock quantity.');
+            $pdo->prepare('UPDATE products SET stock_qty=:stock WHERE id=:id')->execute(['stock' => $after, 'id' => $id]);
+            $this->auditProduct($pdo, $actorId, $add ? 'inventory.restock' : 'inventory.set', $id, 'Catalog / Inventory; stock ' . $before . ' to ' . $after);
+        });
+    }
+
+    public function imageIsReferenced(string $path): bool
+    {
+        $stmt = Database::connection()->prepare('SELECT id FROM products WHERE image_path=:path LIMIT 1');
+        $stmt->execute(['path' => $path]);
+        return $stmt->fetchColumn() !== false;
+    }
+
+    private function lockProduct(PDO $pdo, int $id): array
+    {
+        $stmt = $pdo->prepare('SELECT * FROM products WHERE id=:id FOR UPDATE');
+        $stmt->execute(['id' => $id]);
+        $product = $stmt->fetch();
+        if (!$product) throw new InvalidArgumentException('That product no longer exists. Refresh the list and try again.');
+        return $product;
+    }
+
+    private function auditProduct(PDO $pdo, int $actorId, string $action, int $id, string $details): void
+    {
+        $stmt = $pdo->prepare('INSERT INTO audit_logs (actor_id,action,target_type,target_id,details) VALUES (:actor,:action,"product",:target,:details)');
+        $stmt->execute(['actor' => $actorId, 'action' => $action, 'target' => $id, 'details' => $details]);
     }
 
     public function findActive(int $id): ?array
