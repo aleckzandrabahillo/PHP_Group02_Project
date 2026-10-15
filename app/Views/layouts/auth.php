@@ -15,7 +15,6 @@
     <span class="eyebrow">PERSONAL HAIR CARE</span>
     <h1>Care that starts with understanding your hair.</h1>
     <p>Browse everyday hair care, compare product details, and keep your bag and orders in one place.</p>
-    <div class="leaf-mark" aria-hidden="true"><span></span><span></span><span></span></div>
   </aside>
   <main id="main-content" tabindex="-1" class="auth-panel">
     <?php require dirname(__DIR__) . '/partials/flashes.php'; ?>

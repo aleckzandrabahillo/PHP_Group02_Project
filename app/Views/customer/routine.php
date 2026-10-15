@@ -6,9 +6,9 @@ $state = (string) ($routineState['state'] ?? 'assessment_needed');
 
 <?php if ($state === 'assessment_needed'): ?>
   <?php
-  $emptyTitle = 'Your routine starts with your hair profile';
-  $emptyMessage = 'Complete the hair assessment so Avela can build product matches around your texture, scalp type, and concerns.';
-  $emptyActionLabel = 'Take hair assessment';
+  $emptyTitle = 'Your routine space';
+  $emptyMessage = 'Hair-profile collection and new personalized routine building are still in development. You can browse the catalog while these features are prepared.';
+  $emptyActionLabel = 'Preview planned hair profile';
   $emptyActionUrl = url('/assessment');
   $emptyExtraClass = 'routine-empty-state';
   require dirname(__DIR__) . '/partials/empty_state.php';
@@ -16,7 +16,7 @@ $state = (string) ($routineState['state'] ?? 'assessment_needed');
 <?php elseif ($state === 'profile_ready'): ?>
   <?php
   $emptyTitle = 'Your hair profile is ready';
-  $emptyMessage = 'Your hair profile is saved. A personalized routine will appear here after matched products are added to your routine.';
+  $emptyMessage = 'Your saved hair profile remains available. Building a new personalized routine is still in development.';
   $emptyActionLabel = 'Browse products';
   $emptyActionUrl = url('/shop');
   $emptyExtraClass = 'routine-empty-state';

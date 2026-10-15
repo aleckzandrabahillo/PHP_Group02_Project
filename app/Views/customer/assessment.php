@@ -1,7 +1,9 @@
 <section class="page-head">
   <div>
     <span class="eyebrow">HAIR ASSESSMENT</span>
-    <h1>Start with the basics.</h1>
+    <h1>Your hair profile.</h1>
+    <p>Assessment preview — saving profiles, text analysis and personalized routines are still in development. The options below are not yet available.</p>
+    <a class="btn btn-secondary" href="<?= e(url('/shop')) ?>">Browse products</a>
   </div>
 </section>
 

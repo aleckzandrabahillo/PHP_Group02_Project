@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@font-face {font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("../fonts/inter/InterVariable.woff2") format("woff2")}
 :root {
   --background:#FAF8F5;--surface:#FFFDFC;--ink:#332C31;--muted:#6A5D63;
   --berry:#6D4D56;--berry-dark:#503A42;--rose:#AA898D;--blush:#D8C6BE;--mist:#F0E8E3;
@@ -56,10 +56,6 @@ select {font:inherit}
 .auth-art {background:var(--mist);padding:58px;display:flex;flex-direction:column;justify-content:center;position:relative}
 .auth-art h1 {font-size:39px;line-height:1.08;letter-spacing:-1.4px;margin:16px 0}
 .auth-art p {color:#6d5961;font-size:16px}
-.leaf-mark {height:115px;margin-top:36px;position:relative}
-.leaf-mark span {position:absolute;display:block;width:75px;height:32px;border:2px solid rgba(148,77,99,.28);border-radius:100% 0 100% 0;transform:rotate(-34deg)}
-.leaf-mark span:nth-child(2) {left:48px;top:24px;transform:rotate(-7deg)}
-.leaf-mark span:nth-child(3) {left:85px;top:59px;transform:rotate(22deg)}
 .auth-panel {padding:52px 56px}
 .form-head h2 {font-size:30px;letter-spacing:-1px;margin:6px 0}
 .form-head p {color:var(--muted);margin:0 0 26px}
@@ -605,7 +601,6 @@ body.overlay-scroll-locked {position:fixed;left:0;right:0;top:var(--scroll-lock-
   position:fixed;top:calc(var(--header-height) + 14px);left:50%;z-index:var(--z-flash);width:min(540px,calc(100% - 36px));
   transform:translateX(-50%);pointer-events:none;
 }
-.alert[data-auto-dismiss] {transition:opacity var(--motion-base) var(--ease-standard),transform var(--motion-base) var(--ease-standard)}
 .store-flash-stack .alert {margin:0 0 8px;box-shadow:0 14px 34px rgba(73,42,54,.10);pointer-events:auto}
 
 .store-home.storefront-home {max-width:none;margin:0;padding:0 0 68px}
@@ -1050,7 +1045,6 @@ html {scroll-padding-top:calc(var(--header-height) + 20px)}
 .auth-art h1 {font-size:44px;line-height:1.12}
 .auth-shell {box-shadow:none}
 .auth-panel {padding:44px;min-width:0}
-.leaf-mark {display:none}
 .checkout-details {background:var(--background)}
 .checkout-summary {background:var(--mist)}
 .checkout-summary-totals .btn {min-height:52px}
