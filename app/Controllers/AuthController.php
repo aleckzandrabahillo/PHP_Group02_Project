@@ -54,6 +54,7 @@ final class AuthController
             Response::redirect('/login');
         }
         if (($result['next'] ?? '') === 'otp') Response::redirect('/verify-otp');
+        if (($result['next'] ?? '') === 'totp') Response::redirect('/verify-authenticator');
         Response::redirect(AuthGuard::dashboardPath());
     }
 
@@ -122,6 +123,7 @@ final class AuthController
             Session::flash('success', $result['message']);
             Response::redirect('/login');
         }
+        if (($result['next'] ?? '') === 'totp') Response::redirect('/verify-authenticator');
         Response::redirect(AuthGuard::dashboardPath());
     }
 

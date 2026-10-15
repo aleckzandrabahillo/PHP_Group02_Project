@@ -1,5 +1,8 @@
 {
     "require": {
-        "phpmailer/phpmailer": "*"
+        "phpmailer/phpmailer": "*",
+        "spomky-labs/otphp": "^11.3",
+        "ext-openssl": "*",
+        "php": ">=8.2"
     }
 }

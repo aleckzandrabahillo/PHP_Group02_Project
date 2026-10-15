@@ -1,6 +1,6 @@
 # Account security
 
-The custom PHP application uses prepared statements, encoded output, CSRF tokens, password hashing and live account/role checks. Staff still complete email OTP. TOTP enrollment and its mandatory role coverage are separate work; password expiration, PII encryption scope and cookie-consent policy remain pending decisions.
+The custom PHP application uses prepared statements, encoded output, CSRF tokens, password hashing and live account/role checks. Staff still complete email OTP. [Optional authenticator enrollment](MFA.md) adds TOTP and one-use recovery codes; mandatory role coverage remains pending. Password expiration, PII encryption scope and cookie-consent policy also remain pending decisions.
 
 Administrators manage `/admin/security`. Catalog Managers and Customers cannot read or change these controls.
 
