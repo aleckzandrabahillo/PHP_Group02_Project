@@ -86,9 +86,12 @@ $router->get('/favorites', [$customer, 'favorites']);
 $router->post('/favorites/toggle', [$customer, 'toggleFavorite']);
 
 $router->get('/catalog', [$catalog, 'dashboard']);
-$router->get('/catalog/products', fn() => $catalog->page('products','Products'));
-$router->get('/catalog/categories', fn() => $catalog->page('categories','Categories'));
-$router->get('/catalog/inventory', fn() => $catalog->page('inventory','Inventory'));
+$router->get('/catalog/products', [$catalog, 'products']);
+$router->post('/catalog/products', [$catalog, 'manageProduct']);
+$router->get('/catalog/categories', [$catalog, 'categories']);
+$router->post('/catalog/categories', [$catalog, 'manageCategory']);
+$router->get('/catalog/inventory', [$catalog, 'inventory']);
+$router->post('/catalog/inventory', [$catalog, 'updateStock']);
 $router->get('/catalog/profile', fn() => $catalog->page('profile','Profile'));
 
 $router->get('/admin', [$admin, 'dashboard']);

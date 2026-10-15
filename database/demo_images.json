@@ -1,0 +1,126 @@
+{
+  "manifest_id": "avela-demo-images-v1",
+  "version": 1,
+  "images": [
+    {
+      "sku": "AVE-SMP-002",
+      "name": "Avela Everyday Fresh Shampoo",
+      "path": "assets/images/products/demo/avela-ave-smp-002.webp",
+      "sha256": "41b58600e266d917eb8377fee4830fb4636c0d5857db75275808b6c50006aa9d",
+      "width": 1200,
+      "height": 1500
+    },
+    {
+      "sku": "AVE-TOL-001",
+      "name": "Wide-Tooth Comb",
+      "path": "assets/images/products/demo/avela-ave-tol-001.webp",
+      "sha256": "d4a3594c91240d61e6e455f77f09eaf500fb39e16120f1709bf76a5b7fcb2cb8",
+      "width": 1200,
+      "height": 1500
+    },
+    {
+      "sku": "AVE-SMP-001",
+      "name": "Gentle Hydrating Shampoo",
+      "path": "assets/images/products/demo/avela-ave-smp-001.webp",
+      "sha256": "ebcf4e8c8dc18a886b103f06d31e044088fbc74d14ad4415731258f05ec98475",
+      "width": 1200,
+      "height": 1500
+    },
+    {
+      "sku": "AVE-SMP-003",
+      "name": "Avela Soft Curl Shampoo",
+      "path": "assets/images/products/demo/avela-ave-smp-003.webp",
+      "sha256": "bf325e287deed4a7852ca9b3d6e75e8aaa9456563ecd17aabb14ba32f9e36acf",
+      "width": 1200,
+      "height": 1500
+    },
+    {
+      "sku": "AVE-SMP-004",
+      "name": "Avela Light Wash Shampoo",
+      "path": "assets/images/products/demo/avela-ave-smp-004.webp",
+      "sha256": "4b254732160c799564592b973fedfd4ae618eb5a1b444d710a69e42ccb75ac8f",
+      "width": 1200,
+      "height": 1500
+    },
+    {
+      "sku": "AVE-CON-001",
+      "name": "Repair Conditioner",
+      "path": "assets/images/products/demo/avela-ave-con-001.webp",
+      "sha256": "45acb8e4d20cfad80d5f4e881e0f7015884d9e64225536102fa349fe4cdabe48",
+      "width": 1200,
+      "height": 1500
+    },
+    {
+      "sku": "AVE-CON-002",
+      "name": "Avela Lightweight Conditioner",
+      "path": "assets/images/products/demo/avela-ave-con-002.webp",
+      "sha256": "55da4e54fe56305d39de46cd4685c5242084ac81a818336e95cd7341267eb5df",
+      "width": 1200,
+      "height": 1500
+    },
+    {
+      "sku": "AVE-CON-003",
+      "name": "Avela Curl Comfort Conditioner",
+      "path": "assets/images/products/demo/avela-ave-con-003.webp",
+      "sha256": "2cecd91bbe0ef82eb7ad0dccc3a969cdcc9d4365df93caa1aaf4fd421b52fc3d",
+      "width": 1200,
+      "height": 1500
+    },
+    {
+      "sku": "AVE-TRT-001",
+      "name": "Intensive Hair Mask",
+      "path": "assets/images/products/demo/avela-ave-trt-001.webp",
+      "sha256": "3db484d859d2a0ab865d63c3388e90f4f9356879b44ca8318d828b4fb4dacb70",
+      "width": 1200,
+      "height": 1500
+    },
+    {
+      "sku": "AVE-TRT-002",
+      "name": "Avela Soft Lengths Mask",
+      "path": "assets/images/products/demo/avela-ave-trt-002.webp",
+      "sha256": "f7755b9ed8c3d5255bafd63fbf0750e1aa6db0b0dda3a27467700868710a0982",
+      "width": 1200,
+      "height": 1500
+    },
+    {
+      "sku": "AVE-TRT-003",
+      "name": "Avela Wash-Day Detangling Cream",
+      "path": "assets/images/products/demo/avela-ave-trt-003.webp",
+      "sha256": "9f25be869dbfb7d3b7b9fabf153b0b85baa61a00be9fc0f7faad878755c92030",
+      "width": 1200,
+      "height": 1500
+    },
+    {
+      "sku": "AVE-SER-001",
+      "name": "Smoothing Serum",
+      "path": "assets/images/products/demo/avela-ave-ser-001.webp",
+      "sha256": "bb8991da05126843004cb0ebf5ea4840aa376e64350ebddcfd1db7fbd701a0c9",
+      "width": 1200,
+      "height": 1500
+    },
+    {
+      "sku": "AVE-OIL-001",
+      "name": "Nourishing Hair Oil",
+      "path": "assets/images/products/demo/avela-ave-oil-001.webp",
+      "sha256": "8b179df624526ed9ac1d1ca61c58ad892755c8bfc3bb8fdc0f6ca7a4903528b7",
+      "width": 1200,
+      "height": 1500
+    },
+    {
+      "sku": "AVE-TOL-002",
+      "name": "Avela Sectioning Clips Set",
+      "path": "assets/images/products/demo/avela-ave-tol-002.webp",
+      "sha256": "fbe57b213485a3e784f0dd544459387ae65299c5ded02211f89312dda1cb0128",
+      "width": 1200,
+      "height": 1500
+    },
+    {
+      "sku": "AVE-TOL-004",
+      "name": "Avela Satin Scrunchie Trio",
+      "path": "assets/images/products/demo/avela-ave-tol-004.webp",
+      "sha256": "f8eed71609a5550f97e231ead1afa53bf4620010cec7316c0c20512d5018f12e",
+      "width": 1200,
+      "height": 1500
+    }
+  ]
+}
