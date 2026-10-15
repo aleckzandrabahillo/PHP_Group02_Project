@@ -2,21 +2,75 @@
 
 namespace App\Controllers;
 
+use App\Core\Csrf;
+use App\Core\Response;
+use App\Core\Session;
 use App\Core\View;
 use App\Middleware\AuthGuard;
 use App\Models\User;
 use App\Models\Order;
 use App\Services\AuditService;
 use App\Services\DashboardService;
+use App\Services\LogService;
 use PDO;
 
 final class AdminController
 {
     public function __construct(
-        private readonly DashboardService $dashboard, 
-        private readonly User $users, 
-        private readonly AuditService $audit, 
-        private readonly Order $orders) {}
+        private readonly DashboardService $dashboard,
+        private readonly User $users,
+        private readonly AuditService $audit,
+        private readonly Order $orders,
+        private readonly LogService $logs,
+    ) {}
+
+    // ---- shared helpers -------------------------------------------------------------
+
+    /** Admin-only gate. Returns the signed-in admin. */
+    private function admin(): array
+    {
+        return AuthGuard::roles(['admin']);
+    }
+
+    /** Admin-only gate plus CSRF check, for every POST action. */
+    private function mutate(): array
+    {
+        $user = $this->admin();
+        Csrf::enforce(isset($_POST['_token']) && is_string($_POST['_token']) ? $_POST['_token'] : null);
+        return $user;
+    }
+
+    /** Flash a message and redirect. $path must be an internal path, never user input. */
+    private function back(string $path, string $type, string $message): never
+    {
+        Session::flash($type, $message);
+        Response::redirect($path);
+    }
+
+    /** @return array{0:int,1:int,2:int} [limit, offset, page] */
+    private function pager(): array
+    {
+        $limit = AuditService::DEFAULT_LIMIT;
+        $page = max(1, (int) filter_var($_GET['page'] ?? 1, FILTER_VALIDATE_INT, ['options' => ['default' => 1]]));
+        return [$limit, ($page - 1) * $limit, $page];
+    }
+
+    /** A trimmed string query parameter ('' if missing or not a string). */
+    private function query(string $key): string
+    {
+        return isset($_GET[$key]) && is_string($_GET[$key]) ? trim($_GET[$key]) : '';
+    }
+
+    /** Renders admin/$view with the page title and the signed-in admin's profile. */
+    private function render(array $admin, string $view, string $title, array $data = []): void
+    {
+        View::render('admin/' . $view, [
+            'pageTitle' => $title,
+            'profile' => $this->users->profileFor((int) $admin['id']),
+        ] + $data);
+    }
+
+    // ---- pages ----------------------------------------------------------------------
 
     public function dashboard(): void
     {
@@ -111,6 +165,30 @@ final class AdminController
             'limit' => $limit,
             'page' => $page,
             'term' => $term,
+        ]);
+    }
+
+    public function authLogs(): void
+    {
+        $admin = $this->admin();
+        [$limit, $offset, $page] = $this->pager();
+        $q = $this->query('q');
+        $event = $this->query('event');
+        $result = $this->query('result');
+
+        $data = $this->logs->search($q, $event, $result, $limit, $offset);
+
+        // Requested page is past the end: fall back to the last real page.
+        if ($data['rows'] === [] && $data['total'] > 0) {
+            $page = (int) ceil($data['total'] / $limit);
+            $data = $this->logs->search($q, $event, $result, $limit, ($page - 1) * $limit);
+        }
+
+        $this->render($admin, 'auth_logs', 'Authentication Logs', $data + [
+            'page' => $page,
+            'limit' => $limit,
+            'filters' => ['q' => $q, 'event' => $event, 'result' => $result],
+            'events' => $this->logs->events(),
         ]);
     }
 }
