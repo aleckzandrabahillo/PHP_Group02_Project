@@ -20,7 +20,7 @@
     <?php require dirname(__DIR__) . '/partials/staff_sidebar.php'; ?>
     <div class="staff-workspace">
       <header class="staff-topbar">
-        <button class="icon-button sidebar-toggle" type="button" aria-label="Toggle menu">☰</button>
+        <button class="icon-button sidebar-toggle" type="button" aria-label="Open staff navigation" aria-controls="staff-navigation" aria-expanded="false">☰</button>
         <div><span class="muted small"><?= e(($current['role'] ?? '') === 'admin' ? 'Administrator' : 'Catalog Manager') ?></span><strong><?= e($pageTitle ?? 'Avela') ?></strong></div>
         <div class="topbar-user"><span class="avatar"><?= e(strtoupper(substr($current['username'] ?? 'A',0,1))) ?></span><span><?= e($current['username'] ?? '') ?></span></div>
       </header>

@@ -43,23 +43,24 @@
   </section>
 <?php endif; ?>
 
-<div class="table-card catalog-inventory-table">
-  <div class="data-table">
-    <div class="data-row header">
-      <span>Product</span>
-      <span>SKU</span>
-      <span>Stock</span>
-      <span>Availability</span>
-      <span>Actions</span>
+<div class="table-card catalog-inventory-table" data-staff-list data-list-label="inventory">
+  <?php $staffListLabel='inventory'; $staffStatusOptions=['In stock'=>'In stock','Low stock'=>'Low stock','Out of stock'=>'Out of stock','Inactive'=>'Inactive','Inactive category'=>'Inactive category']; $staffFilterLabel='availability'; $staffSearchHint='Search name or SKU'; $staffQuantityLabel='Stock: low to high'; require dirname(__DIR__) . '/partials/staff_list_tools.php'; ?>
+  <div class="data-table" role="table" aria-label="Inventory" tabindex="0">
+    <div class="data-row header" role="row">
+      <span role="columnheader">Product</span>
+      <span role="columnheader">SKU</span>
+      <span role="columnheader">Stock</span>
+      <span role="columnheader">Availability</span>
+      <span role="columnheader">Actions</span>
     </div>
 
     <?php foreach (($products ?? []) as $product): ?>
-      <div class="data-row">
-        <span><?= e($product['name']) ?></span>
-        <span><?= e($product['sku']) ?></span>
-        <span><?= (int) $product['stock_qty'] ?></span>
-        <span><?= e(\App\Models\Product::availability($product)) ?></span>
-        <span><a class="btn btn-secondary btn-sm" href="<?= e(url('/catalog/inventory?stock=' . (int) $product['id'] . '#stock-form')) ?>">Update stock</a></span>
+      <div class="data-row" role="row" data-staff-row data-list-search="<?= e($product['name'] . ' ' . $product['sku']) ?>" data-list-name="<?= e($product['name']) ?>" data-list-status="<?= e(\App\Models\Product::availability($product)) ?>" data-list-quantity="<?= (int) $product['stock_qty'] ?>">
+        <span role="cell"><?= e($product['name']) ?></span>
+        <span role="cell"><?= e($product['sku']) ?></span>
+        <span role="cell"><?= (int) $product['stock_qty'] ?></span>
+        <span role="cell"><?= e(\App\Models\Product::availability($product)) ?></span>
+        <span role="cell"><a class="btn btn-secondary btn-sm" href="<?= e(url('/catalog/inventory?stock=' . (int) $product['id'] . '#stock-form')) ?>">Update stock</a></span>
       </div>
     <?php endforeach; ?>
   </div>

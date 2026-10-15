@@ -1,28 +1,6 @@
-<section class="page-head">
-  <div>
-    <span class="eyebrow">ADMIN</span>
-    <h1>Users</h1>
-    <p>Customer account management.</p>
-  </div>
+<section class="page-head"><div><span class="eyebrow">ADMINISTRATION</span><h1>Users</h1><p>Customer account management.</p></div></section>
+<section class="module-status" aria-labelledby="module-status-title">
+  <h2 id="module-status-title">This module is not available yet</h2>
+  <p>Account management is still under development. This screen does not load customer records. Existing accounts remain intact. Use Security to review and unlock locked accounts.</p>
+  <a class="btn btn-secondary" href="<?= e(url('/admin/security')) ?>">Open security controls</a>
 </section>
-
-<div class="table-card">
-  <div class="table-toolbar">
-    <div class="search-shell">Search users</div>
-    <div class="filter-chip">All status</div>
-  </div>
-
-  <div class="data-table">
-    <div class="data-row header">
-      <span>Name</span>
-      <span>Email</span>
-      <span>Status</span>
-      <span>Joined</span>
-      <span>Actions</span>
-    </div>
-  </div>
-
-  <div class="table-empty">
-    <p>No customer records to display yet.</p>
-  </div>
-</div>
