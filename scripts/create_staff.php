@@ -37,14 +37,7 @@ if (!preg_match('/^[A-Za-z0-9._-]{4,40}$/', $username)) {
     exit(1);
 }
 
-$minimumLength = (int) env('PASSWORD_MIN_LENGTH', 12);
-$passwordIsValid = strlen($password) >= $minimumLength
-    && preg_match('/[A-Z]/', $password)
-    && preg_match('/[a-z]/', $password)
-    && preg_match('/\d/', $password)
-    && preg_match('/[^A-Za-z0-9]/', $password);
-
-if (!$passwordIsValid) {
+if (\App\Core\Validator::passwordError($password) !== null) {
     fwrite(STDERR, "Password does not meet the Avela password policy.\n");
     exit(1);
 }

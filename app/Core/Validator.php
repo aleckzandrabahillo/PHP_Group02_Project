@@ -29,21 +29,27 @@ final class Validator
             $errors['contact_no'] = 'Enter a valid Philippine mobile number, such as 09XXXXXXXXX.';
         }
 
-        $min = (int) env('PASSWORD_MIN_LENGTH', 12);
-        if (
-            strlen($password) < $min ||
-            !preg_match('/[A-Z]/', $password) ||
-            !preg_match('/[a-z]/', $password) ||
-            !preg_match('/\d/', $password) ||
-            !preg_match('/[^A-Za-z0-9]/', $password)
-        ) {
-            $errors['password'] = "Use at least {$min} characters with uppercase, lowercase, a number, and a special character.";
+        if ($error = self::passwordError($password)) {
+            $errors['password'] = $error;
         }
         if ($password !== $confirm) {
             $errors['password_confirmation'] = 'Passwords do not match.';
         }
 
         return $errors;
+    }
+
+    public static function passwordError(string $password): ?string
+    {
+        $min = \App\Services\SecurityPolicy::values()['password_min_length'];
+        $length = preg_match_all('/./us', $password);
+        if ($length === false || $length < $min || strlen($password) > 72
+            || !preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password)
+            || !preg_match('/\d/', $password) || !preg_match('/[^A-Za-z0-9\s]/', $password)
+            || str_contains($password, "\0")) {
+            return "Use at least {$min} characters with uppercase, lowercase, a number and a special character (maximum 72 bytes).";
+        }
+        return null;
     }
 
     public static function login(array $input): array

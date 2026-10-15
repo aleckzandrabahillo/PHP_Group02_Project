@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($pageTitle ?? 'Account') ?> · Avela</title>
 <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<?php if (!empty($recaptchaSiteKey)): ?><script src="https://www.google.com/recaptcha/api.js" async defer></script><?php endif; ?>
 </head>
 <body class="auth-body">
 <a class="skip-link" href="#main-content">Skip to content</a>

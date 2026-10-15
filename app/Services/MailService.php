@@ -54,6 +54,9 @@ final class MailService
             }
         }
 
+        if ($driver !== 'log' || env('APP_ENV', 'production') !== 'development') {
+            throw new \RuntimeException('Configure a supported mail delivery driver. Development OTP logging is unavailable in production.');
+        }
         $file = dirname(__DIR__, 2) . '/storage/logs/dev_mail.log';
         $line = sprintf(
             "[%s] TO: %s | PURPOSE: %s | OTP: %s | %s\n",

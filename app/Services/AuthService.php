@@ -44,11 +44,11 @@ final class AuthService
 
         if (!password_verify($password, (string) $user['password_hash'])) {
             $failure = $this->users->recordFailure((int) $user['id']);
+            $this->logs->auth((int) $user['id'], 'login', 'failure', ['reason' => 'invalid_credentials']);
             if (!empty($failure['locked_until'])) {
-                $this->logs->auth((int) $user['id'], 'lockout', 'success');
+                if ($failure['new_lock']) $this->logs->auth((int) $user['id'], 'lockout', 'success');
                 return ['ok' => false, 'message' => 'Too many failed sign-in attempts. This account is temporarily locked.'];
             }
-            $this->logs->auth((int) $user['id'], 'login', 'failure', ['reason' => 'invalid_credentials']);
             return ['ok' => false, 'message' => 'Invalid email/username or password.'];
         }
 

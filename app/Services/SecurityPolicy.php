@@ -1,0 +1,47 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+use App\Core\Database;
+use InvalidArgumentException;
+
+final class SecurityPolicy
+{
+    public const RULES = [
+        'max_login_attempts' => [1, 3, 3, 'MAX_LOGIN_ATTEMPTS'],
+        'lockout_minutes' => [15, 120, 15, 'LOCKOUT_MINUTES'],
+        'session_timeout_minutes' => [1, 30, 30, 'SESSION_TIMEOUT_MINUTES'],
+        'password_min_length' => [12, 64, 12, 'PASSWORD_MIN_LENGTH'],
+    ];
+
+    public static function values(): array
+    {
+        $stored = Database::connection()->query('SELECT setting_key, setting_value FROM security_settings')
+            ->fetchAll(\PDO::FETCH_KEY_PAIR);
+        $values = [];
+        foreach (self::RULES as $key => [$min, $max, $default, $env]) {
+            $value = filter_var($stored[$key] ?? env($env, $default), FILTER_VALIDATE_INT);
+            $values[$key] = $value === false ? $default : max($min, min($max, $value));
+        }
+        return $values;
+    }
+
+    public static function validate(array $input): array
+    {
+        if (array_diff(array_keys($input), array_keys(self::RULES))) {
+            throw new InvalidArgumentException('Unknown security setting.');
+        }
+        $values = [];
+        foreach (self::RULES as $key => [$min, $max]) {
+            $raw = $input[$key] ?? null;
+            $value = is_string($raw) || is_int($raw) ? filter_var($raw, FILTER_VALIDATE_INT) : false;
+            if ($value === false || $value < $min || $value > $max) {
+                throw new InvalidArgumentException("Use a whole number from {$min} to {$max} for " . str_replace('_', ' ', $key) . '.');
+            }
+            $values[$key] = $value;
+        }
+        return $values;
+    }
+}
