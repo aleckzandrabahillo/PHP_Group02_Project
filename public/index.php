@@ -20,6 +20,8 @@ use App\Models\Favorite;
 use App\Models\Cart;
 use App\Models\Routine;
 use App\Models\Review;
+use App\Models\Order;
+use App\Services\CheckoutService;
 use App\Services\AuthService;
 use App\Services\DashboardService;
 use App\Services\LogService;
@@ -42,7 +44,7 @@ $recaptcha = new RecaptchaService();
 
 $auth = new AuthController($authService, $recaptcha);
 $public = new PublicController($products, $favorites, $cart, $reviews);
-$customer = new CustomerController($dashboard, $users, $products, $favorites, $cart, $routines, $otp);
+$customer = new CustomerController($dashboard, $users, $products, $favorites, $cart, $routines, $otp, new CheckoutService(), new Order());
 $catalog = new CatalogController($dashboard, $users, $products);
 $admin = new AdminController($dashboard, $users);
 
@@ -69,10 +71,12 @@ $router->get('/assessment', fn() => $customer->page('assessment','Hair Assessmen
 $router->get('/routine', [$customer, 'routine']);
 $router->get('/cart', [$customer, 'cart']);
 $router->get('/checkout', [$customer, 'checkout']);
+$router->post('/checkout', [$customer, 'placeOrder']);
 $router->post('/cart/add', [$customer, 'addToCart']);
 $router->post('/cart/update', [$customer, 'updateCart']);
 $router->post('/cart/remove', [$customer, 'removeFromCart']);
-$router->get('/orders', fn() => $customer->page('orders','My Orders'));
+$router->get('/orders', [$customer, 'orders']);
+$router->get('/orders/view', [$customer, 'order']);
 $router->get('/profile', fn() => $customer->page('profile','Profile'));
 $router->post('/profile/image', [$customer, 'updateProfileImage']);
 $router->post('/profile/update', [$customer, 'updateProfile']);

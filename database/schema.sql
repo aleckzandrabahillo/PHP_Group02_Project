@@ -158,6 +158,10 @@ CREATE TABLE IF NOT EXISTS orders (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id BIGINT UNSIGNED NOT NULL,
   delivery_address_snapshot VARCHAR(500) NOT NULL,
+  recipient_name_snapshot VARCHAR(120) NULL,
+  contact_email_snapshot VARCHAR(190) NULL,
+  contact_no_snapshot VARCHAR(25) NULL,
+  checkout_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL,
   payment_method ENUM('cod','manual') NOT NULL DEFAULT 'cod',
   subtotal DECIMAL(10,2) NOT NULL,
   total DECIMAL(10,2) NOT NULL,
@@ -165,6 +169,7 @@ CREATE TABLE IF NOT EXISTS orders (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+  UNIQUE KEY uq_orders_checkout_key (checkout_key),
   INDEX idx_orders_user_status_date (user_id, status, created_at),
   INDEX idx_orders_status_date (status, created_at)
 ) ENGINE=InnoDB;

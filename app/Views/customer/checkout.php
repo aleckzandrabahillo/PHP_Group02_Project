@@ -2,25 +2,31 @@
 $profile = $profile ?? [];
 $cart = $cart ?? ['items' => [], 'subtotal' => 0.0, 'item_count' => 0];
 ?>
-<main class="checkout-page">
+<form class="checkout-page" method="post" action="<?= e(url('/checkout')) ?>">
+  <?= csrf_field() ?>
+  <input type="hidden" name="checkout_key" value="<?= e($checkoutKey) ?>">
   <section class="checkout-details" aria-labelledby="checkout-title">
     <div class="checkout-section checkout-contact-section">
       <span class="eyebrow">CHECKOUT</span>
       <h1 id="checkout-title">Contact and delivery.</h1>
+      <?php if ($errors): ?><div class="checkout-errors" role="alert"><strong>Please review your order.</strong>
+        <ul><?php foreach ($errors as $error): ?><li><?= e($error) ?></li><?php endforeach; ?></ul>
+      </div><?php endif; ?>
 
       <div class="checkout-section-heading">
         <h2>Contact</h2>
       </div>
       <div class="checkout-field-grid checkout-field-grid--single">
         <label class="checkout-field">
-          <span>Email</span>
-          <input type="email" value="<?= e($profile['email'] ?? '') ?>" autocomplete="email">
+          <span>Account email</span>
+          <input type="email" value="<?= e($profile['email'] ?? '') ?>" readonly aria-readonly="true" autocomplete="email">
         </label>
         <label class="checkout-field">
-          <span>Phone</span>
-          <input type="tel" value="<?= e($profile['contact_no'] ?? '') ?>" autocomplete="tel">
+          <span>Mobile number</span>
+          <input type="tel" name="contact_no" value="<?= e($values['contact_no']) ?>" maxlength="25" required autocomplete="tel" aria-invalid="<?= isset($errors['contact_no']) ? 'true' : 'false' ?>">
         </label>
       </div>
+      <p class="muted small">Used for delivery contact. Phone numbers are not verified.</p>
     </div>
 
     <div class="checkout-section">
@@ -33,40 +39,27 @@ $cart = $cart ?? ['items' => [], 'subtotal' => 0.0, 'item_count' => 0];
           <input type="text" value="Philippines" readonly aria-readonly="true">
         </label>
         <label class="checkout-field checkout-field--full">
-          <span>Full name</span>
-          <input type="text" value="<?= e($profile['full_name'] ?? '') ?>" autocomplete="name">
+          <span>Recipient full name</span>
+          <input type="text" name="full_name" value="<?= e($values['full_name']) ?>" maxlength="120" required autocomplete="name" aria-invalid="<?= isset($errors['full_name']) ? 'true' : 'false' ?>">
         </label>
         <label class="checkout-field checkout-field--full">
-          <span>Address</span>
-          <input type="text" value="<?= e($profile['delivery_address'] ?? '') ?>" autocomplete="street-address">
+          <span>Complete delivery address</span>
+          <textarea name="delivery_address" rows="4" maxlength="500" required autocomplete="street-address" aria-describedby="delivery-help" aria-invalid="<?= isset($errors['delivery_address']) ? 'true' : 'false' ?>"><?= e($values['delivery_address']) ?></textarea>
         </label>
-        <label class="checkout-field checkout-field--full">
-          <span>Barangay</span>
-          <input type="text" autocomplete="address-level3">
-        </label>
-        <label class="checkout-field">
-          <span>City / Municipality</span>
-          <input type="text" autocomplete="address-level2">
-        </label>
-        <label class="checkout-field">
-          <span>Postal code</span>
-          <input type="text" inputmode="numeric" autocomplete="postal-code">
-        </label>
-        <label class="checkout-field checkout-field--full">
-          <span>Region / Province</span>
-          <input type="text" autocomplete="address-level1">
-        </label>
+        <p id="delivery-help" class="checkout-field--full muted small">Include house/building, street, barangay, city, province and postal code. This order's delivery details do not change your profile.</p>
       </div>
     </div>
 
     <div class="checkout-section">
       <div class="checkout-section-heading"><h2>Shipping method</h2></div>
-      <div class="checkout-pending-panel">Shipping options will be connected with order processing.</div>
+      <div class="checkout-pending-panel">Demonstration delivery: no shipping charge is added. No courier booking is performed.</div>
     </div>
 
     <div class="checkout-section checkout-payment-section">
       <div class="checkout-section-heading"><h2>Payment</h2></div>
-      <div class="checkout-pending-panel">Payment and final order placement will be implemented in the next checkout phase.</div>
+      <label class="checkout-payment-choice"><input type="radio" name="payment_method" value="cod" checked required> Cash on delivery (demonstration)</label>
+      <p class="muted small">No online payment is collected. Do not enter card or bank details.</p>
+      <a class="back-link" href="<?= e(url('/cart')) ?>">Return to your bag</a>
     </div>
   </section>
 
@@ -86,6 +79,8 @@ $cart = $cart ?? ['items' => [], 'subtotal' => 0.0, 'item_count' => 0];
           <div class="checkout-summary-copy">
             <strong><?= e($item['name']) ?></strong>
             <span><?= e($item['category_name']) ?></span>
+            <span><?= (int) $item['quantity'] ?> × ₱<?= e(number_format((float) $item['price'], 2)) ?></span>
+            <?php if (!$item['is_available']): ?><span>Review quantity or availability in your bag.</span><?php endif; ?>
           </div>
           <strong class="checkout-summary-price">₱<?= e(number_format((float) $item['line_total'], 2)) ?></strong>
         </article>
@@ -94,8 +89,10 @@ $cart = $cart ?? ['items' => [], 'subtotal' => 0.0, 'item_count' => 0];
 
     <div class="checkout-summary-totals">
       <div><span>Subtotal</span><strong>₱<?= e(number_format((float) $cart['subtotal'], 2)) ?></strong></div>
-      <div><span>Shipping</span><span>To be added</span></div>
-      <div class="checkout-summary-grand"><span>Estimated total</span><strong><small>PHP</small> ₱<?= e(number_format((float) $cart['subtotal'], 2)) ?></strong></div>
+      <div><span>Shipping (demonstration)</span><strong>₱0.00</strong></div>
+      <div class="checkout-summary-grand"><span>Total</span><strong><small>PHP</small> ₱<?= e(number_format((float) $cart['subtotal'], 2)) ?></strong></div>
+      <button class="btn btn-primary" type="submit" <?= !$cart['checkout_ready'] ? 'disabled' : '' ?>>Place order — cash on delivery</button>
+      <p class="muted small">Stock and prices are checked again when you place the order.</p>
     </div>
   </aside>
-</main>
+</form>
