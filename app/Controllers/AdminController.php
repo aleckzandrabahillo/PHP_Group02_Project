@@ -5,12 +5,18 @@ namespace App\Controllers;
 use App\Core\View;
 use App\Middleware\AuthGuard;
 use App\Models\User;
+use App\Models\Order;
 use App\Services\AuditService;
 use App\Services\DashboardService;
+use PDO;
 
 final class AdminController
 {
-    public function __construct(private readonly DashboardService $dashboard, private readonly User $users, private readonly AuditService $audit) {}
+    public function __construct(
+        private readonly DashboardService $dashboard, 
+        private readonly User $users, 
+        private readonly AuditService $audit, 
+        private readonly Order $orders) {}
 
     public function dashboard(): void
     {
@@ -22,6 +28,63 @@ final class AdminController
     {
         $user = AuthGuard::roles(['admin']);
         View::render('admin/' . $view, ['pageTitle'=>$title, 'profile'=>$this->users->profileFor((int)$user['id'])]);
+    }
+
+    public function orders(): void
+    {
+        $admin = $this->admin();
+        [$limit, $offset, $page] = $this->pager();
+        $search = $this->query('q');
+        $status = $this->query('status');
+
+        $result = $this->orders->search($search, $status, $limit, $offset);
+
+        $this->render($admin, 'orders', 'Orders', $result + [
+            'page' => $page,
+            'limit' => $limit,
+            'filters' => ['q' => $search, 'status' => $status],
+            'statuses' => Order::statuses(),
+        ]);
+    }
+
+    public function orderView(): void
+    {
+        $admin = $this->admin();
+        $id = (int) ($_GET['id'] ?? 0);
+        $order = $id > 0 ? $this->orders->find($id) : null;
+
+        if ($order === null) {
+            http_response_code(404);
+            View::render('errors/404', ['pageTitle' => 'Page not found'], 'plain');
+            return;
+        }
+
+        $this->render($admin, 'order_detail', 'Order #' . $order['id'], [
+            'order' => $order,
+            'nextStatuses' => Order::nextStatuses((string) $order['status']),
+            'history' => $this->audit->forTarget('order', (int) $order['id']),
+        ]);
+    }
+
+    public function updateOrderStatus(): void
+    {
+        $actor = $this->mutate();
+        $id = (int) ($_POST['id'] ?? 0);
+        $to = (string) ($_POST['status'] ?? '');
+
+        if ($id <= 0) {
+            $this->back('/admin/orders', 'error', 'Invalid order.');
+        }
+
+        // The status change and its audit entry are saved together or not at all.
+        $result = $this->orders->transition($id, $to, function (PDO $pdo, string $from, string $newStatus) use ($actor, $id): void {
+            $this->audit->record((int) $actor['id'], 'order.status', 'order', $id, $from . ' → ' . $newStatus);
+        });
+
+        if (!empty($result['missing'])) {
+            $this->back('/admin/orders', 'error', $result['message']);
+        }
+        $this->back('/admin/orders/view?id=' . $id, $result['ok'] ? 'success' : 'error', $result['message']);
     }
 
     public function auditLogs(): void

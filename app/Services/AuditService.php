@@ -48,6 +48,19 @@ final class AuditService
     /**
      * @return array{rows: array, total: int}
      */
+
+    public function forTarget(string $targetType, int $targetId, int $limit = 20): array
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT a.action, a.details, a.created_at, u.email AS actor_email
+             FROM audit_logs a LEFT JOIN users u ON u.id = a.actor_id
+             WHERE a.target_type = :target_type AND a.target_id = :target_id
+             ORDER BY a.id DESC' . Sql::limitOffset($limit, 0)
+        );
+        $stmt->execute(['target_type' => $targetType, 'target_id' => $targetId]);
+        return $stmt->fetchAll();
+    }
+    
     public function search(string $term, int $limit, int $offset): array
     {
         $limit = self::normalizeLimit($limit);
