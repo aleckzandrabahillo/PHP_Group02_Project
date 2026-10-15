@@ -41,6 +41,16 @@ It refuses personal ports 13307/18080 and normal database port 3306. It creates 
 
 ## Deployment controls
 
+Staff setup on Windows uses `pwsh -File scripts/create_staff.ps1` (PowerShell 7) with hidden password confirmation. The PHP helper accepts securely redirected stdin only; password arguments are no longer supported. It validates role/email/username/name and the shared password policy, creates the existing active staff/profile records, and preserves mandatory staff email OTP. Passwords and raw database exceptions are not printed.
+
+Reproduce its positive/negative and record-preservation checks only in a disposable development database:
+
+```sh
+php tests/create_staff.php --expect-database=TEST_DATABASE --expect-port=TEST_PORT --expect-datadir=ABSOLUTE_TEST_DATA_DIRECTORY --output=PRIVATE_RESULTS_JSON
+```
+
+The test refuses database ports 3306/13307, generates synthetic credentials in memory, passes them only through child stdin, and leaves two synthetic staff accounts in the disposable database. The PowerShell prompt still depends on a trusted local terminal; never paste personal passwords into a conversation or command.
+
 - Serve only `public/`; keep `.env`, sessions, logs, backups and credentials outside public access and Git.
 - Use HTTPS with secure session cookies and a trusted host configuration in production.
 - `MAIL_DRIVER=log` is accepted only with `APP_ENV=development`; configure working SMTP for production. Mail/log write failures must not be presented as delivered OTPs.

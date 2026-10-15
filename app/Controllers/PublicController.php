@@ -173,7 +173,7 @@ final class PublicController
 
         $pages = [
             ['title' => 'Shop', 'subtitle' => 'Browse the full Avela hair care catalog.', 'url' => url('/shop'), 'keywords' => 'shop products catalog hair care'],
-            ['title' => 'Hair Assessment', 'subtitle' => 'Build a hair profile to narrow product matches.', 'url' => url('/assessment'), 'keywords' => 'hair assessment profile texture scalp concerns personalized'],
+            ['title' => 'Hair Assessment', 'subtitle' => 'Preview the planned hair profile; responses cannot be saved yet.', 'url' => url('/assessment'), 'keywords' => 'hair assessment profile texture scalp concerns personalized'],
             ['title' => 'About Avela', 'subtitle' => 'Learn how Avela combines e-commerce with optional personalization.', 'url' => url('/about'), 'keywords' => 'about avela store ecommerce personalization'],
         ];
 

@@ -2,7 +2,7 @@
 $current = auth_user();
 $role = $current['role'] ?? null;
 $transparentHeader = (bool) ($transparentHeader ?? false);
-$assessmentUrl = $role === 'customer' ? url('/assessment') : ($role === null ? url('/register') : null);
+$assessmentUrl = $role === 'customer' ? url('/assessment') : ($role === null ? url('/about#planned-profile') : null);
 $storeNav = $storeNav ?? ['categories' => [], 'concerns' => []];
 $favoriteCount = (int) ($favoriteCount ?? 0);
 $cartCount = (int) ($cartCount ?? 0);
@@ -42,7 +42,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
             <section>
               <span class="mega-kicker">PERSONALIZED</span>
               <?php if ($assessmentUrl !== null): ?>
-                <a href="<?= e($assessmentUrl) ?>">Hair Assessment</a>
+                <a href="<?= e($assessmentUrl) ?>">Hair profile (planned)</a>
               <?php else: ?>
                 <a href="<?= e(url('/shop')) ?>">Explore the catalog</a>
               <?php endif; ?>
@@ -52,7 +52,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
       </div>
 
       <?php if ($assessmentUrl !== null): ?>
-        <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" href="<?= e($assessmentUrl) ?>">Hair Assessment</a>
+        <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" href="<?= e($assessmentUrl) ?>">Hair profile (planned)</a>
       <?php endif; ?>
       <a class="<?= is_active_path('/about') ? 'active' : '' ?>" href="<?= e(url('/about')) ?>">About</a>
     </nav>
@@ -105,7 +105,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
             <a class="mobile-nav-sub" href="<?= e(url('/shop?category[]=' . (int) $category['id'])) ?>"><?= e($category['name']) ?></a>
           <?php endforeach; ?>
           <?php if ($assessmentUrl !== null): ?>
-            <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" href="<?= e($assessmentUrl) ?>">Hair Assessment</a>
+            <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" href="<?= e($assessmentUrl) ?>">Hair profile (planned)</a>
           <?php endif; ?>
           <a class="<?= is_active_path('/about') ? 'active' : '' ?>" href="<?= e(url('/about')) ?>">About</a>
           <?php if ($role === null): ?>

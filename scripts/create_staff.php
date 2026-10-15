@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-require dirname(__DIR__) . '/bootstrap.php';
-
 use App\Models\User;
 
 if (PHP_SAPI !== 'cli') {
@@ -11,23 +9,26 @@ if (PHP_SAPI !== 'cli') {
     exit;
 }
 
-if ($argc < 6) {
+if ($argc !== 6 || ($argv[5] ?? '') !== '--password-stdin') {
     fwrite(
         STDERR,
-        "Usage: php scripts/create_staff.php <admin|catalog_manager> <email> <username> <password> <full name>\n"
+        "Usage: php scripts/create_staff.php <admin|catalog_manager> <email> <username> <full-name> --password-stdin\n"
+        . "Use scripts/create_staff.ps1 for hidden password entry on Windows. Never put a password in command arguments.\n"
     );
     exit(1);
 }
 
-[, $role, $email, $username, $password] = $argv;
-$fullName = implode(' ', array_slice($argv, 5));
+[, $role, $email, $username, $fullName] = $argv;
+$email = strtolower(trim($email));
+$username = trim($username);
+$fullName = trim($fullName);
 
 if (!in_array($role, ['admin', 'catalog_manager'], true)) {
     fwrite(STDERR, "Invalid role.\n");
     exit(1);
 }
 
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 190) {
     fwrite(STDERR, "Invalid email.\n");
     exit(1);
 }
@@ -37,12 +38,26 @@ if (!preg_match('/^[A-Za-z0-9._-]{4,40}$/', $username)) {
     exit(1);
 }
 
-if (\App\Core\Validator::passwordError($password) !== null) {
-    fwrite(STDERR, "Password does not meet the Avela password policy.\n");
+if (!preg_match('/^.{2,120}$/usD', $fullName) || preg_match('/[\x00-\x1F\x7F]/', $fullName)) {
+    fwrite(STDERR, "Enter a full name of 2–120 characters without control characters.\n");
+    exit(1);
+}
+
+if (stream_isatty(STDIN)) {
+    fwrite(STDERR, "Password input must be redirected by a secure prompt, not typed into this terminal.\n");
     exit(1);
 }
 
 try {
+    require dirname(__DIR__) . '/bootstrap.php';
+    // Bound input before hashing; one newline terminates the private input protocol.
+    $input = stream_get_contents(STDIN, 75);
+    $password = preg_replace('/\r?\n\z/', '', (string) $input);
+    unset($input);
+    if (str_contains($password, "\r") || str_contains($password, "\n") || \App\Core\Validator::passwordError($password) !== null) {
+        fwrite(STDERR, "Password does not meet the Avela password policy.\n");
+        exit(1);
+    }
     $users = new User();
 
     if ($users->emailExists($email) || $users->usernameExists($username)) {
@@ -58,8 +73,9 @@ try {
         $fullName
     );
 
-    echo "Created {$role} account #{$id} for {$email}. MFA is enabled.\n";
+    unset($password);
+    echo "Created {$role} account #{$id}. Active; staff email OTP is required.\n";
 } catch (Throwable $e) {
-    fwrite(STDERR, 'FAILED: ' . $e->getMessage() . PHP_EOL);
+    fwrite(STDERR, "Staff creation failed. Check the private database configuration and account uniqueness.\n");
     exit(1);
 }

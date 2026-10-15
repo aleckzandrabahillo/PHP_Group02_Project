@@ -2,9 +2,9 @@
   <div>
     <span class="eyebrow">YOUR AVELA</span>
     <h1>Hi, <?= e($profile['full_name'] ?? $profile['username'] ?? 'there') ?>.</h1>
-    <p>Shop hair care, build your hair profile, or return to your routine.</p>
+    <p>Browse hair care, manage your bag, and review your orders.</p>
   </div>
-  <a class="btn btn-primary" href="<?= e(url('/assessment')) ?>">Start hair assessment</a>
+  <a class="btn btn-primary" href="<?= e(url('/orders')) ?>">View your orders</a>
 </section>
 
 <div class="metric-grid three">
@@ -22,13 +22,13 @@
 
   <a class="action-card" href="<?= e(url('/assessment')) ?>">
     <span>Hair Profile</span>
-    <h3>Understand your hair</h3>
-    <p>Record your texture, scalp type, and main concerns.</p>
+    <h3>Hair profile preview</h3>
+    <p>Profile collection and text analysis are planned; this preview does not save responses.</p>
   </a>
 
   <a class="action-card" href="<?= e(url('/routine')) ?>">
     <span>Routine</span>
     <h3>Your routine space</h3>
-    <p>Keep your recommended steps together in one place.</p>
+    <p>Review any saved routine. Building new personalized routines is planned.</p>
   </a>
 </section>
