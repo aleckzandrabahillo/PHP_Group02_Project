@@ -34,8 +34,10 @@ final class AuthGuard
         if (!is_array($cached)) return null;
 
         $user = (new User())->findById((int) ($cached['id'] ?? 0));
+        $version = $user ? \App\Services\MfaService::sessionVersion((int) $user['id']) : null;
         // A changed role must pass its normal login/MFA path before gaining access.
-        if (!User::canAuthenticate($user) || ($cached['role'] ?? '') !== $user['role']) {
+        if (!User::canAuthenticate($user) || ($cached['role'] ?? '') !== $user['role']
+            || ($version !== null && (!is_string(Session::get('auth_mfa_version')) || !hash_equals($version, Session::get('auth_mfa_version'))))) {
             Session::forgetAuth();
             session_regenerate_id(true);
             Session::flash('warning', 'Please sign in to continue.');

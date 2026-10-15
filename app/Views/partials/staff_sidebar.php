@@ -5,6 +5,7 @@ $items = $role === 'admin' ? [
 ] : [
  ['/catalog','Dashboard'], ['/catalog/products','Products'], ['/catalog/categories','Categories'], ['/catalog/inventory','Inventory'], ['/catalog/profile','Profile']
 ];
+$items[] = ['/account/mfa', 'Authenticator'];
 ?>
 <aside class="staff-sidebar">
   <a class="brand staff-brand" href="<?= e(url($role==='admin'?'/admin':'/catalog')) ?>"><img src="<?= e(asset('images/avela-logo.png')) ?>" alt="Avela"></a>

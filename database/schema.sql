@@ -310,3 +310,13 @@ CREATE TABLE IF NOT EXISTS locked_accounts (
   CONSTRAINT fk_locked_account_admin FOREIGN KEY (unlocked_by) REFERENCES users(id) ON DELETE SET NULL,
   INDEX idx_locked_accounts_user_date (user_id, locked_at)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS user_authenticators (
+  user_id BIGINT UNSIGNED PRIMARY KEY,
+  secret_encrypted VARCHAR(512) NULL,
+  recovery_hashes_json TEXT NOT NULL,
+  last_used_step BIGINT NOT NULL DEFAULT -1,
+  enabled_at DATETIME NULL,
+  credential_version CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  CONSTRAINT fk_authenticator_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;

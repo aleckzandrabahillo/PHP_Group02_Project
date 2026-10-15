@@ -27,6 +27,7 @@ require __DIR__ . '/app/Support/helpers.php';
 date_default_timezone_set(env('APP_TIMEZONE', 'Asia/Manila'));
 
 ini_set('display_errors', '0');
+ini_set('zend.exception_ignore_args', '1');
 error_reporting(E_ALL);
 
 $logDir = __DIR__ . '/storage/logs';

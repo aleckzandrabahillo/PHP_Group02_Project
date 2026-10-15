@@ -48,6 +48,7 @@ $customer = new CustomerController($dashboard, $users, $products, $favorites, $c
 $catalog = new CatalogController($dashboard, $users, $products);
 $admin = new AdminController($dashboard, $users);
 $security = new \App\Controllers\SecurityController(new \App\Services\SecurityManagement());
+$mfa = new \App\Controllers\MfaController(new \App\Services\MfaService($users, $otp, $logs), $authService);
 
 $router = new Router();
 $router->get('/', [$public, 'landing']);
@@ -66,6 +67,11 @@ $router->get('/verify-otp', [$auth, 'otpForm']);
 $router->post('/verify-otp', [$auth, 'verifyOtp']);
 $router->post('/otp/resend', [$auth, 'resendOtp']);
 $router->post('/logout', [$auth, 'logout']);
+$router->get('/verify-authenticator', [$mfa, 'verifyForm']);
+$router->post('/verify-authenticator', [$mfa, 'verify']);
+$router->get('/account/mfa', [$mfa, 'settings']);
+$router->post('/account/mfa', [$mfa, 'manage']);
+$router->get('/account/mfa/recovery', [$mfa, 'recovery']);
 
 $router->get('/customer', [$customer, 'dashboard']);
 $router->get('/assessment', fn() => $customer->page('assessment','Hair Assessment'));

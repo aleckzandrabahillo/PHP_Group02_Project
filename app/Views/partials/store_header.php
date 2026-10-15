@@ -69,6 +69,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
           </summary>
           <div class="account-menu-panel">
             <a href="<?= e(url('/profile')) ?>">Profile</a>
+            <a href="<?= e(url('/account/mfa')) ?>">Authenticator</a>
             <a href="<?= e(url('/routine')) ?>">My Routine</a>
             <a href="<?= e(url('/orders')) ?>">My Orders</a>
             <form method="post" action="<?= e(url('/logout')) ?>">

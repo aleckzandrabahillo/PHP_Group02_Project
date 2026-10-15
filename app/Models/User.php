@@ -104,7 +104,7 @@ final class User
 
     public function recordFailure(int $id): array
     {
-        return Database::transaction(function (PDO $pdo) use ($id): array {
+        $record = function (PDO $pdo) use ($id): array {
             $user = $this->findById($id, true);
             if (!$user) throw new \DomainException('Account unavailable.');
             if (self::isLocked($user)) {
@@ -124,7 +124,9 @@ final class User
                     ]);
             }
             return ['attempts' => $attempts, 'locked_until' => $lockedUntil, 'new_lock' => $lockedUntil !== null];
-        });
+        };
+        $pdo = Database::connection();
+        return $pdo->inTransaction() ? $record($pdo) : Database::transaction($record);
     }
 
     public function profileFor(int $id): array
