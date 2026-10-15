@@ -257,7 +257,7 @@ CREATE TABLE IF NOT EXISTS security_settings (
 
 INSERT IGNORE INTO security_settings (setting_key, setting_value) VALUES
 ('password_min_length','12'),
-('max_login_attempts','5'),
+('max_login_attempts','3'),
 ('lockout_minutes','15'),
 ('session_timeout_minutes','30'),
 ('staff_mfa_required','1'),
@@ -296,3 +296,17 @@ SELECT p.id, t.id FROM products p JOIN tags t ON
     (p.sku='AVE-SER-001' AND ((t.tag_type='concern' AND t.code IN ('frizz','tangling')) OR (t.tag_type='texture' AND t.code IN ('straight','wavy','curly','coily')) OR (t.tag_type='scalp' AND t.code IN ('normal_scalp')))) OR
     (p.sku='AVE-OIL-001' AND ((t.tag_type='concern' AND t.code IN ('dryness','frizz','damage')) OR (t.tag_type='texture' AND t.code IN ('wavy','curly','coily')) OR (t.tag_type='scalp' AND t.code IN ('normal_scalp','dry_scalp')))) OR
     (p.sku='AVE-TOL-001' AND ((t.tag_type='concern' AND t.code IN ('tangling')) OR (t.tag_type='texture' AND t.code IN ('wavy','curly','coily'))));
+
+CREATE TABLE IF NOT EXISTS locked_accounts (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT UNSIGNED NULL,
+  username_snapshot VARCHAR(40) NOT NULL,
+  failed_attempts TINYINT UNSIGNED NOT NULL,
+  locked_at DATETIME NOT NULL,
+  locked_until DATETIME NOT NULL,
+  unlocked_at DATETIME NULL,
+  unlocked_by BIGINT UNSIGNED NULL,
+  CONSTRAINT fk_locked_account_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_locked_account_admin FOREIGN KEY (unlocked_by) REFERENCES users(id) ON DELETE SET NULL,
+  INDEX idx_locked_accounts_user_date (user_id, locked_at)
+) ENGINE=InnoDB;

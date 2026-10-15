@@ -63,6 +63,7 @@
   </div>
 
   <div class="captcha-block <?= isset($errors['captcha']) ? 'has-error' : '' ?>">
+    <?php if (empty($recaptchaSiteKey)): ?><p class="muted small" role="status">CAPTCHA is not configured for this environment. Registration remains unavailable until it is configured.</p><?php endif; ?>
     <div
       class="g-recaptcha"
       data-sitekey="<?= e($recaptchaSiteKey ?? '') ?>">

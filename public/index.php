@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
 error_reporting(E_ALL);
 
 require dirname(__DIR__) . '/bootstrap.php';
@@ -47,6 +47,7 @@ $public = new PublicController($products, $favorites, $cart, $reviews);
 $customer = new CustomerController($dashboard, $users, $products, $favorites, $cart, $routines, $otp, new CheckoutService(), new Order());
 $catalog = new CatalogController($dashboard, $users, $products);
 $admin = new AdminController($dashboard, $users);
+$security = new \App\Controllers\SecurityController(new \App\Services\SecurityManagement());
 
 $router = new Router();
 $router->get('/', [$public, 'landing']);
@@ -98,7 +99,8 @@ $router->get('/admin', [$admin, 'dashboard']);
 $router->get('/admin/users', fn() => $admin->page('users','Users'));
 $router->get('/admin/staff', fn() => $admin->page('staff','Staff & Roles'));
 $router->get('/admin/orders', fn() => $admin->page('orders','Orders'));
-$router->get('/admin/security', fn() => $admin->page('security','Security'));
+$router->get('/admin/security', [$security, 'page']);
+$router->post('/admin/security', [$security, 'save']);
 $router->get('/admin/auth-logs', fn() => $admin->page('auth_logs','Authentication Logs'));
 $router->get('/admin/audit-logs', fn() => $admin->page('audit_logs','Audit Logs'));
 $router->get('/admin/profile', fn() => $admin->page('profile','Profile'));
