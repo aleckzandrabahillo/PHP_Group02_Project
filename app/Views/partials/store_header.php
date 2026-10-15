@@ -107,6 +107,10 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
             <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" href="<?= e($assessmentUrl) ?>">Hair Assessment</a>
           <?php endif; ?>
           <a class="<?= is_active_path('/about') ? 'active' : '' ?>" href="<?= e(url('/about')) ?>">About</a>
+          <?php if ($role === null): ?>
+            <a href="<?= e(url('/login')) ?>">Sign in</a>
+            <a href="<?= e(url('/register')) ?>">Create account</a>
+          <?php endif; ?>
         </nav>
       </details>
     </div>
@@ -115,7 +119,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
 
 <div class="global-search-backdrop" data-global-search-backdrop hidden></div>
 <section class="global-search-drawer" data-global-search-drawer data-search-endpoint="<?= e(url('/search/suggest')) ?>" hidden aria-hidden="true">
-  <div class="global-search-inner" role="dialog" aria-labelledby="global-search-title">
+  <div class="global-search-inner" role="dialog" aria-modal="true" aria-labelledby="global-search-title">
     <form class="global-search-form" method="get" action="<?= e(url('/search')) ?>">
       <label>
         <span class="sr-only" id="global-search-title">Search Avela</span>

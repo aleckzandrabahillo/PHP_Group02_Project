@@ -1,39 +1,43 @@
 <?php
-$currentUser = auth_user();
-$isCustomer = ($currentUser['role'] ?? null) === 'customer';
-$assessmentUrl = $isCustomer ? url('/assessment') : ($currentUser ? url('/shop') : url('/register'));
+$heroProduct = null;
+foreach (($featuredProducts ?? []) as $candidate) {
+    if ($candidate['sku'] === 'AVE-SMP-001') {
+        $heroProduct = $candidate;
+        break;
+    }
+}
 ?>
-<main class="store-home storefront-home">
-  <section class="storefront-hero" aria-labelledby="home-hero-title">
-    <div class="storefront-hero-media" aria-hidden="true">
-      <img src="<?= e(asset('images/avela-hero-studio.png')) ?>" alt="" fetchpriority="high">
-    </div>
-    <div class="storefront-hero-scrim" aria-hidden="true"></div>
-    <div class="storefront-hero-inner">
-      <div class="storefront-hero-copy">
-        <span class="eyebrow hero-eyebrow">CURATED HAIR CARE</span>
-        <h1 id="home-hero-title">Find the right care for your hair.</h1>
-        <p>Explore hair care for every routine, then narrow your choices by what your hair actually needs.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="<?= e(url('/shop')) ?>">Shop hair care</a>
-          <a class="btn btn-hero-secondary" href="<?= e($assessmentUrl) ?>">Take hair assessment</a>
-        </div>
+<main id="main-content" tabindex="-1" class="store-home storefront-home">
+  <section class="campaign-hero" aria-labelledby="home-hero-title">
+    <div class="campaign-copy">
+      <span class="eyebrow">THE EVERYDAY COLLECTION</span>
+      <h1 id="home-hero-title">Hair care,<br><em>at your pace.</em></h1>
+      <p>From your first wash to the finishing touch. Find the essentials that fit your everyday routine.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="<?= e(url('/shop')) ?>">Shop products <span aria-hidden="true">↗</span></a>
+        <a class="campaign-text-link" href="#featured">Explore the collection</a>
       </div>
+      <p class="campaign-note">Cleanse. Condition. Finish.<br>A little time for yourself, every day.</p>
     </div>
+    <figure class="campaign-image">
+      <a href="<?= e($heroProduct ? url('/product?id=' . (int) $heroProduct['id']) : url('/shop')) ?>" aria-label="<?= e($heroProduct ? 'View ' . $heroProduct['name'] : 'Explore Avela products') ?>">
+        <img src="<?= e(asset('images/products/demo/avela-ave-smp-001.webp')) ?>" alt="Avela Gentle Hydrating Shampoo" width="1200" height="1500" fetchpriority="high" decoding="async">
+      </a>
+      <figcaption><span><?= e($heroProduct['name'] ?? 'The Avela collection') ?></span><?php if ($heroProduct): ?><strong>₱<?= e(number_format((float) $heroProduct['price'], 2)) ?></strong><?php endif; ?></figcaption>
+    </figure>
   </section>
 
   <section class="store-section home-section category-section">
     <div class="section-heading-row">
       <div>
         <span class="eyebrow">SHOP BY CATEGORY</span>
-        <h2>Start with what your routine needs.</h2>
+        <h2>Your routine, step by step.</h2>
       </div>
       <a href="<?= e(url('/shop')) ?>">View all products</a>
     </div>
     <div class="category-grid">
       <?php foreach (($categories ?? []) as $index => $category): ?>
         <a class="category-card" href="<?= e(url('/shop?category[]=' . (int) $category['id'])) ?>">
-          <span class="category-art" aria-hidden="true"><?php $visualCategory = $category['name']; $placeholderLarge = false; require dirname(__DIR__) . '/partials/product_placeholder.php'; ?></span>
           <span class="category-copy">
             <small><?= e(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)) ?></small>
             <strong><?= e($category['name']) ?></strong>
@@ -48,7 +52,7 @@ $assessmentUrl = $isCustomer ? url('/assessment') : ($currentUser ? url('/shop')
     <div class="section-heading-row">
       <div>
         <span class="eyebrow">FROM THE CATALOG</span>
-        <h2>Everyday picks from the catalog.</h2>
+        <h2>The everyday essentials.</h2>
       </div>
       <a href="<?= e(url('/shop')) ?>">Shop the catalog</a>
     </div>
@@ -86,10 +90,10 @@ $assessmentUrl = $isCustomer ? url('/assessment') : ($currentUser ? url('/shop')
 
   <section class="assessment-promo home-section">
     <div>
-      <span class="eyebrow">PERSONALIZATION, WHEN YOU WANT IT</span>
-      <h2>Not sure what fits? Start with your hair profile.</h2>
-      <p>A short assessment helps Avela narrow the catalog using your hair texture, scalp type, and concerns. You can still shop normally without taking it.</p>
+      <span class="eyebrow">FIND YOUR EVERYDAY CARE</span>
+      <h2>Start with what your hair needs.</h2>
+      <p>Browse the catalog by hair concern, texture or scalp type. Saved hair profiles and personalized routines are planned for a future update.</p>
     </div>
-    <a class="btn btn-primary" href="<?= e($assessmentUrl) ?>">Take hair assessment</a>
+    <a class="btn btn-primary" href="<?= e(url('/shop')) ?>">Explore hair care</a>
   </section>
 </main>

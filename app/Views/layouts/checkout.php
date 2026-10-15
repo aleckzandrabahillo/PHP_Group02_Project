@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 </head>
 <body class="checkout-body">
+<a class="skip-link" href="#main-content">Skip to content</a>
 <header class="checkout-header">
   <div class="checkout-header-inner">
     <span aria-hidden="true"></span>
@@ -20,6 +21,7 @@
   </div>
 </header>
 <div class="checkout-flash-stack"><?php require dirname(__DIR__) . '/partials/flashes.php'; ?></div>
-<?= $content ?>
+<main id="main-content" tabindex="-1"><?= $content ?></main>
+<script src="<?= e(asset('js/app.js')) ?>" defer></script>
 </body>
 </html>

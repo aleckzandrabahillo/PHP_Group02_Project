@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 </head>
 <body class="plain-body">
-  <main class="plain-card">
+  <main id="main-content" tabindex="-1" class="plain-card">
     <div class="error-page">
       <span class="eyebrow">ERROR</span>
       <h1><?= e($pageTitle ?? 'Something went wrong') ?></h1>

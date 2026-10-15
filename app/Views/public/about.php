@@ -3,7 +3,7 @@ $currentUser = auth_user();
 $currentRole = $currentUser['role'] ?? null;
 $assessmentUrl = $currentRole === 'customer' ? url('/assessment') : ($currentRole === null ? url('/register') : url('/shop'));
 ?>
-<main class="about-page">
+<main id="main-content" tabindex="-1" class="about-page">
   <section class="about-hero" aria-labelledby="about-title">
     <div class="about-hero-copy">
       <span class="eyebrow">ABOUT AVELA</span>

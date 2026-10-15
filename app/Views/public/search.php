@@ -1,4 +1,4 @@
-<main class="search-page">
+<main id="main-content" tabindex="-1" class="search-page">
   <section class="search-page-head">
     <span class="eyebrow">SEARCH AVELA</span>
     <h1><?= ($query ?? '') !== '' ? 'Results for “' . e($query) . '”' : 'Search Avela.' ?></h1>

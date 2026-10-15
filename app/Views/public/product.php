@@ -5,7 +5,7 @@ $imageUrl = product_image_url($product['image_path'] ?? null);
 $inStock = (int) $product['stock_qty'] > 0;
 $reviewSummary = $reviewSummary ?? ['count' => 0, 'average' => 0.0];
 ?>
-<main class="store-page product-page">
+<main id="main-content" tabindex="-1" class="store-page product-page">
   <div class="product-primary-area">
     <a class="back-link" href="<?= e(url('/shop')) ?>">Back to shop</a>
 
