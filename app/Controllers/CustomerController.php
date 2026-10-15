@@ -15,6 +15,9 @@ use App\Models\User;
 use App\Services\DashboardService;
 use InvalidArgumentException;
 use App\Services\OtpService;
+use App\Core\CheckoutValidator;
+use App\Models\Order;
+use App\Services\CheckoutService;
 
 final class CustomerController
 {
@@ -26,6 +29,8 @@ final class CustomerController
         private readonly Cart $cart,
         private readonly Routine $routines,
         private readonly OtpService $otp,
+        private readonly CheckoutService $checkoutService,
+        private readonly Order $orders,
     ) {}  
 
     public function dashboard(): void
@@ -72,25 +77,102 @@ final class CustomerController
 
     public function checkout(): void
     {
+        header('Cache-Control: no-store, private');
         $user = AuthGuard::roles(['customer']);
+        $this->renderCheckout((int) $user['id']);
+    }
+
+    public function placeOrder(): void
+    {
+        header('Cache-Control: no-store, private');
+        $user = AuthGuard::roles(['customer']);
+        Csrf::enforce(is_string($_POST['_token'] ?? null) ? $_POST['_token'] : null);
         $userId = (int) $user['id'];
-        $cart = $this->cart->contentsForUser($userId);
+        $checked = CheckoutValidator::validate($_POST);
+        $key = is_string($_POST['checkout_key'] ?? null) ? $_POST['checkout_key'] : '';
+        try {
+            // Replays always resolve to this customer's existing order, even after a new checkout.
+            if (preg_match('/^[a-f0-9]{64}$/D', $key) && ($id = $this->orders->submitted($userId, $key)) !== null) {
+                http_response_code(303);
+                Response::redirect('/orders/view?id=' . $id);
+            }
+            $intent = Session::get('checkout_intent');
+            if (!is_array($intent) || ($intent['user_id'] ?? 0) !== $userId
+                || !is_string($intent['key'] ?? null) || !hash_equals($intent['key'], $key)
+                || (int) ($intent['issued_at'] ?? 0) < time() - 1800) {
+                $checked['errors']['form'] = 'Checkout expired or changed. Review this fresh form before submitting again.';
+            }
+            if ($checked['errors']) {
+                http_response_code(422);
+                $this->renderCheckout($userId, $checked['values'], $checked['errors']);
+                return;
+            }
+            $id = $this->checkoutService->place($userId, $checked['values'], $key, $intent['signature']);
+            Session::flash('success', 'Your order has been received. No online payment was collected.');
+            http_response_code(303);
+            Response::redirect('/orders/view?id=' . $id);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(409);
+            $this->renderCheckout($userId, $checked['values'], ['form' => $e->getMessage()]);
+        } catch (\Throwable) {
+            http_response_code(503);
+            $this->renderCheckout($userId, $checked['values'], ['form' => 'We could not place your order. Your bag was preserved; please try again later.']);
+        }
+    }
 
-        if (empty($cart['items'])) {
-            Session::flash('warning', 'Your bag is empty.');
+    public function orders(): void
+    {
+        header('Cache-Control: no-store, private');
+        $user = AuthGuard::roles(['customer']);
+        $page = is_string($_GET['page'] ?? null) && preg_match('/^[0-9]{1,8}$/D', $_GET['page']) ? (int) $_GET['page'] : 1;
+        View::render('customer/orders', ['pageTitle' => 'My Orders',
+            'history' => $this->orders->forCustomer((int) $user['id'], $page),
+            ...$this->commonData((int) $user['id'])]);
+    }
+
+    public function order(): void
+    {
+        header('Cache-Control: no-store, private');
+        $user = AuthGuard::roles(['customer']);
+        $id = is_string($_GET['id'] ?? null) && preg_match('/^[1-9][0-9]{0,17}$/D', $_GET['id']) ? (int) $_GET['id'] : 0;
+        $order = $this->orders->owned($id, (int) $user['id']);
+        if ($order === null) {
+            http_response_code(404);
+            View::render('errors/404', ['pageTitle' => 'Order not found'], 'plain');
+            return;
+        }
+        View::render('customer/order', ['pageTitle' => 'Order #' . $order['id'], 'order' => $order,
+            ...$this->commonData((int) $user['id'])]);
+    }
+
+    private function renderCheckout(int $userId, array $values = [], array $errors = []): void
+    {
+        try {
+            $cart = $this->checkoutService->quote($userId);
+        } catch (InvalidArgumentException $e) {
+            Session::flash('warning', $e->getMessage());
+            Response::redirect('/cart');
+        } catch (\Throwable) {
+            http_response_code(503);
+            View::render('errors/500', ['pageTitle' => 'Checkout unavailable',
+                'message' => 'Checkout is temporarily unavailable. Your bag has been preserved.'], 'plain');
+            return;
+        }
+        if (!$cart['items'] || (!$cart['checkout_ready'] && !$errors)) {
+            Session::flash('warning', $cart['items'] ? 'Review unavailable items in your bag before checkout.' : 'Your bag is empty.');
             Response::redirect('/cart');
         }
-
-        if (empty($cart['checkout_ready'])) {
-            Session::flash('warning', 'Review unavailable items in your bag before checkout.');
-            Response::redirect('/cart');
+        $profile = $this->users->profileFor($userId);
+        if (!$values) $values = ['full_name' => $profile['full_name'] ?? '', 'contact_no' => $profile['contact_no'] ?? '',
+            'delivery_address' => $profile['delivery_address'] ?? '', 'payment_method' => 'cod'];
+        $intent = Session::get('checkout_intent');
+        if (!is_array($intent) || ($intent['user_id'] ?? 0) !== $userId || ($intent['signature'] ?? '') !== $cart['signature']
+            || (int) ($intent['issued_at'] ?? 0) < time() - 1800) {
+            $intent = ['user_id' => $userId, 'key' => bin2hex(random_bytes(32)), 'signature' => $cart['signature'], 'issued_at' => time()];
+            Session::put('checkout_intent', $intent);
         }
-
-        View::render('customer/checkout', [
-            'pageTitle' => 'Checkout',
-            'cart' => $cart,
-            'profile' => $this->users->profileFor($userId),
-        ], 'checkout');
+        View::render('customer/checkout', ['pageTitle' => 'Checkout', 'cart' => $cart, 'profile' => $profile,
+            'values' => $values, 'errors' => $errors, 'checkoutKey' => $intent['key']], 'checkout');
     }
 
     public function routine(): void
