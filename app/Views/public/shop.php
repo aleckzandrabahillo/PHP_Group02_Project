@@ -11,7 +11,7 @@ if ($sort !== 'newest') $clearParams['sort'] = $sort;
 $clearFilterUrl = url('/shop') . ($clearParams ? '?' . http_build_query($clearParams) : '');
 ?>
 
-<main class="store-page shop-page">
+<main id="main-content" tabindex="-1" class="store-page shop-page">
   <section class="shop-head">
     <span class="eyebrow">SHOP</span>
     <h1>Hair care for everyday routines.</h1>

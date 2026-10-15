@@ -9,8 +9,8 @@ $cart = $cart ?? ['items' => [], 'subtotal' => 0.0, 'item_count' => 0];
     <div class="checkout-section checkout-contact-section">
       <span class="eyebrow">CHECKOUT</span>
       <h1 id="checkout-title">Contact and delivery.</h1>
-      <?php if ($errors): ?><div class="checkout-errors" role="alert"><strong>Please review your order.</strong>
-        <ul><?php foreach ($errors as $error): ?><li><?= e($error) ?></li><?php endforeach; ?></ul>
+      <?php if ($errors): ?><div class="checkout-errors" role="alert" tabindex="-1" data-error-summary><strong>Please review your order.</strong>
+        <ul><?php foreach ($errors as $key => $error): ?><li><?php if (in_array($key, ['full_name', 'contact_no', 'delivery_address'], true)): ?><a href="#checkout-<?= e($key) ?>"><?= e($error) ?></a><?php else: ?><?= e($error) ?><?php endif; ?></li><?php endforeach; ?></ul>
       </div><?php endif; ?>
 
       <div class="checkout-section-heading">
@@ -23,7 +23,8 @@ $cart = $cart ?? ['items' => [], 'subtotal' => 0.0, 'item_count' => 0];
         </label>
         <label class="checkout-field">
           <span>Mobile number</span>
-          <input type="tel" name="contact_no" value="<?= e($values['contact_no']) ?>" maxlength="25" required autocomplete="tel" aria-invalid="<?= isset($errors['contact_no']) ? 'true' : 'false' ?>">
+          <input id="checkout-contact_no" type="tel" name="contact_no" value="<?= e($values['contact_no']) ?>" maxlength="25" required autocomplete="tel" aria-invalid="<?= isset($errors['contact_no']) ? 'true' : 'false' ?>" <?= isset($errors['contact_no']) ? 'aria-describedby="checkout-contact-error"' : '' ?>>
+          <?php if (isset($errors['contact_no'])): ?><small class="checkout-field-error" id="checkout-contact-error"><?= e($errors['contact_no']) ?></small><?php endif; ?>
         </label>
       </div>
       <p class="muted small">Used for delivery contact. Phone numbers are not verified.</p>
@@ -40,11 +41,13 @@ $cart = $cart ?? ['items' => [], 'subtotal' => 0.0, 'item_count' => 0];
         </label>
         <label class="checkout-field checkout-field--full">
           <span>Recipient full name</span>
-          <input type="text" name="full_name" value="<?= e($values['full_name']) ?>" maxlength="120" required autocomplete="name" aria-invalid="<?= isset($errors['full_name']) ? 'true' : 'false' ?>">
+          <input id="checkout-full_name" type="text" name="full_name" value="<?= e($values['full_name']) ?>" maxlength="120" required autocomplete="name" aria-invalid="<?= isset($errors['full_name']) ? 'true' : 'false' ?>" <?= isset($errors['full_name']) ? 'aria-describedby="checkout-name-error"' : '' ?>>
+          <?php if (isset($errors['full_name'])): ?><small class="checkout-field-error" id="checkout-name-error"><?= e($errors['full_name']) ?></small><?php endif; ?>
         </label>
         <label class="checkout-field checkout-field--full">
           <span>Complete delivery address</span>
-          <textarea name="delivery_address" rows="4" maxlength="500" required autocomplete="street-address" aria-describedby="delivery-help" aria-invalid="<?= isset($errors['delivery_address']) ? 'true' : 'false' ?>"><?= e($values['delivery_address']) ?></textarea>
+          <textarea id="checkout-delivery_address" name="delivery_address" rows="4" maxlength="500" required autocomplete="street-address" aria-describedby="delivery-help<?= isset($errors['delivery_address']) ? ' checkout-address-error' : '' ?>" aria-invalid="<?= isset($errors['delivery_address']) ? 'true' : 'false' ?>"><?= e($values['delivery_address']) ?></textarea>
+          <?php if (isset($errors['delivery_address'])): ?><small class="checkout-field-error" id="checkout-address-error"><?= e($errors['delivery_address']) ?></small><?php endif; ?>
         </label>
         <p id="delivery-help" class="checkout-field--full muted small">Include house/building, street, barangay, city, province and postal code. This order's delivery details do not change your profile.</p>
       </div>

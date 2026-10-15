@@ -73,18 +73,6 @@ function unlockViewport(key) {
   window.scrollTo(0, lockedScrollY);
 }
 
-function setupAutoDismissFlashes() {
-  document.querySelectorAll('[data-flash][data-auto-dismiss]').forEach((flash) => {
-    if (!(flash instanceof HTMLElement) || flash.dataset.dismissReady === 'true') return;
-    flash.dataset.dismissReady = 'true';
-    const delay = Math.max(1500, Number.parseInt(flash.dataset.autoDismiss || '3200', 10) || 3200);
-    window.setTimeout(() => {
-      flash.classList.add('is-dismissing');
-      window.setTimeout(() => flash.remove(), 220);
-    }, delay);
-  });
-}
-
 let filterReturnFocus = null;
 let filterCloseTimer = null;
 
@@ -672,12 +660,20 @@ function trapFocus(event, container) {
 document.addEventListener('DOMContentLoaded', () => {
   syncAllPasswordToggles();
   setupMegaMenu();
-  setupAutoDismissFlashes();
+  document.querySelectorAll('[data-product-tab][aria-selected="true"]').forEach(activateProductTab);
   window.setTimeout(syncAllPasswordToggles, 150);
   window.setTimeout(syncAllPasswordToggles, 800);
 
-  const firstInvalid = document.querySelector('[aria-invalid="true"]');
-  if (firstInvalid instanceof HTMLElement) firstInvalid.focus({preventScroll: false});
+  const errorTarget = document.querySelector('[data-error-summary]') || document.querySelector('[aria-invalid="true"]');
+  if (errorTarget instanceof HTMLElement) errorTarget.focus({preventScroll: false});
+  document.querySelectorAll('[data-error-summary] a[href^="#"]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      const field = document.getElementById(link.getAttribute('href').slice(1));
+      if (!(field instanceof HTMLElement)) return;
+      event.preventDefault();
+      field.focus();
+    });
+  });
 });
 
 document.addEventListener('pageshow', () => {
@@ -745,6 +741,10 @@ document.addEventListener('keydown', (event) => {
     const filterOpen = filterDrawer instanceof HTMLElement && !filterDrawer.hidden;
     if (filterOpen) { closeFilterDrawer(); return; }
     closeMegaMenu(true);
+    document.querySelectorAll('.mobile-nav-menu[open], .account-menu[open]').forEach((menu) => {
+      menu.removeAttribute('open');
+      menu.querySelector('summary')?.focus();
+    });
     document.querySelectorAll('[data-sort-menu][open]').forEach((menu) => menu.removeAttribute('open'));
     return;
   }
@@ -755,6 +755,15 @@ document.addEventListener('keydown', (event) => {
     } else if (filterDrawer instanceof HTMLElement && !filterDrawer.hidden) {
       trapFocus(event, filterDrawer);
     }
+  }
+  const activeTab = event.target instanceof Element ? event.target.closest('[data-product-tab]') : null;
+  if (activeTab && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+    const tabs = [...activeTab.closest('[role="tablist"]').querySelectorAll('[data-product-tab]')];
+    const current = tabs.indexOf(activeTab);
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+    event.preventDefault();
+    activateProductTab(tabs[next]);
+    tabs[next].focus();
   }
 });
 

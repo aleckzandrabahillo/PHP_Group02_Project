@@ -8,6 +8,7 @@
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body class="auth-body">
+<a class="skip-link" href="#main-content">Skip to content</a>
 <a class="auth-logo" href="<?= e(url('/')) ?>"><img src="<?= e(asset('images/avela-logo.png')) ?>" alt="Avela"></a>
 <div class="auth-shell">
   <aside class="auth-art">
@@ -16,7 +17,7 @@
     <p>Avela keeps shopping simple: understand your hair profile, find better-matched products, and build a routine that makes sense.</p>
     <div class="leaf-mark" aria-hidden="true"><span></span><span></span><span></span></div>
   </aside>
-  <main class="auth-panel">
+  <main id="main-content" tabindex="-1" class="auth-panel">
     <?php require dirname(__DIR__) . '/partials/flashes.php'; ?>
     <?= $content ?>
   </main>

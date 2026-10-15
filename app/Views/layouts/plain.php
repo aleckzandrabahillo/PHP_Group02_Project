@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 </head>
 <body class="plain-body">
-<main class="plain-card"><?= $content ?></main>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content" tabindex="-1" class="plain-card"><?= $content ?></main>
 </body>
 </html>
