@@ -12,30 +12,31 @@
 <?php endif; ?>
 <?php if ($showForm): ?><?php require __DIR__ . '/product_form.php'; ?><?php endif; ?>
 
-<div class="table-card catalog-products-table">
-  <p class="muted small">All products are shown here, including inactive and out-of-stock records. Archive products with customer or history records; only unused products can be deleted.</p>
-  <div class="data-table">
-    <div class="data-row header">
-      <span>Product</span>
-      <span>Category</span>
-      <span>Price</span>
-      <span>Stock</span>
-      <span>Status / availability</span>
-      <span>Actions</span>
+<div class="table-card catalog-products-table" data-staff-list data-list-label="products">
+  <?php $staffListLabel='products'; $staffStatusOptions=['active'=>'Active','inactive'=>'Archived']; $staffFilterLabel='statuses'; $staffSearchHint='Search name, SKU or category'; $staffQuantityLabel='Stock: low to high'; require dirname(__DIR__) . '/partials/staff_list_tools.php'; ?>
+  <p class="muted small">Search and page through active, inactive and out-of-stock records. Archive products with customer or history records; only unused products can be deleted.</p>
+  <div class="data-table" role="table" aria-label="Products" tabindex="0">
+    <div class="data-row header" role="row">
+      <span role="columnheader">Product</span>
+      <span role="columnheader">Category</span>
+      <span role="columnheader">Price</span>
+      <span role="columnheader">Stock</span>
+      <span role="columnheader">Status / availability</span>
+      <span role="columnheader">Actions</span>
     </div>
 
     <?php foreach (($products ?? []) as $product): ?>
-      <div class="data-row">
-        <div class="catalog-product-identity">
+      <div class="data-row" role="row" data-staff-row data-list-search="<?= e($product['name'] . ' ' . $product['sku'] . ' ' . $product['category_name']) ?>" data-list-name="<?= e($product['name']) ?>" data-list-status="<?= e($product['status']) ?>" data-list-quantity="<?= (int) $product['stock_qty'] ?>">
+        <div class="catalog-product-identity" role="cell">
           <?php $imageUrl = product_image_url($product['image_path']); ?>
           <?php if ($imageUrl !== null): ?><img class="catalog-thumb" src="<?= e($imageUrl) ?>" alt="" loading="lazy"><?php endif; ?>
           <span><?= e($product['name']) ?><small class="muted"><?= e($product['sku']) ?></small></span>
         </div>
-        <span><?= e($product['category_name']) ?><?= $product['category_status'] !== 'active' ? ' (inactive)' : '' ?></span>
-        <span>₱<?= e(number_format((float) $product['price'], 2)) ?></span>
-        <span><?= (int) $product['stock_qty'] ?></span>
-        <span><?= e(ucfirst($product['status'])) ?><small class="muted catalog-block"><?= e(\App\Models\Product::availability($product)) ?></small></span>
-        <div class="catalog-actions">
+        <span role="cell"><?= e($product['category_name']) ?><?= $product['category_status'] !== 'active' ? ' (inactive)' : '' ?></span>
+        <span role="cell">₱<?= e(number_format((float) $product['price'], 2)) ?></span>
+        <span role="cell"><?= (int) $product['stock_qty'] ?></span>
+        <span role="cell"><?= e(ucfirst($product['status'])) ?><small class="muted catalog-block"><?= e(\App\Models\Product::availability($product)) ?></small></span>
+        <div class="catalog-actions" role="cell">
           <a class="btn btn-secondary btn-sm" href="<?= e(url('/catalog/products?edit=' . (int) $product['id'] . '#product-form')) ?>">Edit</a>
           <?php if ($product['status'] === 'active'): ?>
             <form method="post" action="<?= e(url('/catalog/products')) ?>">

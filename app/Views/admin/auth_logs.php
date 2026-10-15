@@ -1,28 +1,6 @@
-<section class="page-head">
-  <div>
-    <span class="eyebrow">ADMIN</span>
-    <h1>Authentication Logs</h1>
-    <p>Review login, OTP, activation, lockout, and logout events.</p>
-  </div>
+<section class="page-head"><div><span class="eyebrow">ADMINISTRATION</span><h1>Authentication Logs</h1><p>Authentication event history.</p></div></section>
+<section class="module-status" aria-labelledby="module-status-title">
+  <h2 id="module-status-title">This module is not available yet</h2>
+  <p>The authentication log viewer is still under development. This screen does not load log records. Supported sign-in, OTP and logout events continue to be recorded; account lock history is available in Security.</p>
+  <a class="btn btn-secondary" href="<?= e(url('/admin/security')) ?>">Open security controls</a>
 </section>
-
-<div class="table-card">
-  <div class="table-toolbar">
-    <div class="search-shell">Search authentication logs</div>
-    <div class="filter-chip">All status</div>
-  </div>
-
-  <div class="data-table">
-    <div class="data-row header">
-      <span>Time</span>
-      <span>User</span>
-      <span>Event</span>
-      <span>Result</span>
-      <span>IP</span>
-    </div>
-  </div>
-
-  <div class="table-empty">
-    <p>No authentication records to display yet.</p>
-  </div>
-</div>

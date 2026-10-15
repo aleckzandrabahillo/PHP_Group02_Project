@@ -1,29 +1,6 @@
-<section class="page-head">
-  <div>
-    <span class="eyebrow">ADMIN</span>
-    <h1>Orders</h1>
-    <p>Review customer orders and their current status.</p>
-  </div>
+<section class="page-head"><div><span class="eyebrow">ADMINISTRATION</span><h1>Orders</h1><p>Order administration.</p></div></section>
+<section class="module-status" aria-labelledby="module-status-title">
+  <h2 id="module-status-title">This module is not available yet</h2>
+  <p>Order administration is still under development. This screen does not load or update orders. Customers can use Checkout and their own order history.</p>
+  <a class="btn btn-secondary" href="<?= e(url('/admin/security')) ?>">Open security controls</a>
 </section>
-
-<div class="table-card">
-  <div class="table-toolbar">
-    <div class="search-shell">Search orders</div>
-    <div class="filter-chip">All status</div>
-  </div>
-
-  <div class="data-table">
-    <div class="data-row header">
-      <span>Order</span>
-      <span>Customer</span>
-      <span>Total</span>
-      <span>Date</span>
-      <span>Status</span>
-      <span>Actions</span>
-    </div>
-  </div>
-
-  <div class="table-empty">
-    <p>No orders to display yet.</p>
-  </div>
-</div>

@@ -14,9 +14,11 @@
   <div class="metric-card"><span>Categories</span><strong><?= e($stats['categories']) ?></strong></div>
 </div>
 
-<div class="panel">
-  <div class="panel-head"><h2>Recent catalog activity</h2></div>
-  <div class="table-empty">
-    <p>Catalog activity will be shown here after product management is connected.</p>
+<section class="panel" aria-labelledby="catalog-actions-title">
+  <h2 id="catalog-actions-title">Manage the catalog</h2>
+  <div class="quick-links">
+    <a href="<?= e(url('/catalog/products')) ?>">Products and images</a>
+    <a href="<?= e(url('/catalog/inventory')) ?>">Stock and restocking</a>
+    <a href="<?= e(url('/catalog/categories')) ?>">Categories</a>
   </div>
-</div>
+</section>
