@@ -444,7 +444,17 @@ final class CustomerController
                         
                         $profileImagePath = 'uploads/profile/' . $filename;
 
-                        $this->users->updateProfileImage($userId, $profileImagePath);
+                        try {
+                            $oldImage=$this->users->updateProfileImage($userId, $profileImagePath);
+                        } catch (\Throwable) {
+                            @unlink($destination);
+                            Session::flash('warning','Your profile photograph could not be saved. Please try again.');
+                            Response::redirect('/profile');
+                        }
+                        if(is_string($oldImage)&&preg_match('~^uploads/profile/[a-f0-9]{32}\.(jpg|png|webp)$~D',$oldImage)){
+                            $oldFile=dirname(__DIR__,2).'/public/'.$oldImage;
+                            if(is_file($oldFile)&&!is_link($oldFile)&&realpath(dirname($oldFile))===realpath($uploadDirectory))@unlink($oldFile);
+                        }
 
                         Session::flash('success', 'Profile picture updated successfully.');
                         Response::redirect('/profile');
@@ -495,14 +505,16 @@ public function profileOtpForm(): void
         $contactNo = $input['contact_no'];
         $deliveryAddress = $input['delivery_address'];
         if ($fullName === '' || mb_strlen($fullName) > 100) $errors['full_name'] = 'Enter your full name, up to 100 characters.';
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 255) $errors['email'] = 'Enter a valid email address, up to 255 characters.';
-        if ($contactNo !== '' && (mb_strlen($contactNo) > 30 || !preg_match('/^[0-9+\\-\\s().]+$/', $contactNo))) $errors['contact_no'] = 'Enter a contact number using numbers, spaces, +, -, ( or ).';
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 190) $errors['email'] = 'Enter a valid email address, up to 190 characters.';
+        $normalizedContact=\App\Core\Validator::normalizePhilippineMobile($contactNo);
+        if ($normalizedContact===null || strlen($contactNo)>25) $errors['contact_no'] = 'Enter a valid Philippine mobile number, such as 09XXXXXXXXX.';
         if (mb_strlen($deliveryAddress) > 255) $errors['delivery_address'] = 'Keep the delivery address within 255 characters.';
         if ($errors) {
             Session::keepOld($input);
             Session::put('errors', $errors);
             Response::redirect('/profile?edit=1');
         }
+        $contactNo=$normalizedContact;
 
         $currentProfile = $this->users->profileFor($userId);
 
@@ -579,69 +591,42 @@ public function profileOtpForm(): void
 
         return $visible . str_repeat('*', max(2, strlen($local) - 1)) . '@' . $domain;
     }
-        public function verifyProfileOtp(): void
+    public function verifyProfileOtp(): void
     {
-        $user = AuthGuard::roles(['customer']);
-        Csrf::enforce($_POST['_token'] ?? null);
-
-        $userId = (int) $user['id'];
-        $code = preg_replace('/\D+/', '', (string) ($_POST['otp'] ?? ''));
-
-        if (strlen($code) !== 6) {
-            Session::put('errors', ['otp' => 'Enter the 6-digit code.']);
+        $user=AuthGuard::roles(['customer']);
+        Csrf::enforce($_POST['_token']??null);
+        $raw=$_POST['otp']??'';
+        $code=is_string($raw)?preg_replace('/\s+/','',$raw):'';
+        if(!preg_match('/^[0-9]{6}$/D',$code)){
+            Session::put('errors',['otp'=>'Enter the 6-digit code.']);
             Response::redirect('/profile/verify-otp');
         }
-
-        $flow = Session::get('profile_update_flow');
-
-        if (!is_array($flow) || (int) ($flow['user_id'] ?? 0) !== $userId) {
-            Session::flash('warning', 'Your profile update verification session has expired.');
+        $id=(int)$user['id'];
+        $flow=Session::get('profile_update_flow');
+        if(!is_array($flow)||(int)($flow['user_id']??0)!==$id){
+            Session::flash('warning','Your profile update verification session has expired.');
             Response::redirect('/profile');
         }
-
-        $result = $this->otp->verify($userId, 'profile_update', $code);
-
-        if (!$result['ok']) {
-            $message = match ($result['reason'] ?? '') {
-                'expired' => 'The verification code has expired. Please request a new code.',
-                'attempt_limit' => 'Too many incorrect attempts. Please request a new code.',
-                'missing' => 'No active verification code was found. Please request a new code.',
-                default => 'The verification code is incorrect. Please try again.',
-                };
-
-                Session::put('errors', ['otp' => $message]);
-                Response::redirect('/profile/verify-otp');
-                }
-                
-                try {
-                $this->users->updateCustomerProfile(
-                $userId,
-                (string) $flow['full_name'],
-                (string) $flow['email'],
-                (string) $flow['contact_no'],
-                $flow['delivery_address'] !== ''
-                    ? (string) $flow['delivery_address']
-                    : null
-            );
-
-            $authUser = Session::get('auth_user');
-            if (is_array($authUser)) { 
-                $authUser['email'] = (string) $flow['email'];
-                Session::put('auth_user', $authUser);
-                }
-
-        } catch (\Throwable $e) {
-            Session::flash(
-                'warning',
-                'Your profile could not be updated. Please try again.'
-            );
-            Response::redirect('/profile');
+        try {
+            $result=(new \App\Services\CustomerProfileService($this->otp))->confirm($id,$flow,$code);
+        } catch(\Throwable) {
+            Session::flash('warning','Your profile could not be saved. No partial change was committed; retry verification before the code expires.');
+            Response::redirect('/profile/verify-otp');
         }
-
-        Session::forget('profile_update_flow');
-        Session::put('errors', []);
-
-        Session::flash('success', 'Your profile has been updated successfully.');
+        if(!$result['ok']){
+            $message=match($result['reason']??''){
+                'expired'=>'The verification code expired. Request a new profile update.',
+                'attempt_limit'=>'Too many incorrect attempts. Request a new profile update.',
+                'account_unavailable'=>'The account or email changed. Start a new profile update.',
+                default=>'The verification code is invalid or already used.',
+            };
+            Session::put('errors',['otp'=>$message]);
+            Response::redirect('/profile/verify-otp');
+        }
+        $current=Session::get('auth_user');
+        if(is_array($current)){$current['email']=$flow['email'];Session::put('auth_user',$current);}
+        Session::forget('profile_update_flow');Session::put('errors',[]);
+        Session::flash('success','Your profile has been updated successfully.');
         Response::redirect('/profile');
     }
 }

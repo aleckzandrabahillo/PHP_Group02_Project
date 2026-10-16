@@ -47,6 +47,8 @@ final class Favorite
     public function toggle(int $userId, int $productId): bool
     {
         return Database::transaction(function (PDO $pdo) use ($userId, $productId): bool {
+            $user=(new User())->findById($userId,true);
+            if(!User::canAuthenticate($user)||$user['role']!=='customer')throw new InvalidArgumentException('An active customer account is required.');
             $product = $pdo->prepare(
                 'SELECT p.id
                  FROM products p
@@ -67,6 +69,7 @@ final class Favorite
             if ($existing->fetchColumn()) {
                 $delete = $pdo->prepare('DELETE FROM favorites WHERE user_id = :user_id AND product_id = :product_id');
                 $delete->execute(['user_id' => $userId, 'product_id' => $productId]);
+                \App\Services\AuditService::record($pdo,$userId,'favorite.removed','product',$productId);
                 return false;
             }
 
@@ -74,6 +77,7 @@ final class Favorite
                 'INSERT INTO favorites (user_id, product_id, created_at) VALUES (:user_id, :product_id, NOW())'
             );
             $insert->execute(['user_id' => $userId, 'product_id' => $productId]);
+            \App\Services\AuditService::record($pdo,$userId,'favorite.added','product',$productId);
             return true;
         });
     }

@@ -64,19 +64,21 @@ final class DemoCatalogImporter
             $products = $this->pdo->query('SELECT * FROM products ORDER BY id' . $suffix)->fetchAll();
             $tags = $this->pdo->query('SELECT id,tag_type,code,display_name FROM tags ORDER BY id' . $suffix)->fetchAll();
             $links = $this->pdo->query('SELECT product_id,tag_id FROM product_tags ORDER BY product_id,tag_id' . $suffix)->fetchAll();
-            $plan = $this->plan($manifest['products'], $categories, $products, $tags, $links);
             $actorId = null;
             if ($apply) {
                 if (!is_string($actor) || !preg_match('/^[A-Za-z0-9._-]{4,40}$/D', $actor)) {
                     throw new DomainException('Apply requires an existing staff username through --actor.');
                 }
-                $stmt = $this->pdo->prepare('SELECT id,role,status,locked_until FROM users WHERE username=:username FOR UPDATE');
+                $stmt = $this->pdo->prepare('SELECT id,role,status,locked_until,lock_requires_admin FROM users WHERE username=:username FOR UPDATE');
                 $stmt->execute(['username' => $actor]);
                 $user = $stmt->fetch() ?: null;
                 if (!User::canAuthenticate($user) || !in_array($user['role'], ['admin', 'catalog_manager'], true)) {
                     throw new DomainException('Actor must be an active, unlocked Administrator or Catalog Manager.');
                 }
                 $actorId = (int) $user['id'];
+            }
+            $plan = $this->plan($manifest['products'], $categories, $products, $tags, $links);
+            if ($apply) {
                 foreach ($plan as $item) $this->insert($item, $actorId);
                 if ((int) $this->pdo->query('SELECT COUNT(*) FROM products')->fetchColumn() !== 20) {
                     throw new DomainException('Catalog changed during import; expected exactly 20 products.');
