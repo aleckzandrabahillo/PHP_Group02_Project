@@ -196,13 +196,11 @@ final class PublicController
             return ['favoriteIds' => [], 'favoriteCount' => 0, 'cartCount' => 0];
         }
 
+        header('Cache-Control: no-store, private');
         $userId = (int) $current['id'];
         return [
-            // Favorites temporarily disabled until the favorites table is created.
-            'favoriteIds' => [],
-            'favoriteCount' => 0,
-
-            // Cart can continue working normally.
+            'favoriteIds' => $this->favorites->idsForUser($userId),
+            'favoriteCount' => $this->favorites->countForUser($userId),
             'cartCount' => $this->cart->countForUser($userId),
             ];
     }

@@ -94,7 +94,7 @@ $cart = $cart ?? ['items' => [], 'subtotal' => 0.0, 'item_count' => 0];
       <div><span>Subtotal</span><strong>₱<?= e(number_format((float) $cart['subtotal'], 2)) ?></strong></div>
       <div><span>Shipping (demonstration)</span><strong>₱0.00</strong></div>
       <div class="checkout-summary-grand"><span>Total</span><strong><small>PHP</small> ₱<?= e(number_format((float) $cart['subtotal'], 2)) ?></strong></div>
-      <button class="btn btn-primary" type="submit" <?= !$cart['checkout_ready'] ? 'disabled' : '' ?>>Place order — cash on delivery</button>
+      <button class="btn btn-primary" type="submit" <?= !$cart['checkout_ready'] ? 'disabled' : '' ?>>Place order</button>
       <p class="muted small">Stock and prices are checked again when you place the order.</p>
     </div>
   </aside>

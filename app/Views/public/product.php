@@ -7,7 +7,10 @@ $reviewSummary = $reviewSummary ?? ['count' => 0, 'average' => 0.0];
 ?>
 <main id="main-content" tabindex="-1" class="store-page product-page">
   <div class="product-primary-area">
-    <a class="back-link" href="<?= e(url('/shop')) ?>">Back to shop</a>
+    <nav class="product-breadcrumb" aria-label="Breadcrumb">
+      <a href="<?= e(url('/shop')) ?>">Shop</a><span aria-hidden="true">/</span>
+      <span><?= e($product['category_name']) ?></span>
+    </nav>
 
     <section class="product-detail-shell">
       <div class="product-detail-art">

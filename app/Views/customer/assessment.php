@@ -6,6 +6,11 @@
   <form class="hair-profile-form" method="post" action="<?= e(url('/assessment')) ?>">
     <?= csrf_field() ?>
     <input type="hidden" name="profile_version" value="<?= e($profileVersion) ?>">
+    <nav class="assessment-sections" aria-label="Assessment sections">
+      <a href="#hair-hair_texture"><span>01</span> Your hair</a>
+      <a href="#hair-scalp_type"><span>02</span> Scalp &amp; lengths</a>
+      <a href="#hair-concerns"><span>03</span> Your concerns</a>
+    </nav>
     <?php if ($errors): ?>
       <div class="alert alert-error" id="profile-errors" role="alert" tabindex="-1" data-error-summary>
         <h2>Please check your answers</h2><ul><?php foreach ($errors as $field => $message): ?>

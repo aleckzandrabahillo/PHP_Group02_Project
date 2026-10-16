@@ -30,7 +30,7 @@ final class MfaController
         $user=AuthGuard::auth();$this->privatePage();
         $factor=$this->mfa->factor((int)$user['id']);
         View::render('account/mfa',[
-            'pageTitle'=>'Authenticator','enabledAt'=>$factor['enabled_at']??null,
+            'pageTitle'=>$user['role']==='customer'?'Two-step verification':'Authenticator','enabledAt'=>$factor['enabled_at']??null,
             'remaining'=>$factor?count(json_decode($factor['recovery_hashes_json'],true)):0,
             'configured'=>(new MfaCipher())->configured(),'setupSecret'=>$this->mfa->setupSecret((int)$user['id']),
         ]);

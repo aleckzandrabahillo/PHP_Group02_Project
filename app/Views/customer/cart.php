@@ -1,5 +1,5 @@
 <?php $cart = $cart ?? ['items' => [], 'subtotal' => 0.0, 'item_count' => 0, 'checkout_ready' => false]; ?>
-<section class="page-head"><div><span class="eyebrow">SHOPPING BAG</span><h1>Shopping bag</h1></div></section>
+<section class="page-head"><div><h1>Shopping bag</h1></div></section>
 
 <?php if (empty($cart['items'])): ?>
   <?php
