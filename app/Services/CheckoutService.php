@@ -68,7 +68,7 @@ final class CheckoutService
 
     private function lockCustomer(PDO $pdo, int $userId): array
     {
-        $stmt = $pdo->prepare('SELECT id,email,role,status,locked_until FROM users WHERE id=? FOR UPDATE');
+        $stmt = $pdo->prepare('SELECT id,email,role,status,locked_until,lock_requires_admin FROM users WHERE id=? FOR UPDATE');
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
         if (!User::canAuthenticate($user ?: null) || $user['role'] !== 'customer') {

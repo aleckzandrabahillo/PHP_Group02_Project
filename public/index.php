@@ -119,8 +119,8 @@ $router->get('/admin/staff', fn() => $admin->page('staff','Staff & Roles'));
 $router->get('/admin/orders', fn() => $admin->page('orders','Orders'));
 $router->get('/admin/security', [$security, 'page']);
 $router->post('/admin/security', [$security, 'save']);
-$router->get('/admin/auth-logs', fn() => $admin->page('auth_logs','Authentication Logs'));
-$router->get('/admin/audit-logs', fn() => $admin->page('audit_logs','Audit Logs'));
+$router->get('/admin/auth-logs', fn() => $admin->logs('auth'));
+$router->get('/admin/audit-logs', fn() => $admin->logs('audit'));
 $router->get('/admin/profile', fn() => $admin->page('profile','Profile'));
 
 $router->dispatch($_SERVER['REQUEST_METHOD'] ?? 'GET', $_SERVER['REQUEST_URI'] ?? '/');

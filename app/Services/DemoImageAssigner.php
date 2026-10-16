@@ -76,7 +76,7 @@ final class DemoImageAssigner
                 $report[]=['sku'=>$sku,'id'=>(int)$p['id'],'path'=>$image['path'],'state'=>$pending?'planned':'unchanged'];
             }
             // Match catalog write order: products first, then current actor eligibility.
-            $q=$this->pdo->prepare('SELECT id,role,status,locked_until FROM users WHERE username=?'.($apply?' FOR UPDATE':''));
+            $q=$this->pdo->prepare('SELECT id,role,status,locked_until,lock_requires_admin FROM users WHERE username=?'.($apply?' FOR UPDATE':''));
             $q->execute([$actor]); $user=$q->fetch()?:null;
             if (!User::canAuthenticate($user) || !in_array($user['role'],['admin','catalog_manager'],true))
                 throw new DomainException('Actor must be an active, unlocked Administrator or Catalog Manager.');
