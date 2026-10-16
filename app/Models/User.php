@@ -54,7 +54,7 @@ final class User
 
     public function createCustomer(array $data): int
     {
-        return Database::transaction(function (PDO $pdo) use ($data): int {
+        $create = function (PDO $pdo) use ($data): int {
             $stmt = $pdo->prepare('INSERT INTO users (email, username, password_hash, role, status, failed_attempts, mfa_enabled, created_at, updated_at) VALUES (:email, :username, :password_hash, "customer", "pending", 0, :mfa_enabled, NOW(), NOW())');
             $stmt->execute([
                 'email' => strtolower($data['email']),
@@ -71,7 +71,9 @@ final class User
                 'contact_no' => $data['contact_no'] ?: null,
             ]);
             return $id;
-        });
+        };
+        $pdo = Database::connection();
+        return $pdo->inTransaction() ? $create($pdo) : Database::transaction($create);
     }
 
     public function createStaff(string $role, string $email, string $username, string $passwordHash, string $fullName): int

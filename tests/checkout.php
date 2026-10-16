@@ -2,6 +2,7 @@
 declare(strict_types=1);
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 require dirname(__DIR__) . '/scripts/assign_demo_images.php';
+require_once dirname(__DIR__) . '/vendor/autoload.php';
 ob_start(); // CLI session factories must run before output is flushed.
 ini_set('session.use_cookies', '0');
 ini_set('session.cache_limiter', '');

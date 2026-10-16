@@ -9,13 +9,13 @@ final class OtpService
     public function __construct(private readonly MailService $mail, private readonly LogService $logs) {}
 
     /** @return array{issued:bool,retry_after:int,reusable:bool} */
-    public function issue(int $userId, string $email, string $purpose): array
+    public function issue(int $userId, string $email, string $purpose, ?callable $delivery = null): array
     {
         if (!in_array($purpose, ['activation', 'login', 'profile_update'], true)) {
             throw new \InvalidArgumentException('Invalid OTP purpose.');
         }
 
-        return Database::transaction(function (\PDO $pdo) use ($userId, $email, $purpose): array {
+        $issue = function (\PDO $pdo) use ($userId, $email, $purpose, $delivery): array {
             // The existing account row serializes issuance even when no OTP row exists yet.
             $account = $pdo->prepare('SELECT id FROM users WHERE id = :id FOR UPDATE');
             $account->execute(['id' => $userId]);
@@ -50,10 +50,13 @@ final class OtpService
                 'expires_at' => $expires,
             ]);
 
-            $this->mail->sendOtp($email, $code, $purpose);
+            if ($delivery) $delivery($email, $code);
+            else $this->mail->sendOtp($email, $code, $purpose);
             $this->logs->auth($userId, 'otp_sent', 'success', ['purpose' => $purpose]);
             return ['issued' => true, 'retry_after' => 0, 'reusable' => true];
-        });
+        };
+        $pdo = Database::connection();
+        return $pdo->inTransaction() ? $issue($pdo) : Database::transaction($issue);
     }
 
     /**

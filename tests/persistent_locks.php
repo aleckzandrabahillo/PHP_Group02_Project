@@ -2,6 +2,7 @@
 declare(strict_types=1);
 if(PHP_SAPI!=='cli'){http_response_code(404);exit;}
 define('AVELA_HAIR_TEST_LIBRARY',true);require __DIR__.'/hair_profiles.php';
+require_once dirname(__DIR__).'/vendor/autoload.php';
 try{
  $options=getopt('',['expect-database:','expect-port:','expect-datadir:','base-url:','session-directory:','scratch-directory:','output:']);
  $pdo=App\Core\Database::connection();$id=$pdo->query('SELECT DATABASE() db,@@port port,@@datadir datadir')->fetch();$base=$options['base-url']??'';$url=parse_url($base);$sessions=realpath($options['session-directory']??'');

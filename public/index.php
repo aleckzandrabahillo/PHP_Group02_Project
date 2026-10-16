@@ -43,6 +43,7 @@ $dashboard = new DashboardService();
 $recaptcha = new RecaptchaService();
 
 $auth = new AuthController($authService, $recaptcha);
+$activation = new \App\Controllers\ActivationController(new \App\Services\ActivationService($otp, $mail, $logs));
 $public = new PublicController($products, $favorites, $cart, $reviews);
 $customer = new CustomerController($dashboard, $users, $products, $favorites, $cart, $routines, $otp, new CheckoutService(), new Order());
 $catalog = new CatalogController($dashboard, $users, $products);
@@ -63,6 +64,8 @@ $router->get('/search/suggest', [$public, 'searchSuggestions']);
 $router->get('/product', [$public, 'product']);
 $router->get('/register', [$auth, 'registerForm']);
 $router->post('/register', [$auth, 'register']);
+$router->get('/activate', [$activation, 'page']);
+$router->post('/activate', [$activation, 'activate']);
 
 
 $router->get('/verify-otp', [$auth, 'otpForm']);
