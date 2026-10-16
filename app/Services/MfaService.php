@@ -47,7 +47,7 @@ final class MfaService
         $pending = Session::get('mfa_setup_flow');
         if (!$issued['issued'] && is_array($pending) && ($pending['user_id'] ?? 0) === $userId && ($pending['expires_at'] ?? 0) >= time()) return $pending;
         $secret = TOTP::generate()->getSecret();
-        $pending = ['user_id'=>$userId, 'secret'=>$cipher->encrypt($userId,$secret), 'expires_at'=>time()+300];
+        $pending = ['user_id'=>$userId, 'secret'=>$cipher->encrypt($userId,$secret), 'expires_at'=>time()+300, 'password_version'=>$user['password_version']??''];
         Session::put('mfa_setup_flow',$pending);
         return $pending;
     }
@@ -55,7 +55,9 @@ final class MfaService
     public function setupSecret(int $userId): ?string
     {
         $flow=Session::get('mfa_setup_flow');
-        if (!is_array($flow) || ($flow['user_id']??0)!==$userId || ($flow['expires_at']??0)<time()) {
+        $user=$this->users->findById($userId);
+        if (!is_array($flow) || !User::canAuthenticate($user) || ($flow['user_id']??0)!==$userId || ($flow['expires_at']??0)<time()
+            || !hash_equals((string)($user['password_version']??''),(string)($flow['password_version']??''))) {
             Session::forget('mfa_setup_flow'); return null;
         }
         return (new MfaCipher())->decrypt($userId,$flow['secret']);
@@ -67,7 +69,8 @@ final class MfaService
         if ($secret===null) throw new DomainException('Enrollment expired. Start again.');
         $codes=Database::transaction(function(PDO $pdo) use($userId,$secret,$emailCode,$code):array {
             $user=$this->users->findById($userId,true);
-            if (!User::canAuthenticate($user) || $this->factor($userId,true)) throw new DomainException('Account enrollment is unavailable.');
+            if (!User::canAuthenticate($user) || $this->factor($userId,true)
+                || !hash_equals((string)($user['password_version']??''),(string)(Session::get('mfa_setup_flow')['password_version']??''))) throw new DomainException('Account enrollment is unavailable.');
             $step=$this->matchingStep($secret,$code,-1);
             if ($step===null) {
                 $this->users->recordFailure($userId);
@@ -101,7 +104,7 @@ final class MfaService
     {
         $factor=$this->factor($userId);
         if (!$factor) throw new DomainException('Authenticator unavailable.');
-        return ['user_id'=>$userId,'expires_at'=>time()+300,'version'=>$factor['credential_version']];
+        return ['user_id'=>$userId,'expires_at'=>time()+300,'version'=>$factor['credential_version'],'password_version'=>$this->users->findById($userId)['password_version']??''];
     }
 
     public function verifyLogin(array $flow, #[\SensitiveParameter] string $code): array
@@ -109,7 +112,8 @@ final class MfaService
         if (($flow['expires_at']??0)<time() || !isset($flow['user_id'],$flow['version'])) return ['ok'=>false,'message'=>'The sign-in challenge expired. Sign in again.','expired'=>true];
         return Database::transaction(function(PDO $pdo) use($flow,$code):array {
             $id=(int)$flow['user_id'];$user=$this->users->findById($id,true);$factor=$this->factor($id,true);
-            if (!User::canAuthenticate($user) || !$factor || !hash_equals($factor['credential_version'],$flow['version'])) {
+            if (!User::canAuthenticate($user) || !$factor || !hash_equals($factor['credential_version'],$flow['version'])
+                || !hash_equals((string)($user['password_version']??''),(string)($flow['password_version']??''))) {
                 return ['ok'=>false,'message'=>'Sign-in is no longer available. Start again.','expired'=>true];
             }
             if (!$this->consume($pdo,$factor,$code)) {

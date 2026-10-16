@@ -83,13 +83,14 @@ final class AuthService
             $factor = $this->mfa->factor((int) $user['id']);
             if (is_array($challenge) && ($challenge['user_id'] ?? 0) === (int) $user['id']
                 && ($challenge['expires_at'] ?? 0) >= time() && $factor
+                && hash_equals((string)($user['password_version']??''),(string)($challenge['password_version']??''))
                 && hash_equals($factor['credential_version'], (string) ($challenge['version'] ?? ''))) {
                 return ['ok' => true, 'next' => 'totp'];
             }
             Session::forget('pending_totp');
             $issued = $this->otp->issue((int) $user['id'], (string) $user['email'], 'login');
             if (!$issued['issued'] && !$issued['reusable']) return $this->cooldownResult($issued);
-            Session::put('pending_flow', ['user_id' => (int) $user['id'], 'purpose' => 'login', 'email' => $user['email'], 'sent_at' => time()]);
+            Session::put('pending_flow', ['user_id' => (int) $user['id'], 'purpose' => 'login', 'email' => $user['email'], 'sent_at' => time(), 'password_version' => $user['password_version'] ?? '']);
             if (!$issued['issued']) Session::flash('warning', 'Use the verification code already sent to your email. ' . $this->cooldownResult($issued)['message']);
             return ['ok' => true, 'next' => 'otp'];
         }
@@ -106,12 +107,13 @@ final class AuthService
         }
         $userId = (int) $flow['user_id'];
         $purpose = (string) $flow['purpose'];
-        $verification = Database::transaction(function () use ($userId, $purpose, $code): array {
+        $verification = Database::transaction(function () use ($userId, $purpose, $code, $flow): array {
             $user = $this->users->findById($userId, true);
             $eligible = $purpose === 'activation'
                 ? $user && $user['status'] === 'pending' && !User::isLocked($user)
                     && in_array($user['role'], ['customer', 'catalog_manager', 'admin'], true)
-                : $purpose === 'login' && User::canAuthenticate($user);
+                : $purpose === 'login' && User::canAuthenticate($user)
+                    && hash_equals((string)($user['password_version']??''),(string)($flow['password_version']??''));
             if (!$eligible) {
                 $this->logs->auth($user ? $userId : null, 'otp_verify', 'failure', ['purpose' => $purpose, 'reason' => 'account_unavailable']);
                 return ['ok' => false, 'reason' => 'account_unavailable'];
@@ -172,7 +174,8 @@ final class AuthService
         $purpose = (string) ($flow['purpose'] ?? '');
         $eligible = $purpose === 'activation'
             ? $user && $user['status'] === 'pending' && !User::isLocked($user)
-            : $purpose === 'login' && User::canAuthenticate($user);
+            : $purpose === 'login' && User::canAuthenticate($user)
+                && hash_equals((string)($user['password_version']??''),(string)($flow['password_version']??''));
         if (!$eligible) return $this->unavailableResult();
         $issued = $purpose === 'activation' && $user['role'] === 'customer'
             ? $this->activation->issue((int) $user['id']) : $this->otp->issue((int) $user['id'], (string) $user['email'], $purpose);
@@ -187,6 +190,7 @@ final class AuthService
         $current = Database::transaction(function () use ($user): ?array {
             $current = $this->users->findById((int) $user['id'], true);
             if (!User::canAuthenticate($current)
+                || !hash_equals((string)$current['password_hash'],(string)($user['password_hash']??''))
                 || (bool) $current['mfa_enabled']
                 || in_array($current['role'], ['admin', 'catalog_manager'], true)
                 || $this->mfa->factor((int) $current['id']) !== null) return null;
@@ -223,6 +227,7 @@ final class AuthService
             'role' => $user['role'],
         ]);
         Session::put('last_activity', time());
+        Session::put('auth_password_version', $user['password_version'] ?? '');
         if ($factorVersion !== null) Session::put('auth_mfa_version', $factorVersion);
     }
 

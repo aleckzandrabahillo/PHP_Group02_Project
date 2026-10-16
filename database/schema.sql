@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(190) NOT NULL UNIQUE,
   username VARCHAR(40) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
+  password_changed_at DATETIME NULL DEFAULT NULL,
+  password_version CHAR(64) NOT NULL DEFAULT '',
   role ENUM('customer','catalog_manager','admin') NOT NULL DEFAULT 'customer',
   status ENUM('pending','active','inactive') NOT NULL DEFAULT 'pending',
   failed_attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,

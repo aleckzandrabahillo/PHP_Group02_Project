@@ -55,7 +55,7 @@ final class User
     public function createCustomer(array $data): int
     {
         $create = function (PDO $pdo) use ($data): int {
-            $stmt = $pdo->prepare('INSERT INTO users (email, username, password_hash, role, status, failed_attempts, mfa_enabled, created_at, updated_at) VALUES (:email, :username, :password_hash, "customer", "pending", 0, :mfa_enabled, NOW(), NOW())');
+            $stmt = $pdo->prepare('INSERT INTO users (email, username, password_hash, role, status, failed_attempts, mfa_enabled, created_at, updated_at, password_changed_at) VALUES (:email, :username, :password_hash, "customer", "pending", 0, :mfa_enabled, NOW(), NOW(), NOW())');
             $stmt->execute([
                 'email' => strtolower($data['email']),
                 'username' => $data['username'],
@@ -82,7 +82,7 @@ final class User
             throw new \InvalidArgumentException('Invalid staff role.');
         }
         return Database::transaction(function (PDO $pdo) use ($role, $email, $username, $passwordHash, $fullName): int {
-            $stmt = $pdo->prepare('INSERT INTO users (email, username, password_hash, role, status, failed_attempts, mfa_enabled, activated_at, created_at, updated_at) VALUES (:email, :username, :password_hash, :role, "active", 0, 1, NOW(), NOW(), NOW())');
+            $stmt = $pdo->prepare('INSERT INTO users (email, username, password_hash, role, status, failed_attempts, mfa_enabled, activated_at, created_at, updated_at, password_changed_at) VALUES (:email, :username, :password_hash, :role, "active", 0, 1, NOW(), NOW(), NOW(), NOW())');
             $stmt->execute([
                 'email' => strtolower($email), 'username' => $username, 'password_hash' => $passwordHash, 'role' => $role
             ]);

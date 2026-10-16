@@ -44,6 +44,7 @@ $recaptcha = new RecaptchaService();
 
 $auth = new AuthController($authService, $recaptcha);
 $activation = new \App\Controllers\ActivationController(new \App\Services\ActivationService($otp, $mail, $logs));
+$passwords = new \App\Controllers\PasswordController();
 $public = new PublicController($products, $favorites, $cart, $reviews);
 $customer = new CustomerController($dashboard, $users, $products, $favorites, $cart, $routines, $otp, new CheckoutService(), new Order());
 $catalog = new CatalogController($dashboard, $users, $products);
@@ -75,6 +76,8 @@ $router->post('/logout', [$auth, 'logout']);
 $router->get('/verify-authenticator', [$mfa, 'verifyForm']);
 $router->post('/verify-authenticator', [$mfa, 'verify']);
 $router->get('/account/mfa', [$mfa, 'settings']);
+$router->get('/account/password', [$passwords, 'page']);
+$router->post('/account/password', [$passwords, 'change']);
 $router->post('/account/mfa', [$mfa, 'manage']);
 $router->get('/account/mfa/recovery', [$mfa, 'recovery']);
 

@@ -1196,3 +1196,11 @@ html {scroll-padding-top:calc(var(--header-height) + 20px)}
 .saved-routine-item form {margin-top:16px}
 @media(max-width:1000px){.matching-grid {grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.matching-grid,.routine-preview-list {grid-template-columns:minmax(0,1fr)}.matching-routine {padding:20px}.saved-routine-item {padding:20px}}
+
+.password-requirements {margin-top:12px;padding:14px 16px;background:var(--greige,var(--mist));font-size:12px;line-height:1.7}
+.password-requirements[hidden] {display:none}
+.password-requirements p {margin:0 0 6px;font-weight:600}
+.password-requirements ul {padding:0;margin:0;list-style:none;display:grid;gap:4px}
+.password-requirements li::before {content:'○';display:inline-block;width:20px}
+.password-requirements li.is-met {font-weight:600;color:var(--espresso,var(--ink))}
+.password-requirements li.is-met::before {content:'✓'}

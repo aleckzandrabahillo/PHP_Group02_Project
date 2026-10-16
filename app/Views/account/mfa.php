@@ -15,7 +15,8 @@
   <?php elseif ($setupSecret): ?>
     <h2>Connect your authenticator app</h2>
     <p>In Google Authenticator or another compatible app, choose <strong>Add account → Enter a setup key</strong>. Use your Avela username and select <strong>Time based</strong>.</p>
-    <label class="field">Setup key — keep private<input type="text" value="<?= e($setupSecret) ?>" readonly autocomplete="off" spellcheck="false"></label>
+    <label class="field" for="authenticator-setup-key">Setup key — keep private<input id="authenticator-setup-key" type="password" value="<?= e($setupSecret) ?>" readonly autocomplete="off" spellcheck="false"></label>
+    <button type="button" class="btn btn-secondary" data-reveal-setup-key aria-controls="authenticator-setup-key" aria-pressed="false">Show setup key</button>
     <p class="muted small">This setup expires after five minutes. Never send this key or a verification code to another person. No external QR service receives the key.</p>
     <form class="form-stack" method="post" action="<?= e(url('/account/mfa')) ?>">
       <?= csrf_field() ?><input type="hidden" name="action" value="confirm">
@@ -37,3 +38,4 @@
     <?php endif; ?>
   <?php endif; ?>
 </section>
+<script src="<?= e(asset('js/password-policy.js')) ?>" defer></script>
