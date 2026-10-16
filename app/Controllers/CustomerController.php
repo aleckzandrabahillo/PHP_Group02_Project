@@ -385,82 +385,26 @@ final class CustomerController
     {
         $user = AuthGuard::roles(['customer']);
         Csrf::enforce($_POST['_token'] ?? null);
-        $userId = (int) $user['id'];
-        
-        if (!isset($_FILES['profile_image']) || $_FILES['profile_image']['error'] !== UPLOAD_ERR_OK) {
-            Session::flash('warning', 'Please choose a valid profile picture.');
+        $images = new \App\Services\ProfileImageService();
+        $path = null;
+        try {
+            $path = $images->store($_FILES['profile_image'] ?? null);
+            $oldImage = $this->users->updateProfileImage((int) $user['id'], $path);
+        } catch (\InvalidArgumentException $e) {
+            $images->discard($path);
+            Session::flash('warning', $e->getMessage());
             Response::redirect('/profile');
-            }
-            
-            $file = $_FILES['profile_image'];
-            if ($file['size'] > 2 * 1024 * 1024) {
-                Session::flash('warning', 'Profile picture must not exceed 2 MB.');
-                Response::redirect('/profile');
-                }
-                
-                if (!is_uploaded_file($file['tmp_name'])) {
-                    Session::flash('warning', 'Invalid file upload.');
-                    Response::redirect('/profile');
-                    }
-                    
-                    $imageInfo = @getimagesize($file['tmp_name']);
-                    
-                    if ($imageInfo === false) {
-                        
-                    Session::flash('warning', 'The uploaded file is not a valid image.');
-                    Response::redirect('/profile');
-                    }
-                    
-                    $mime = $imageInfo['mime'] ?? '';
-                    $allowedTypes = [
-                        'image/jpeg' => 'jpg',
-                        'image/png' => 'png',
-                        'image/webp' => 'webp',
-                        ];
-                        
-                        if (!isset($allowedTypes[$mime])) {
-                            
-                        Session::flash('warning', 'Only JPG, PNG, and WebP images are allowed.');
-                        Response::redirect('/profile');
-                        }
-                        
-                        $extension = $allowedTypes[$mime];
-                        
-                        $uploadDirectory = dirname(__DIR__, 2) . '/public/uploads/profile';
-                        
-                        if (!is_dir($uploadDirectory) && !mkdir($uploadDirectory, 0755, true)) {
-                        
-                        Session::flash('warning', 'Unable to prepare the profile picture folder.');
-                        Response::redirect('/profile'); }
+        } catch (\Throwable) {
+            $images->discard($path);
+            Session::flash('warning', 'Your profile photograph could not be saved. Please try again.');
+            Response::redirect('/profile');
+        }
+        $images->discard($oldImage);
+        Session::flash('success', 'Profile picture updated successfully.');
+        Response::redirect('/profile');
+    }
 
-                        $filename = bin2hex(random_bytes(16)) . '.' . $extension;
-                        $destination = $uploadDirectory . '/' . $filename;
-
-                        if (!move_uploaded_file($file['tmp_name'], $destination)) {
-                            
-                        Session::flash('warning', 'Unable to save the profile picture.');
-                        Response::redirect('/profile');
-                        }
-                        
-                        $profileImagePath = 'uploads/profile/' . $filename;
-
-                        try {
-                            $oldImage=$this->users->updateProfileImage($userId, $profileImagePath);
-                        } catch (\Throwable) {
-                            @unlink($destination);
-                            Session::flash('warning','Your profile photograph could not be saved. Please try again.');
-                            Response::redirect('/profile');
-                        }
-                        if(is_string($oldImage)&&preg_match('~^uploads/profile/[a-f0-9]{32}\.(jpg|png|webp)$~D',$oldImage)){
-                            $oldFile=dirname(__DIR__,2).'/public/'.$oldImage;
-                            if(is_file($oldFile)&&!is_link($oldFile)&&realpath(dirname($oldFile))===realpath($uploadDirectory))@unlink($oldFile);
-                        }
-
-                        Session::flash('success', 'Profile picture updated successfully.');
-                        Response::redirect('/profile');
-}
-
-public function profileOtpForm(): void
+    public function profileOtpForm(): void
     {
         $user = AuthGuard::roles(['customer']);
 
