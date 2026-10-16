@@ -1,0 +1,19 @@
+{
+  "version": "1",
+  "rules": [
+    {"id":"scalp.oily","type":"scalp","code":"oily_scalp","scope":"scalp","phrases":["oily scalp","oily roots","greasy roots","greasy scalp","mamantikang anit","mamantika ang anit"]},
+    {"id":"scalp.dry","type":"scalp","code":"dry_scalp","scope":"scalp","phrases":["dry scalp","dry roots","tuyong anit","tuyo ang anit"]},
+    {"id":"length.dry","type":"concern","code":"dryness","scope":"length","phrases":["dry ends","dry lengths","dry hair","tuyong buhok","tuyo ang buhok","dry yung hair","dry ang hair","dry","tuyo"]},
+    {"id":"length.oily","type":"concern","code":"oiliness","scope":"length","phrases":["oily hair","greasy hair","oily lengths","mamantikang buhok","oily","greasy","mamantika"]},
+    {"id":"length.frizz","type":"concern","code":"frizz","scope":"length","phrases":["frizzy hair","frizzy","frizz","buhaghag"]},
+    {"id":"length.tangles","type":"concern","code":"tangling","scope":"length","phrases":["madaling mag tangle","buhol buhol","nagbubuhol","tangled","tangles","tangling","mag tangle"]},
+    {"id":"length.damage","type":"concern","code":"damage","scope":"length","phrases":["damaged hair","damaged","rough hair","brittle hair"]},
+    {"id":"texture.straight","type":"texture","code":"straight","scope":"texture","phrases":["straight hair","straight","tuwid"]},
+    {"id":"texture.wavy","type":"texture","code":"wavy","scope":"texture","phrases":["wavy hair","wavy","alon alon"]},
+    {"id":"texture.curly","type":"texture","code":"curly","scope":"texture","phrases":["curly hair","curly","kulot"]},
+    {"id":"texture.coily","type":"texture","code":"coily","scope":"texture","phrases":["coily hair","coily","tight coils"]},
+    {"id":"history.colored","type":"treatment","code":"colored","scope":"history","phrases":["recently colored","recently coloured","color treated","colour treated","colored hair","coloured hair","dyed hair","kinulayan"]},
+    {"id":"history.bleached","type":"treatment","code":"bleached","scope":"history","phrases":["bleached hair","bleached","binleach"]},
+    {"id":"history.heat","type":"treatment","code":"heat_styled","scope":"history","phrases":["heat styled","heat styling","flat iron","curling iron"]}
+  ]
+}
