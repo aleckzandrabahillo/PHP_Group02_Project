@@ -44,9 +44,9 @@ $assessmentUrl = $currentRole === 'customer' ? url('/assessment') : url('/regist
   <section id="planned-profile" class="about-section about-balance" aria-labelledby="about-purpose-title">
     <div>
       <span class="eyebrow">THE IDEA</span>
-      <h2 id="about-purpose-title">A more personal shortlist is planned.</h2>
+      <h2 id="about-purpose-title">A more personal shortlist, with clear reasons.</h2>
     </div>
-    <p>Saved hair profiles, lightweight text processing and explainable routine building are still in development. Current catalog tags describe demonstration shopping metadata; they are not a medical assessment or verified ingredient claims.</p>
+    <p>Structured hair profiles, lightweight text interpretation and explainable rules help organize a personal shortlist. The current fictional catalog uses reviewed demonstration metadata; it does not establish ingredient benefits, medical advice or product effectiveness.</p>
   </section>
 
   <section class="about-cta">
@@ -56,7 +56,7 @@ $assessmentUrl = $currentRole === 'customer' ? url('/assessment') : url('/regist
     </div>
     <div class="about-cta-actions">
       <a class="btn btn-primary" href="<?= e(url('/shop')) ?>">Shop hair care</a>
-      <?php if ($currentRole === 'customer' || $currentRole === null): ?><a class="btn btn-secondary" href="<?= e($assessmentUrl) ?>"><?= $currentRole === 'customer' ? 'Preview planned hair profile' : 'Create an account' ?></a><?php endif; ?>
+      <?php if ($currentRole === 'customer' || $currentRole === null): ?><a class="btn btn-secondary" href="<?= e($assessmentUrl) ?>"><?= $currentRole === 'customer' ? 'Your hair profile' : 'Create an account' ?></a><?php endif; ?>
     </div>
   </section>
 </main>

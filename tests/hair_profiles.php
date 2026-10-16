@@ -61,6 +61,8 @@ final class HairAuditFaultPDO extends PDO {
     }
 }
 
+if (defined('AVELA_HAIR_TEST_LIBRARY')) return;
+
 try {
     $options = getopt('', ['expect-database:', 'expect-port:', 'expect-datadir:', 'base-url:', 'session-directory:', 'output:']);
     $pdo = App\Core\Database::connection();

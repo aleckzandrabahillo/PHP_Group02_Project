@@ -50,6 +50,7 @@ $admin = new AdminController($dashboard, $users);
 $security = new \App\Controllers\SecurityController(new \App\Services\SecurityManagement());
 $mfa = new \App\Controllers\MfaController(new \App\Services\MfaService($users, $otp, $logs), $authService);
 $hairProfile = new \App\Controllers\HairProfileController(new \App\Models\HairProfile(), new \App\Services\ConcernInterpreter());
+$recommendations = new \App\Controllers\RecommendationController();
 
 $router = new Router();
 $router->get('/', [$public, 'landing']);
@@ -78,6 +79,8 @@ $router->get('/customer', [$customer, 'dashboard']);
 $router->get('/assessment', [$hairProfile, 'assessment']);
 $router->post('/assessment', [$hairProfile, 'save']);
 $router->get('/routine', [$customer, 'routine']);
+$router->get('/recommendations', [$recommendations, 'matches']);
+$router->post('/routine', [$recommendations, 'save']);
 $router->get('/cart', [$customer, 'cart']);
 $router->get('/checkout', [$customer, 'checkout']);
 $router->post('/checkout', [$customer, 'placeOrder']);

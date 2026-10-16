@@ -177,6 +177,7 @@ final class CustomerController
 
     public function routine(): void
     {
+        header('Cache-Control: no-store, private');
         $user = AuthGuard::roles(['customer']);
         $userId = (int) $user['id'];
         View::render('customer/routine', [

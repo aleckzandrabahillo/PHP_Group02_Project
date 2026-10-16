@@ -1,0 +1,349 @@
+{
+  "version": "1",
+  "catalog_sha256": "505bf83fc3fcf33a802c313792df065c12b82f36c19a1b730faa3a5cc1fa71ce",
+  "notice": "Reviewed fictional catalog specifications for a student demonstration. This is not manufacturer verification, ingredient evidence, or proof of cosmetic/medical performance. No treatment compatibility is verified for the current demonstration formulations.",
+  "products": [
+    {
+      "sku": "AVE-SMP-001",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-SMP-001",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:dry_scalp",
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-CON-001",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-CON-001",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:dry_scalp",
+        "concern:dryness",
+        "concern:frizz",
+        "concern:damage",
+        "concern:tangling"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-TRT-001",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-TRT-001",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:dry_scalp",
+        "concern:dryness",
+        "concern:frizz",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-SER-001",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-SER-001",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "concern:frizz",
+        "concern:tangling"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-OIL-001",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-OIL-001",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:dry_scalp",
+        "concern:dryness",
+        "concern:frizz",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-TOL-001",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-TOL-001",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "concern:tangling"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": "detangling"
+    },
+    {
+      "sku": "AVE-SMP-002",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-SMP-002",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:oily_scalp",
+        "concern:oiliness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-SMP-003",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-SMP-003",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:dry_scalp",
+        "concern:dryness",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-SMP-004",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-SMP-004",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "scalp:normal_scalp",
+        "scalp:oily_scalp",
+        "concern:oiliness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-CON-002",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-CON-002",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "scalp:normal_scalp",
+        "scalp:oily_scalp",
+        "concern:tangling",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-CON-003",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-CON-003",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:dry_scalp",
+        "concern:dryness",
+        "concern:tangling",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-TRT-002",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-TRT-002",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:dry_scalp",
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-TRT-003",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-TRT-003",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "scalp:normal_scalp",
+        "scalp:dry_scalp",
+        "concern:tangling",
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-SER-002",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-SER-002",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "concern:frizz",
+        "concern:dryness",
+        "concern:tangling"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-SER-003",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-SER-003",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-OIL-002",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-OIL-002",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "concern:frizz",
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-OIL-003",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-OIL-003",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:curly",
+        "texture:coily",
+        "concern:dryness",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-TOL-002",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-TOL-002",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": "other"
+    },
+    {
+      "sku": "AVE-TOL-003",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-TOL-003",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": "other"
+    },
+    {
+      "sku": "AVE-TOL-004",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/demo_catalog.json#AVE-TOL-004",
+      "reviewed_at": "2026-10-16",
+      "tags": [
+        "texture:straight",
+        "texture:wavy",
+        "texture:curly",
+        "texture:coily",
+        "concern:tangling"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": "other"
+    }
+  ]
+}

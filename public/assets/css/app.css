@@ -1174,3 +1174,25 @@ html {scroll-padding-top:calc(var(--header-height) + 20px)}
 .hair-profile-summary summary {cursor:pointer;min-height:44px}
 @media(max-width:800px) {.hair-profile-layout {grid-template-columns:minmax(0,1fr);gap:24px}.hair-profile-form {padding:22px}.hair-profile-summary {padding:24px}}
 @media(max-width:420px) {.hair-choice-grid {grid-template-columns:minmax(0,1fr)}.hair-profile-form {padding:18px}}
+
+.matching-disclosure {padding:18px 20px;background:var(--mist);line-height:1.65;margin:0 0 28px;border-radius:4px}
+.matching-routine {background:#fff;border:1px solid #e2d5d0;padding:28px;margin-bottom:40px;border-radius:8px}
+.routine-preview-list {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;padding-left:24px;margin:24px 0}
+.routine-preview-list li>a,.routine-preview-list li>span {display:block;margin-top:8px;line-height:1.6}
+.routine-preview-list li>span {font-size:13px;color:#655b5c}
+.matching-routine form {display:flex;gap:12px;flex-wrap:wrap}
+.matching-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;align-items:start}
+.matching-product {min-width:0;background:#fff;border:1px solid #e2d5d0;border-radius:4px;overflow:hidden}
+.matching-product .product-card {border:0}
+.matching-reasons {padding:20px;line-height:1.65}
+.matching-reasons h3 {font-size:16px;margin:0 0 12px}
+.matching-reasons ul {padding-left:20px;margin-bottom:16px}
+.matching-reasons summary {cursor:pointer;min-height:44px}
+.matching-reasons details {margin-bottom:16px;font-size:13px}
+.matching-reasons code {overflow-wrap:anywhere}
+.saved-routine-list {padding-left:24px;display:grid;gap:20px}
+.saved-routine-item {padding:24px;background:#fff;border:1px solid #e2d5d0;border-radius:4px;line-height:1.65}
+.saved-routine-item h2 {font-size:22px;margin:8px 0}
+.saved-routine-item form {margin-top:16px}
+@media(max-width:1000px){.matching-grid {grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.matching-grid,.routine-preview-list {grid-template-columns:minmax(0,1fr)}.matching-routine {padding:20px}.saved-routine-item {padding:20px}}
