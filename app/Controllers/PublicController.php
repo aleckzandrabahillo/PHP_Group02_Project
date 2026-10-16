@@ -43,6 +43,15 @@ final class PublicController
         ], 'public');
     }
 
+    public function privacy(): void
+    {
+        $options = $this->products->filterOptions();
+        View::render('public/privacy', [
+            'pageTitle'=>'Privacy & cookies', 'privacyEmail'=>\App\Services\PrivacyContact::configured(),
+            'storeNav'=>$this->storeNavigation($options), ...$this->customerContext(),
+        ], 'public');
+    }
+
     public function shop(): void
     {
         $options = $this->products->filterOptions();

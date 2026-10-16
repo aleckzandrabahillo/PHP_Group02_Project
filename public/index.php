@@ -60,6 +60,7 @@ $router->get('/login', [$auth, 'loginForm']);
 $router->post('/login', [$auth, 'login']);
 $router->get('/shop', [$public, 'shop']);
 $router->get('/about', [$public, 'about']);
+$router->get('/privacy', [$public, 'privacy']);
 $router->get('/search', [$public, 'search']);
 $router->get('/search/suggest', [$public, 'searchSuggestions']);
 $router->get('/product', [$public, 'product']);
