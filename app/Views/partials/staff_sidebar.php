@@ -6,6 +6,7 @@ $items = $role === 'admin' ? [
  ['/catalog','Dashboard'], ['/catalog/products','Products'], ['/catalog/categories','Categories'], ['/catalog/inventory','Inventory'], ['/catalog/profile','Profile']
 ];
 $items[] = ['/account/mfa', 'Authenticator'];
+$items[] = ['/account/password', 'Change password'];
 $currentStaffPath = parse_url(current_relative_uri(), PHP_URL_PATH);
 ?>
 <button class="staff-nav-backdrop" type="button" data-staff-nav-close aria-label="Close staff navigation" hidden></button>

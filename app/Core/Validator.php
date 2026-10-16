@@ -41,13 +41,16 @@ final class Validator
 
     public static function passwordError(string $password): ?string
     {
-        $min = \App\Services\SecurityPolicy::values()['password_min_length'];
+        $policy = \App\Services\SecurityPolicy::values();
+        $min = $policy['password_min_length'];
         $length = preg_match_all('/./us', $password);
         if ($length === false || $length < $min || strlen($password) > 72
-            || !preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password)
-            || !preg_match('/\d/', $password) || !preg_match('/[^A-Za-z0-9\s]/', $password)
+            || preg_match_all('/[A-Z]/', $password) < $policy['password_min_uppercase']
+            || preg_match_all('/[a-z]/', $password) < $policy['password_min_lowercase']
+            || preg_match_all('/[0-9]/', $password) < $policy['password_min_numbers']
+            || preg_match_all('/[^A-Za-z0-9\x09-\x0d\x20]/u', $password) < $policy['password_min_special']
             || str_contains($password, "\0")) {
-            return "Use at least {$min} characters with uppercase, lowercase, a number and a special character (maximum 72 bytes).";
+            return "Use at least {$min} characters, {$policy['password_min_uppercase']} uppercase, {$policy['password_min_lowercase']} lowercase, {$policy['password_min_numbers']} number(s) and {$policy['password_min_special']} special character(s), within 72 bytes.";
         }
         return null;
     }

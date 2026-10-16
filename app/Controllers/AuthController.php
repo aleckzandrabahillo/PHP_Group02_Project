@@ -71,7 +71,8 @@ final class AuthController
     public function registerForm(): void
     {
         AuthGuard::guest();
-        View::render('auth/register', ['pageTitle' => 'Create account', 'recaptchaSiteKey' => env('RECAPTCHA_SITE_KEY', ''), ],'auth');
+        View::render('auth/register', ['pageTitle' => 'Create account', 'recaptchaSiteKey' => env('RECAPTCHA_SITE_KEY', ''),
+            'passwordPolicy' => \App\Services\SecurityPolicy::values()], 'auth');
     }
 
     public function register(): void

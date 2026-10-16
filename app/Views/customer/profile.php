@@ -61,6 +61,7 @@ $fields = ['full_name' => 'Full name', 'email' => 'Email address', 'contact_no' 
       <p>An authenticator app generates temporary codes for additional account protection.</p>
       <p class="security-enrollment-state"><?= !empty($authenticatorEnrolled) ? 'Authenticator app connected' : 'Authenticator app not connected' ?></p>
       <a class="text-link" href="<?= e(url('/account/mfa')) ?>">Manage two-step verification →</a>
+      <a class="text-link" href="<?= e(url('/account/password')) ?>">Change password →</a>
     </section>
   </div>
 </div>

@@ -9,7 +9,9 @@
     <?= csrf_field() ?><input type="hidden" name="action" value="save_policy">
     <div class="field-grid two">
       <?php foreach (['max_login_attempts'=>'Failed sign-in threshold', 'lockout_minutes'=>'Incident review interval (minutes)',
-        'session_timeout_minutes'=>'Inactive session timeout (minutes)', 'password_min_length'=>'Minimum password length'] as $key=>$label): ?>
+        'session_timeout_minutes'=>'Inactive session timeout (minutes)', 'password_min_length'=>'Minimum password length',
+        'password_min_uppercase'=>'Required uppercase letters', 'password_min_lowercase'=>'Required lowercase letters',
+        'password_min_numbers'=>'Required numbers', 'password_min_special'=>'Required special characters'] as $key=>$label): ?>
         <?php [$min, $max] = \App\Services\SecurityPolicy::RULES[$key]; ?>
         <label class="field"><span><?= e($label) ?></span>
           <input type="number" name="<?= e($key) ?>" value="<?= (int) $policy[$key] ?>" min="<?= $min ?>" max="<?= $max ?>" required>
