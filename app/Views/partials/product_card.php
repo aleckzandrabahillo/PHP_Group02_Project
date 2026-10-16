@@ -23,6 +23,7 @@ $imageUrl = product_image_url($_productCard['image_path'] ?? null);
         <strong>₱<?= e(number_format((float) $_productCard['price'], 2)) ?></strong>
         <span class="stock-label <?= (int) $_productCard['stock_qty'] > 0 ? 'in-stock' : 'out-stock' ?>"><?= (int) $_productCard['stock_qty'] > 0 ? 'In stock' : 'Out of stock' ?></span>
       </span>
+      <span class="product-card-cta">View product <span aria-hidden="true">↗</span></span>
     </span>
   </a>
   <div class="product-card-favorite">

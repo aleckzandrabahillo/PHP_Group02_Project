@@ -14,9 +14,16 @@ $clearFilterUrl = url('/shop') . ($clearParams ? '?' . http_build_query($clearPa
 <main id="main-content" tabindex="-1" class="store-page shop-page">
   <section class="shop-head">
     <span class="eyebrow">SHOP</span>
-    <h1>Hair care for everyday routines.</h1>
+    <h1>All care.</h1>
+    <p>Find the essentials for your everyday routine.</p>
   </section>
 
+  <nav class="category-tabs" aria-label="Browse product categories">
+    <a href="<?= e(url('/shop')) ?>" <?= !$filters['categories'] ? 'aria-current="page"' : '' ?>>All care</a>
+    <?php foreach ($filterOptions['categories'] as $category): ?>
+      <a href="<?= e(url('/shop?category[]=' . (int) $category['id'])) ?>" <?= count($filters['categories']) === 1 && in_array((int) $category['id'], $filters['categories'], true) ? 'aria-current="page"' : '' ?>><?= e($category['name']) ?></a>
+    <?php endforeach; ?>
+  </nav>
   <form class="shop-form" method="get" action="<?= e(url('/shop')) ?>" data-shop-form>
     <?php if (($search ?? '') !== ''): ?><input type="hidden" name="q" value="<?= e($search) ?>"><?php endif; ?>
 
@@ -32,9 +39,9 @@ $clearFilterUrl = url('/shop') . ($clearParams ? '?' . http_build_query($clearPa
             <span>Sort by</span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"/></svg>
           </summary>
-          <div class="sort-menu-panel" role="menu" aria-label="Sort products">
+          <div class="sort-menu-panel" aria-label="Sort products">
             <?php foreach (($sortLinks ?? []) as $option): ?>
-              <a class="sort-option <?= !empty($option['active']) ? 'active' : '' ?>" href="<?= e($option['url']) ?>" role="menuitem">
+              <a class="sort-option <?= !empty($option['active']) ? 'active' : '' ?>" href="<?= e($option['url']) ?>">
                 <span class="sort-radio" aria-hidden="true"></span>
                 <span><?= e($option['label']) ?></span>
               </a>
@@ -159,7 +166,7 @@ $clearFilterUrl = url('/shop') . ($clearParams ? '?' . http_build_query($clearPa
   <?php if (!empty($products)): ?>
     <div class="product-grid catalog-grid">
       <?php foreach ($products as $product): ?>
-        <?php $showExcerpt = true; require dirname(__DIR__) . '/partials/product_card.php'; ?>
+        <?php $showExcerpt = false; require dirname(__DIR__) . '/partials/product_card.php'; ?>
       <?php endforeach; ?>
     </div>
   <?php else: ?>
