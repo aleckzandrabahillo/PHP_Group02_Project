@@ -8,7 +8,7 @@ final class RequestThrottle
 {
     public static function allow(string $scope, string $identity, int $limit, int $seconds): bool
     {
-        if(!in_array($scope,['login','administrator_recovery'],true)||$limit<1||$limit>100||$seconds<1||$seconds>3600)throw new \InvalidArgumentException('Invalid request limit.');
+        if(!in_array($scope,['login','activation','administrator_recovery'],true)||$limit<1||$limit>100||$seconds<1||$seconds>3600)throw new \InvalidArgumentException('Invalid request limit.');
         $hash=hash('sha256',$scope.':'.$identity);
         return Database::transaction(static function(PDO $pdo)use($hash,$limit,$seconds):bool{
             $reset=date('Y-m-d H:i:s',time()+$seconds);

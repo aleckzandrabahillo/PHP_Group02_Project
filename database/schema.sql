@@ -338,3 +338,14 @@ CREATE TABLE IF NOT EXISTS security_rate_limits (
   reset_at DATETIME NOT NULL,
   INDEX idx_security_rate_reset (reset_at)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS activation_tokens (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    token_digest CHAR(64) NOT NULL UNIQUE,
+    expires_at DATETIME NOT NULL,
+    used_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_activation_user(user_id),
+    CONSTRAINT fk_activation_user FOREIGN KEY(user_id) REFERENCES users(id)
+) ENGINE=InnoDB;
