@@ -2,7 +2,7 @@
 $current = auth_user();
 $role = $current['role'] ?? null;
 $transparentHeader = (bool) ($transparentHeader ?? false);
-$assessmentUrl = $role === 'customer' ? url('/assessment') : ($role === null ? url('/register') : null);
+$assessmentUrl = $role === 'customer' ? url('/assessment') : ($role === null ? url('/login') : null);
 $storeNav = $storeNav ?? ['categories' => [], 'concerns' => []];
 $favoriteCount = (int) ($favoriteCount ?? 0);
 $cartCount = (int) ($cartCount ?? 0);
@@ -42,7 +42,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
             <section>
               <span class="mega-kicker">PERSONALIZED</span>
               <?php if ($assessmentUrl !== null): ?>
-                <a href="<?= e($assessmentUrl) ?>">Hair Assessment</a>
+                <a href="<?= e($assessmentUrl) ?>">Hair profile</a>
               <?php else: ?>
                 <a href="<?= e(url('/shop')) ?>">Explore the catalog</a>
               <?php endif; ?>
@@ -52,7 +52,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
       </div>
 
       <?php if ($assessmentUrl !== null): ?>
-        <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" href="<?= e($assessmentUrl) ?>">Hair Assessment</a>
+        <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" href="<?= e($assessmentUrl) ?>">Hair profile</a>
       <?php endif; ?>
       <a class="<?= is_active_path('/about') ? 'active' : '' ?>" href="<?= e(url('/about')) ?>">About</a>
     </nav>
@@ -69,6 +69,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
           </summary>
           <div class="account-menu-panel">
             <a href="<?= e(url('/profile')) ?>">Profile</a>
+            <a href="<?= e(url('/account/mfa')) ?>">Authenticator</a>
             <a href="<?= e(url('/routine')) ?>">My Routine</a>
             <a href="<?= e(url('/orders')) ?>">My Orders</a>
             <form method="post" action="<?= e(url('/logout')) ?>">
@@ -104,9 +105,13 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
             <a class="mobile-nav-sub" href="<?= e(url('/shop?category[]=' . (int) $category['id'])) ?>"><?= e($category['name']) ?></a>
           <?php endforeach; ?>
           <?php if ($assessmentUrl !== null): ?>
-            <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" href="<?= e($assessmentUrl) ?>">Hair Assessment</a>
+            <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" href="<?= e($assessmentUrl) ?>">Hair profile</a>
           <?php endif; ?>
           <a class="<?= is_active_path('/about') ? 'active' : '' ?>" href="<?= e(url('/about')) ?>">About</a>
+          <?php if ($role === null): ?>
+            <a href="<?= e(url('/login')) ?>">Sign in</a>
+            <a href="<?= e(url('/register')) ?>">Create account</a>
+          <?php endif; ?>
         </nav>
       </details>
     </div>
@@ -115,7 +120,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
 
 <div class="global-search-backdrop" data-global-search-backdrop hidden></div>
 <section class="global-search-drawer" data-global-search-drawer data-search-endpoint="<?= e(url('/search/suggest')) ?>" hidden aria-hidden="true">
-  <div class="global-search-inner" role="dialog" aria-labelledby="global-search-title">
+  <div class="global-search-inner" role="dialog" aria-modal="true" aria-labelledby="global-search-title">
     <form class="global-search-form" method="get" action="<?= e(url('/search')) ?>">
       <label>
         <span class="sr-only" id="global-search-title">Search Avela</span>

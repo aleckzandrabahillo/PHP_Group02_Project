@@ -76,3 +76,7 @@ $statusOptions = ['active' => 'Active', 'pending' => 'Pending', 'inactive' => 'I
 
   <?php require __DIR__ . '/../partials/pagination.php'; ?>
 </div>
+<section class="page-head"><div><span class="eyebrow">ADMINISTRATION</span><h1>Users</h1><p>Customer account management.</p></div></section>
+<section class="module-status" aria-labelledby="module-status-title">
+  <a class="btn btn-secondary" href="<?= e(url('/admin/security')) ?>">Open security controls</a>
+</section>

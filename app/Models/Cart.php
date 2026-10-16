@@ -83,6 +83,7 @@ final class Cart
         }
 
         return Database::transaction(function (PDO $pdo) use ($userId, $productId, $quantity): int {
+            $this->lockCustomer($pdo, $userId);
             $product = $this->lockPurchasableProduct($pdo, $productId);
             $stock = (int) $product['stock_qty'];
             if ($stock < 1) {
@@ -96,6 +97,8 @@ final class Cart
             $itemStmt->execute(['cart_id' => $cartId, 'product_id' => $productId]);
             $existing = $itemStmt->fetchColumn();
             $newQuantity = ($existing === false ? 0 : (int) $existing) + $quantity;
+
+            if ($newQuantity > 99) throw new InvalidArgumentException('Choose a quantity between 1 and 99.');
 
             if ($newQuantity > $stock) {
                 throw new InvalidArgumentException('Only ' . $stock . ' item' . ($stock === 1 ? '' : 's') . ' available in stock.');
@@ -124,6 +127,7 @@ final class Cart
         }
 
         Database::transaction(function (PDO $pdo) use ($userId, $productId, $quantity): void {
+            $this->lockCustomer($pdo, $userId);
             $product = $this->lockPurchasableProduct($pdo, $productId);
             $stock = (int) $product['stock_qty'];
             if ($quantity > $stock) {
@@ -153,6 +157,7 @@ final class Cart
     public function remove(int $userId, int $productId): void
     {
         Database::transaction(function (PDO $pdo) use ($userId, $productId): void {
+            $this->lockCustomer($pdo, $userId);
             $cartId = $this->activeCartId($pdo, $userId, false);
             if ($cartId === null) return;
 
@@ -163,19 +168,36 @@ final class Cart
 
     private function lockPurchasableProduct(PDO $pdo, int $productId): array
     {
+        $link = $pdo->prepare('SELECT category_id FROM products WHERE id=?');
+        $link->execute([$productId]);
+        $categoryId = $link->fetchColumn();
+        if ($categoryId === false) throw new InvalidArgumentException('That product is no longer available.');
+        $category = $pdo->prepare('SELECT status FROM categories WHERE id=? FOR UPDATE');
+        $category->execute([$categoryId]);
+        if ($category->fetchColumn() !== 'active') throw new InvalidArgumentException('That product is no longer available.');
         $stmt = $pdo->prepare(
             'SELECT p.id, p.stock_qty
              FROM products p
-             INNER JOIN categories c ON c.id = p.category_id
-             WHERE p.id = :id AND p.status = "active" AND c.status = "active"
+             WHERE p.id = :id AND p.category_id = :category_id AND p.status = "active"
              LIMIT 1 FOR UPDATE'
         );
-        $stmt->execute(['id' => $productId]);
+        $stmt->execute(['id' => $productId, 'category_id' => $categoryId]);
         $product = $stmt->fetch();
         if (!$product) {
             throw new InvalidArgumentException('That product is no longer available.');
         }
         return $product;
+    }
+
+    private function lockCustomer(PDO $pdo, int $userId): void
+    {
+        // Shared with checkout: one customer's bag mutations cannot cross conversion.
+        $stmt = $pdo->prepare('SELECT role,status,locked_until FROM users WHERE id=? FOR UPDATE');
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch();
+        if (!User::canAuthenticate($user ?: null) || $user['role'] !== 'customer') {
+            throw new InvalidArgumentException('An active customer account is required.');
+        }
     }
 
     private function activeCartId(PDO $pdo, int $userId, bool $create): ?int

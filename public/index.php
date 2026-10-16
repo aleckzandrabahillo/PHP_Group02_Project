@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
 error_reporting(E_ALL);
 
 require dirname(__DIR__) . '/bootstrap.php';
@@ -21,6 +21,8 @@ use App\Models\Favorite;
 use App\Models\Cart;
 use App\Models\Routine;
 use App\Models\Review;
+use App\Models\Order;
+use App\Services\CheckoutService;
 use App\Services\AuthService;
 use App\Services\AuditService;
 use App\Services\DashboardService;
@@ -45,10 +47,18 @@ $audit = new AuditService();
 
 $auth = new AuthController($authService, $recaptcha);
 $public = new PublicController($products, $favorites, $cart, $reviews);
-$customer = new CustomerController($dashboard, $users, $products, $favorites, $cart, $routines, $otp);
+$customer = new CustomerController($dashboard, $users, $products, $favorites, $cart, $routines, $otp, new CheckoutService(), new Order());
 $catalog = new CatalogController($dashboard, $users, $products);
+<<<<<<< HEAD
 $orders = new Order();
 $admin = new AdminController($dashboard, $users, $audit, $orders);
+=======
+$admin = new AdminController($dashboard, $users);
+$security = new \App\Controllers\SecurityController(new \App\Services\SecurityManagement());
+$mfa = new \App\Controllers\MfaController(new \App\Services\MfaService($users, $otp, $logs), $authService);
+$hairProfile = new \App\Controllers\HairProfileController(new \App\Models\HairProfile(), new \App\Services\ConcernInterpreter());
+$recommendations = new \App\Controllers\RecommendationController();
+>>>>>>> 96bb4b7507eb9410521a01e05f1253df57918204
 
 $router = new Router();
 $router->get('/', [$public, 'landing']);
@@ -67,16 +77,26 @@ $router->get('/verify-otp', [$auth, 'otpForm']);
 $router->post('/verify-otp', [$auth, 'verifyOtp']);
 $router->post('/otp/resend', [$auth, 'resendOtp']);
 $router->post('/logout', [$auth, 'logout']);
+$router->get('/verify-authenticator', [$mfa, 'verifyForm']);
+$router->post('/verify-authenticator', [$mfa, 'verify']);
+$router->get('/account/mfa', [$mfa, 'settings']);
+$router->post('/account/mfa', [$mfa, 'manage']);
+$router->get('/account/mfa/recovery', [$mfa, 'recovery']);
 
 $router->get('/customer', [$customer, 'dashboard']);
-$router->get('/assessment', fn() => $customer->page('assessment','Hair Assessment'));
+$router->get('/assessment', [$hairProfile, 'assessment']);
+$router->post('/assessment', [$hairProfile, 'save']);
 $router->get('/routine', [$customer, 'routine']);
+$router->get('/recommendations', [$recommendations, 'matches']);
+$router->post('/routine', [$recommendations, 'save']);
 $router->get('/cart', [$customer, 'cart']);
 $router->get('/checkout', [$customer, 'checkout']);
+$router->post('/checkout', [$customer, 'placeOrder']);
 $router->post('/cart/add', [$customer, 'addToCart']);
 $router->post('/cart/update', [$customer, 'updateCart']);
 $router->post('/cart/remove', [$customer, 'removeFromCart']);
-$router->get('/orders', fn() => $customer->page('orders','My Orders'));
+$router->get('/orders', [$customer, 'orders']);
+$router->get('/orders/view', [$customer, 'order']);
 $router->get('/profile', fn() => $customer->page('profile','Profile'));
 $router->post('/profile/image', [$customer, 'updateProfileImage']);
 $router->post('/profile/update', [$customer, 'updateProfile']);
@@ -97,10 +117,16 @@ $router->get('/catalog/profile', fn() => $catalog->page('profile','Profile'));
 $router->get('/admin', [$admin, 'dashboard']);
 $router->get('/admin/users', fn() => $admin->page('users','Users'));
 $router->get('/admin/staff', fn() => $admin->page('staff','Staff & Roles'));
+<<<<<<< HEAD
 $router->get('/admin/orders', [$admin, 'orders']);
 $router->get('/admin/orders/view', [$admin, 'orderView']);
 $router->post('/admin/orders/status', [$admin, 'updateOrderStatus']);
 $router->get('/admin/security', fn() => $admin->page('security','Security'));
+=======
+$router->get('/admin/orders', fn() => $admin->page('orders','Orders'));
+$router->get('/admin/security', [$security, 'page']);
+$router->post('/admin/security', [$security, 'save']);
+>>>>>>> 96bb4b7507eb9410521a01e05f1253df57918204
 $router->get('/admin/auth-logs', fn() => $admin->page('auth_logs','Authentication Logs'));
 $router->get('/admin/audit-logs', [$admin, 'auditLogs']);
 $router->get('/admin/profile', fn() => $admin->page('profile','Profile'));

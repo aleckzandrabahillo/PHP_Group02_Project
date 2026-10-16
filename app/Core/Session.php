@@ -21,7 +21,7 @@ final class Session
         session_start();
 
         if (isset($_SESSION['auth_user'])) {
-            $timeout = (int) env('SESSION_TIMEOUT_MINUTES', 30) * 60;
+            $timeout = \App\Services\SecurityPolicy::values()['session_timeout_minutes'] * 60;
             $last = (int) ($_SESSION['last_activity'] ?? time());
             if ($timeout > 0 && (time() - $last) > $timeout) {
                 self::forgetAuth();
@@ -82,7 +82,8 @@ final class Session
         unset(
             $_SESSION['auth_user'], $_SESSION['last_activity'],
             $_SESSION['pending_flow'], $_SESSION['profile_update_flow'],
-            $_SESSION['_old'], $_SESSION['errors']
+            $_SESSION['_old'], $_SESSION['errors'], $_SESSION['checkout_intent'], $_SESSION['_csrf'],
+            $_SESSION['pending_totp'], $_SESSION['mfa_setup_flow'], $_SESSION['mfa_recovery_codes'], $_SESSION['auth_mfa_version']
         );
     }
 }

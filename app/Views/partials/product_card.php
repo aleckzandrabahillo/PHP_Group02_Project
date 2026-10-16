@@ -8,7 +8,7 @@ $imageUrl = product_image_url($_productCard['image_path'] ?? null);
   <a class="product-card-main" href="<?= e($productUrl) ?>" aria-label="View <?= e($_productCard['name']) ?>">
     <span class="product-art">
       <?php if ($imageUrl !== null): ?>
-        <img class="product-image" src="<?= e($imageUrl) ?>" alt="<?= e($_productCard['name']) ?>" loading="lazy">
+        <img class="product-image" src="<?= e($imageUrl) ?>" alt="<?= e($_productCard['name']) ?>" width="1200" height="1500" loading="lazy" decoding="async">
       <?php else: ?>
         <?php $visualCategory = $_productCard['category_name'] ?? ''; $placeholderLarge = false; require __DIR__ . '/product_placeholder.php'; ?>
       <?php endif; ?>

@@ -1,9 +1,6 @@
-<section class="page-head">
-  <div>
-    <span class="eyebrow">ADMIN</span>
-    <h1>Audit Logs</h1>
-    <p>Review important management actions recorded by the system.</p>
-  </div>
+<section class="page-head"><div><span class="eyebrow">ADMINISTRATION</span><h1>Audit Logs</h1><p>Management action history.</p></div></section>
+<section class="module-status" aria-labelledby="module-status-title">
+  <a class="btn btn-secondary" href="<?= e(url('/admin/security')) ?>">Open security controls</a>
 </section>
 
 <div class="table-card">

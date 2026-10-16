@@ -9,7 +9,12 @@ use App\Models\User;
 
 final class AuthService
 {
-    public function __construct(private readonly User $users, private readonly OtpService $otp, private readonly LogService $logs) {}
+    private readonly MfaService $mfa;
+
+    public function __construct(private readonly User $users, private readonly OtpService $otp, private readonly LogService $logs)
+    {
+        $this->mfa = new MfaService($users, $otp, $logs);
+    }
 
     public function register(array $data): array
     {
@@ -29,7 +34,7 @@ final class AuthService
         return ['ok' => true];
     }
 
-    public function attempt(string $identifier, string $password): array
+    public function attempt(string $identifier, #[\SensitiveParameter] string $password): array
     {
         $user = $this->users->findByIdentifier(trim($identifier));
         if (!$user) {
@@ -44,11 +49,11 @@ final class AuthService
 
         if (!password_verify($password, (string) $user['password_hash'])) {
             $failure = $this->users->recordFailure((int) $user['id']);
+            $this->logs->auth((int) $user['id'], 'login', 'failure', ['reason' => 'invalid_credentials']);
             if (!empty($failure['locked_until'])) {
-                $this->logs->auth((int) $user['id'], 'lockout', 'success');
+                if ($failure['new_lock']) $this->logs->auth((int) $user['id'], 'lockout', 'success');
                 return ['ok' => false, 'message' => 'Too many failed sign-in attempts. This account is temporarily locked.'];
             }
-            $this->logs->auth((int) $user['id'], 'login', 'failure', ['reason' => 'invalid_credentials']);
             return ['ok' => false, 'message' => 'Invalid email/username or password.'];
         }
 
@@ -65,8 +70,17 @@ final class AuthService
             return ['ok' => true, 'next' => 'otp'];
         }
 
-        $requiresMfa = (bool) $user['mfa_enabled'] || in_array($user['role'], ['admin', 'catalog_manager'], true);
+        $requiresMfa = (bool) $user['mfa_enabled'] || in_array($user['role'], ['admin', 'catalog_manager'], true)
+            || $this->mfa->factor((int) $user['id']) !== null;
         if ($requiresMfa) {
+            $challenge = Session::get('pending_totp');
+            $factor = $this->mfa->factor((int) $user['id']);
+            if (is_array($challenge) && ($challenge['user_id'] ?? 0) === (int) $user['id']
+                && ($challenge['expires_at'] ?? 0) >= time() && $factor
+                && hash_equals($factor['credential_version'], (string) ($challenge['version'] ?? ''))) {
+                return ['ok' => true, 'next' => 'totp'];
+            }
+            Session::forget('pending_totp');
             $issued = $this->otp->issue((int) $user['id'], (string) $user['email'], 'login');
             if (!$issued['issued'] && !$issued['reusable']) return $this->cooldownResult($issued);
             Session::put('pending_flow', ['user_id' => (int) $user['id'], 'purpose' => 'login', 'email' => $user['email'], 'sent_at' => time()]);
@@ -78,7 +92,7 @@ final class AuthService
         return ['ok' => true, 'next' => 'dashboard'];
     }
 
-    public function verifyPendingOtp(string $code): array
+    public function verifyPendingOtp(#[\SensitiveParameter] string $code): array
     {
         $flow = Session::get('pending_flow');
         if (!is_array($flow) || empty($flow['user_id']) || empty($flow['purpose'])) {
@@ -102,11 +116,14 @@ final class AuthService
                 $this->users->activate($userId);
                 $this->logs->auth($userId, 'activation', 'success');
             } else {
+                if ($this->mfa->factor($userId) !== null) {
+                    return $result + ['user' => $user, 'totp_flow' => $this->mfa->loginChallenge($userId)];
+                }
                 // Eligibility and role remain authoritative under the account lock.
                 $this->users->resetFailures($userId);
                 $this->logs->auth($userId, 'login', 'success');
             }
-            return $result + ['user' => $user];
+            return $result + ['user' => $user, 'factor_version' => MfaService::sessionVersion($userId)];
         });
         if (!$verification['ok']) {
             if ($verification['reason'] === 'account_unavailable') return $this->unavailableResult();
@@ -128,7 +145,13 @@ final class AuthService
             return ['ok' => true, 'next' => 'login', 'message' => 'Your account is active. You can sign in now.'];
         }
 
-        $this->completeSession($verification['user']);
+        if (isset($verification['totp_flow'])) {
+            Session::forget('pending_flow');
+            Session::put('pending_totp', $verification['totp_flow']);
+            session_regenerate_id(true);
+            return ['ok' => true, 'next' => 'totp'];
+        }
+        $this->completeSession($verification['user'], $verification['factor_version'] ?? null);
         Session::forget('pending_flow');
         return ['ok' => true, 'next' => 'dashboard'];
     }
@@ -156,7 +179,8 @@ final class AuthService
             $current = $this->users->findById((int) $user['id'], true);
             if (!User::canAuthenticate($current)
                 || (bool) $current['mfa_enabled']
-                || in_array($current['role'], ['admin', 'catalog_manager'], true)) return null;
+                || in_array($current['role'], ['admin', 'catalog_manager'], true)
+                || $this->mfa->factor((int) $current['id']) !== null) return null;
             $this->users->resetFailures((int) $current['id']);
             $this->logs->auth((int) $current['id'], 'login', 'success');
             return $current;
@@ -166,7 +190,20 @@ final class AuthService
         return true;
     }
 
-    private function completeSession(array $user): void
+    public function verifyPendingAuthenticator(#[\SensitiveParameter] string $code): array
+    {
+        $flow = Session::get('pending_totp');
+        if (!is_array($flow)) return ['ok'=>false,'message'=>'Start the sign-in flow again.','expired'=>true];
+        $result = $this->mfa->verifyLogin($flow, $code);
+        if (!$result['ok']) {
+            if (!empty($result['expired'])) Session::forget('pending_totp');
+            return $result;
+        }
+        $this->completeSession($result['user'], $result['factor_version']);
+        return ['ok'=>true,'next'=>'dashboard'];
+    }
+
+    private function completeSession(array $user, ?string $factorVersion = null): void
     {
         Session::forgetAuth();
         session_regenerate_id(true);
@@ -177,6 +214,7 @@ final class AuthService
             'role' => $user['role'],
         ]);
         Session::put('last_activity', time());
+        if ($factorVersion !== null) Session::put('auth_mfa_version', $factorVersion);
     }
 
     private function cooldownResult(array $issued): array

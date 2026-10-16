@@ -1,9 +1,6 @@
-<section class="page-head">
-  <div>
-    <span class="eyebrow">ADMIN</span>
-    <h1>Authentication Logs</h1>
-    <p>Review login, OTP, activation, lockout, and logout events.</p>
-  </div>
+<section class="page-head"><div><span class="eyebrow">ADMINISTRATION</span><h1>Authentication Logs</h1><p>Authentication event history.</p></div></section>
+<section class="module-status" aria-labelledby="module-status-title">
+  <a class="btn btn-secondary" href="<?= e(url('/admin/security')) ?>">Open security controls</a>
 </section>
 
 <div class="table-card">

@@ -2,7 +2,7 @@
   <div>
     <span class="eyebrow">SYSTEM OVERVIEW</span>
     <h1>Welcome, <?= e($profile['full_name'] ?? 'Administrator') ?>.</h1>
-    <p>Manage accounts, orders, security, logs, and shared catalog access.</p>
+    <p>Review account counts, manage security controls, and access the shared catalog.</p>
   </div>
 </section>
 
@@ -16,19 +16,19 @@
 <div class="panel-grid">
   <div class="panel">
     <div class="panel-head">
-      <h2>Recent security activity</h2>
-      <a href="<?= e(url('/admin/auth-logs')) ?>">View logs</a>
+      <h2>Account security</h2>
+      <a href="<?= e(url('/admin/security')) ?>">Review locks</a>
     </div>
     <div class="table-empty">
-      <p>Authentication activity will be shown here once the log table is connected to this dashboard.</p>
+      <p>Review current account locks, recorded lock incidents, and the active password and session policy in Security.</p>
     </div>
   </div>
 
   <div class="panel">
     <div class="panel-head"><h2>Quick access</h2></div>
     <div class="quick-links">
-      <a href="<?= e(url('/admin/users')) ?>">Manage users</a>
-      <a href="<?= e(url('/admin/staff')) ?>">Staff &amp; roles</a>
+      <a href="<?= e(url('/admin/users')) ?>">Users (planned)</a>
+      <a href="<?= e(url('/admin/staff')) ?>">Staff &amp; roles (planned)</a>
       <a href="<?= e(url('/admin/security')) ?>">Security settings</a>
       <a href="<?= e(url('/catalog')) ?>">Catalog</a>
     </div>

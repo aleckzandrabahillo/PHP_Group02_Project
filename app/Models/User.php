@@ -104,26 +104,29 @@ final class User
 
     public function recordFailure(int $id): array
     {
-        $pdo = Database::connection();
-        $pdo->beginTransaction();
-        try {
-            $stmt = $pdo->prepare('SELECT failed_attempts FROM users WHERE id = :id FOR UPDATE');
-            $stmt->execute(['id' => $id]);
-            $attempts = (int) $stmt->fetchColumn() + 1;
-            $max = (int) env('MAX_LOGIN_ATTEMPTS', 5);
-            $lockedUntil = null;
-            if ($attempts >= $max) {
-                $minutes = (int) env('LOCKOUT_MINUTES', 15);
-                $lockedUntil = date('Y-m-d H:i:s', time() + ($minutes * 60));
+        $record = function (PDO $pdo) use ($id): array {
+            $user = $this->findById($id, true);
+            if (!$user) throw new \DomainException('Account unavailable.');
+            if (self::isLocked($user)) {
+                return ['attempts' => (int) $user['failed_attempts'], 'locked_until' => $user['locked_until'], 'new_lock' => false];
             }
-            $update = $pdo->prepare('UPDATE users SET failed_attempts = :attempts, locked_until = :locked_until, updated_at = NOW() WHERE id = :id');
-            $update->execute(['attempts' => $attempts, 'locked_until' => $lockedUntil, 'id' => $id]);
-            $pdo->commit();
-            return ['attempts' => $attempts, 'locked_until' => $lockedUntil];
-        } catch (\Throwable $e) {
-            if ($pdo->inTransaction()) $pdo->rollBack();
-            throw $e;
-        }
+            $policy = \App\Services\SecurityPolicy::values();
+            $attempts = ($user['locked_until'] === null ? (int) $user['failed_attempts'] : 0) + 1;
+            $attempts = min(255, $attempts);
+            $lockedUntil = $attempts >= $policy['max_login_attempts']
+                ? date('Y-m-d H:i:s', time() + $policy['lockout_minutes'] * 60) : null;
+            $pdo->prepare('UPDATE users SET failed_attempts=:attempts, locked_until=:until, updated_at=NOW() WHERE id=:id')
+                ->execute(['attempts' => $attempts, 'until' => $lockedUntil, 'id' => $id]);
+            if ($lockedUntil !== null) {
+                $pdo->prepare('INSERT INTO locked_accounts (user_id, username_snapshot, failed_attempts, locked_at, locked_until)
+                    VALUES (:user, :username, :attempts, NOW(), :until)')->execute([
+                        'user' => $id, 'username' => $user['username'], 'attempts' => $attempts, 'until' => $lockedUntil,
+                    ]);
+            }
+            return ['attempts' => $attempts, 'locked_until' => $lockedUntil, 'new_lock' => $lockedUntil !== null];
+        };
+        $pdo = Database::connection();
+        return $pdo->inTransaction() ? $record($pdo) : Database::transaction($record);
     }
 
     public function profileFor(int $id): array

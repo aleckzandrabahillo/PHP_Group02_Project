@@ -1,5 +1,12 @@
 {
     "require": {
+<<<<<<< HEAD
         "phpmailer/phpmailer": "^7.1"
+=======
+        "phpmailer/phpmailer": "*",
+        "spomky-labs/otphp": "^11.3",
+        "ext-openssl": "*",
+        "php": ">=8.2"
+>>>>>>> 96bb4b7507eb9410521a01e05f1253df57918204
     }
 }

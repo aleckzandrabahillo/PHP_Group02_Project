@@ -1,4 +1,12 @@
 .env
+.env.*
+!.env.example
+/*.sql
+*.sql.gz
+*.dump
+/backups/
+/storage/backups/
+/storage/sessions/
 
 /vendor/
 
@@ -15,4 +23,9 @@ public/uploads/products/*
 .DS_Store
 Thumbs.db
 
+<<<<<<< HEAD
 docs/IMPLEMENTATION_PLAN.md
+=======
+__pycache__/
+*.py[cod]
+>>>>>>> 96bb4b7507eb9410521a01e05f1253df57918204

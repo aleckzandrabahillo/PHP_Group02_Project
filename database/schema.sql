@@ -158,6 +158,10 @@ CREATE TABLE IF NOT EXISTS orders (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id BIGINT UNSIGNED NOT NULL,
   delivery_address_snapshot VARCHAR(500) NOT NULL,
+  recipient_name_snapshot VARCHAR(120) NULL,
+  contact_email_snapshot VARCHAR(190) NULL,
+  contact_no_snapshot VARCHAR(25) NULL,
+  checkout_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL,
   payment_method ENUM('cod','manual') NOT NULL DEFAULT 'cod',
   subtotal DECIMAL(10,2) NOT NULL,
   total DECIMAL(10,2) NOT NULL,
@@ -165,6 +169,7 @@ CREATE TABLE IF NOT EXISTS orders (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+  UNIQUE KEY uq_orders_checkout_key (checkout_key),
   INDEX idx_orders_user_status_date (user_id, status, created_at),
   INDEX idx_orders_status_date (status, created_at)
 ) ENGINE=InnoDB;
@@ -200,6 +205,16 @@ CREATE TABLE IF NOT EXISTS routine_items (
   CONSTRAINT fk_routine_item_routine FOREIGN KEY (routine_id) REFERENCES routines(id) ON DELETE CASCADE,
   CONSTRAINT fk_routine_item_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
   UNIQUE KEY uq_routine_step_order (routine_id, step_order)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS routine_contexts (
+  routine_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+  profile_version CHAR(64) NOT NULL,
+  plan_fingerprint CHAR(64) NOT NULL,
+  rules_version VARCHAR(20) NOT NULL,
+  explanation_json JSON NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_routine_context FOREIGN KEY (routine_id) REFERENCES routines(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS otp_codes (
@@ -252,7 +267,7 @@ CREATE TABLE IF NOT EXISTS security_settings (
 
 INSERT IGNORE INTO security_settings (setting_key, setting_value) VALUES
 ('password_min_length','12'),
-('max_login_attempts','5'),
+('max_login_attempts','3'),
 ('lockout_minutes','15'),
 ('session_timeout_minutes','30'),
 ('staff_mfa_required','1'),
@@ -291,3 +306,27 @@ SELECT p.id, t.id FROM products p JOIN tags t ON
     (p.sku='AVE-SER-001' AND ((t.tag_type='concern' AND t.code IN ('frizz','tangling')) OR (t.tag_type='texture' AND t.code IN ('straight','wavy','curly','coily')) OR (t.tag_type='scalp' AND t.code IN ('normal_scalp')))) OR
     (p.sku='AVE-OIL-001' AND ((t.tag_type='concern' AND t.code IN ('dryness','frizz','damage')) OR (t.tag_type='texture' AND t.code IN ('wavy','curly','coily')) OR (t.tag_type='scalp' AND t.code IN ('normal_scalp','dry_scalp')))) OR
     (p.sku='AVE-TOL-001' AND ((t.tag_type='concern' AND t.code IN ('tangling')) OR (t.tag_type='texture' AND t.code IN ('wavy','curly','coily'))));
+
+CREATE TABLE IF NOT EXISTS locked_accounts (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT UNSIGNED NULL,
+  username_snapshot VARCHAR(40) NOT NULL,
+  failed_attempts TINYINT UNSIGNED NOT NULL,
+  locked_at DATETIME NOT NULL,
+  locked_until DATETIME NOT NULL,
+  unlocked_at DATETIME NULL,
+  unlocked_by BIGINT UNSIGNED NULL,
+  CONSTRAINT fk_locked_account_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_locked_account_admin FOREIGN KEY (unlocked_by) REFERENCES users(id) ON DELETE SET NULL,
+  INDEX idx_locked_accounts_user_date (user_id, locked_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS user_authenticators (
+  user_id BIGINT UNSIGNED PRIMARY KEY,
+  secret_encrypted VARCHAR(512) NULL,
+  recovery_hashes_json TEXT NOT NULL,
+  last_used_step BIGINT NOT NULL DEFAULT -1,
+  enabled_at DATETIME NULL,
+  credential_version CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  CONSTRAINT fk_authenticator_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;

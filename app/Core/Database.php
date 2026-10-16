@@ -30,6 +30,10 @@ final class Database
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
             ]);
+            // DATETIME lock/OTP comparisons must use the same timezone as PHP on every host.
+            $zone = new \DateTimeZone((string) env('APP_TIMEZONE', 'Asia/Manila'));
+            $offset = (new \DateTimeImmutable('now', $zone))->format('P');
+            self::$pdo->exec('SET time_zone = ' . self::$pdo->quote($offset));
         } catch (PDOException $e) {
             throw new RuntimeException('Database connection failed. Check MySQL and your .env settings.', 0, $e);
         }
