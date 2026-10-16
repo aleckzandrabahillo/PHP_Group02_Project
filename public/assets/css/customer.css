@@ -271,15 +271,15 @@
   .customer-experience *,.customer-experience *::before,.customer-experience *::after {scroll-behavior:auto!important;animation:none!important;transition:none!important}
 }
 
-/* Brand story keeps the approved portrait and texture study separate from products. */
+/* Brand story reuses approved product photography and a separate texture study. */
 .customer-experience .about-hero {padding-top:0;align-items:center;grid-template-columns:1fr 1fr;gap:clamp(32px,6vw,100px)}
 .customer-experience .about-hero-copy h1 {font-size:clamp(40px,4.8vw,68px);letter-spacing:-.045em;line-height:1.08}
 .customer-experience .about-hero-copy p {font-size:13px;line-height:1.9}
-.about-portrait {margin:0;min-width:0;background:#151515}
-.about-portrait img {display:block;width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;object-position:center}
+.about-product-photo {margin:0;min-width:0;background:var(--greige)}
+.about-product-photo img {display:block;width:100%;height:auto;aspect-ratio:4/5;object-fit:contain;object-position:center}
 .about-texture {display:block;width:100%;max-height:400px;object-fit:cover;margin-bottom:24px}
 .customer-experience .about-balance p {font-size:13px;color:var(--muted);line-height:1.9}
-@media (max-width:760px) {.customer-experience .about-hero {grid-template-columns:1fr}.about-portrait img {aspect-ratio:4/3}}
+@media (max-width:760px) {.customer-experience .about-hero {grid-template-columns:1fr}.about-product-photo img {aspect-ratio:4/3}}
 
 .customer-experience .product-card-cta {display:flex;justify-content:space-between;align-items:center;border:1px solid #958679;min-height:44px;margin-top:18px;padding:10px 13px;font-size:11px;font-weight:500;color:var(--ink)}
 .customer-experience .product-card-main:hover .product-card-cta {background:var(--espresso);border-color:var(--espresso);color:var(--oat)}

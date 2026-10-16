@@ -10,7 +10,7 @@ $assessmentUrl = $currentRole === 'customer' ? url('/assessment') : url('/regist
       <h1 id="about-title">Hair care shopping, with a little more direction.</h1>
       <p>Avela is a hair care e-commerce system designed to make everyday product discovery clearer. Browse by category, compare product details, save favorites and place a demonstration Cash on Delivery order.</p>
     </div>
-    <figure class="about-portrait"><img src="<?= e(asset('images/editorial/about-campaign.webp')) ?>" alt="Portrait with flowing hair against a dark background" width="1800" height="1440" loading="eager" decoding="async"></figure>
+    <figure class="about-product-photo"><img src="<?= e(asset('images/products/demo/avela-ave-smp-002.webp')) ?>" alt="Approved Avela Everyday Fresh Shampoo demonstration packaging" width="1200" height="1500" loading="eager" decoding="async"></figure>
   </section>
 
   <section class="about-section about-principles" aria-labelledby="about-how-title">
