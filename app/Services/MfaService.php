@@ -85,7 +85,7 @@ final class MfaService
                 recovery_hashes_json=VALUES(recovery_hashes_json),last_used_step=VALUES(last_used_step),enabled_at=VALUES(enabled_at),credential_version=VALUES(credential_version)')->execute([
                     'user'=>$userId,'secret'=>$cipher->encrypt($userId,$secret),'hashes'=>json_encode($hashes,JSON_THROW_ON_ERROR),'step'=>$step,'version'=>$version,
                 ]);
-            $pdo->prepare('UPDATE users SET mfa_enabled=1,failed_attempts=0,locked_until=NULL,updated_at=NOW() WHERE id=?')->execute([$userId]);
+            $pdo->prepare('UPDATE users SET mfa_enabled=1,failed_attempts=0,locked_until=NULL,lock_requires_admin=0,updated_at=NOW() WHERE id=?')->execute([$userId]);
             $this->audit($pdo,$userId,'authenticator_enrolled');
             return ['ok'=>true,'codes'=>$plain,'version'=>$version];
         });
@@ -134,12 +134,22 @@ final class MfaService
             }
             $pdo->prepare('UPDATE user_authenticators SET secret_encrypted=NULL,recovery_hashes_json="[]",enabled_at=NULL,last_used_step=-1,credential_version=? WHERE user_id=?')
                 ->execute([bin2hex(random_bytes(32)),$userId]);
-            $pdo->prepare('UPDATE users SET failed_attempts=0,locked_until=NULL,updated_at=NOW() WHERE id=?')->execute([$userId]);
+            $pdo->prepare('UPDATE users SET failed_attempts=0,locked_until=NULL,lock_requires_admin=0,updated_at=NOW() WHERE id=?')->execute([$userId]);
             // Keep email MFA enabled, including for customers who opted into MFA.
             $this->audit($pdo,$userId,'authenticator_removed');return true;
         });
         if (!$result) throw new DomainException('Password and current authenticator/recovery code could not be confirmed.');
         Session::forget('mfa_recovery_codes');Session::forget('mfa_setup_flow');session_regenerate_id(true);
+    }
+
+    /** Private-console recovery only; never creates an authenticated session or bypasses a web login lock. */
+    public function administratorRecovery(PDO $pdo, int $id, #[\SensitiveParameter] string $password, #[\SensitiveParameter] string $code): bool
+    {
+        if (!$pdo->inTransaction()) throw new DomainException('Recovery requires an atomic operation.');
+        $user=$this->users->findById($id,true);
+        if (!$user || $user['role']!=='admin' || $user['status']!=='active' || !password_verify($password,$user['password_hash'])) return false;
+        $factor=$this->factor($id,true);
+        return $factor ? $this->consume($pdo,$factor,$code) : $this->otp->verify($id,'login',$code)['ok'];
     }
 
     private function consume(PDO $pdo, array $factor, #[\SensitiveParameter] string $code): bool
