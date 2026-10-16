@@ -367,3 +367,10 @@
   .customer-experience *, .customer-experience *::before, .customer-experience *::after {transition-duration:.01ms !important;animation-duration:.01ms !important;scroll-behavior:auto !important}
 }
 @media(max-width:360px){.customer-experience.auth-body {padding-inline:8px}}
+
+.privacy-content {max-width:820px;margin-inline:auto;line-height:1.75}
+.privacy-content h1 {margin:12px 0 24px}
+.privacy-content h2 {margin:36px 0 12px;font-size:22px}
+.privacy-content ul {padding-left:24px}
+.privacy-content li {margin-bottom:10px}
+.privacy-content a {text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}

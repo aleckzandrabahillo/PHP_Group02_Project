@@ -22,6 +22,7 @@
     <?php require dirname(__DIR__) . '/partials/flashes.php'; ?>
     <h1 class="sr-only"><?= e($pageTitle ?? 'Your account') ?></h1>
     <?= $content ?>
+    <p class="auth-switch"><a href="<?= e(url('/privacy')) ?>">Privacy &amp; cookies</a></p>
   </main>
 </div>
 <script src="<?= e(asset('js/app.js')) ?>" defer></script>
