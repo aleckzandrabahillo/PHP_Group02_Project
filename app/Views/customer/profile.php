@@ -1,168 +1,23 @@
-<section class="page-head">
-  <div>
-    <span class="eyebrow">PROFILE</span>
-    <h1 class="sr-only">Profile</h1>
-  </div>
-</section>
-
+<?php $profile = $profile ?? []; ?>
+<section class="page-head"><div><span class="eyebrow">YOUR ACCOUNT</span><h1>Profile</h1><p>Keep your everyday details in one place.</p></div><a class="btn btn-secondary" href="<?= e(url('/account/mfa')) ?>">Authenticator settings</a></section>
 <div class="profile-card">
-
-  <form
-    method="POST"
-    action="/profile/image"
-    enctype="multipart/form-data"
-    class="profile-avatar-form"
-  >
+  <form method="post" action="<?= e(url('/profile/image')) ?>" enctype="multipart/form-data" class="customer-avatar-form">
     <?= csrf_field() ?>
-
-    <label
-      class="profile-avatar-edit"
-      for="profile_image"
-      title="Change profile picture"
-    >
-      <div class="avatar large">
-        <?php if (!empty($profile['profile_image'])): ?>
-          <img
-            src="<?= e(url('/' . ltrim($profile['profile_image'], '/'))) ?>"
-            alt="Profile picture"
-          >
-        <?php else: ?>
-          <?= e(strtoupper(substr($profile['full_name'] ?? $profile['username'] ?? 'A', 0, 1))) ?>
-        <?php endif; ?>
-      </div>
-
-      <span class="profile-avatar-pen" aria-hidden="true">✎</span>
-    </label>
-
-    <input
-      type="file"
-      id="profile_image"
-      name="profile_image"
-      accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-      hidden
-      onchange="this.form.submit()"
-    >
+    <div class="avatar large">
+      <?php if (!empty($profile['profile_image'])): ?><img src="<?= e(url('/' . ltrim($profile['profile_image'], '/'))) ?>" alt="Your profile picture"><?php else: ?><?= e(strtoupper(substr($profile['full_name'] ?? $profile['username'] ?? 'A',0,1))) ?><?php endif; ?>
+    </div>
+    <label class="field" for="profile_image"><span>Profile photograph</span><input type="file" id="profile_image" name="profile_image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" required></label>
+    <button class="btn btn-secondary" type="submit">Update photograph</button>
   </form>
-
-  <div class="profile-info">
-
-    <form
-      method="POST"
-      action="<?= e(url('/profile/update')) ?>"
-      id="profile-update-form"
-    >
-      <?= csrf_field() ?>
-
-      <!-- Full Name: existing displayed element -->
-      <h2
-        id="profile-full-name"
-        class="profile-full-name"
-        contenteditable="false"
-      ><?= e($profile['full_name'] ?? '') ?></h2>
-
-      <!-- Email: existing displayed element -->
-      <p
-        id="profile-email"
-        class="profile-editable profile-email"
-        contenteditable="false"
-      ><?= e($profile['email'] ?? '') ?></p>
-
-      <div class="profile-meta">
-
-        <!-- Username: NOT editable -->
-        <span>
-          @<?= e($profile['username'] ?? '') ?>
-        </span>
-
-        <!-- Contact Number: existing displayed element -->
-        <span
-          id="profile-contact"
-          class="profile-editable profile-contact"
-          contenteditable="false"
-        ><?= e($profile['contact_no'] ?: 'No contact number yet') ?></span>
-
-        <!-- Delivery Address: existing displayed element -->
-        <span
-          id="profile-address"
-          class="profile-editable profile-address"
-          contenteditable="false"
-        ><?= e($profile['delivery_address'] ?: 'No delivery address yet') ?></span>
-
-      </div>
-
-      <!-- Hidden fields: no visible textboxes -->
-      <input type="hidden" name="full_name" id="profile-full-name-input">
-      <input type="hidden" name="email" id="profile-email-input">
-      <input type="hidden" name="contact_no" id="profile-contact-input">
-      <input type="hidden" name="delivery_address" id="profile-address-input">
-
-      <div class="profile-actions">
-        <button
-          type="button"
-          id="profile-edit-button"
-          class="profile-edit-button"
-        >
-          Edit
-        </button>
-      </div>
-
-    </form>
-
-  </div>
+  <form method="post" action="<?= e(url('/profile/update')) ?>" class="form-stack customer-profile-form">
+    <?= csrf_field() ?>
+    <p class="muted">Signed in as @<?= e($profile['username'] ?? '') ?></p>
+    <label class="field"><span>Full name</span><input name="full_name" value="<?= e($profile['full_name'] ?? '') ?>" maxlength="100" autocomplete="name" required></label>
+    <label class="field"><span>Email address</span><input type="email" name="email" value="<?= e($profile['email'] ?? '') ?>" maxlength="255" autocomplete="email" required></label>
+    <label class="field"><span>Contact number <small>(optional)</small></span><input type="tel" name="contact_no" value="<?= e($profile['contact_no'] ?? '') ?>" maxlength="30" autocomplete="tel" aria-describedby="profile-phone-help"></label>
+    <small class="muted" id="profile-phone-help">Used for contact. Phone numbers are not verified.</small>
+    <label class="field"><span>Delivery address <small>(optional)</small></span><textarea name="delivery_address" rows="3" maxlength="255" autocomplete="street-address"><?= e($profile['delivery_address'] ?? '') ?></textarea></label>
+    <p class="muted small" id="profile-verification-help">Changes require a verification code sent to your current email address before they are saved.</p>
+    <button class="btn btn-primary" type="submit" aria-describedby="profile-verification-help">Review changes with email verification</button>
+  </form>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const editButton = document.getElementById('profile-edit-button');
-  const form = document.getElementById('profile-update-form');
-
-  const fields = [
-    document.getElementById('profile-full-name'),
-    document.getElementById('profile-email'),
-    document.getElementById('profile-contact'),
-    document.getElementById('profile-address')
-  ];
-
-  const hiddenInputs = {
-    fullName: document.getElementById('profile-full-name-input'),
-    email: document.getElementById('profile-email-input'),
-    contactNo: document.getElementById('profile-contact-input'),
-    address: document.getElementById('profile-address-input')
-  };
-
-  let editing = false;
-
-  editButton.addEventListener('click', function () {
-
-    if (!editing) {
-      editing = true;
-
-      fields.forEach(function (field) {
-        field.contentEditable = 'true';
-      });
-
-      editButton.textContent = 'Update';
-
-      fields[0].focus();
-
-      const selection = window.getSelection();
-      const range = document.createRange();
-
-      range.selectNodeContents(fields[0]);
-      range.collapse(false);
-
-      selection.removeAllRanges();
-      selection.addRange(range);
-
-      return;
-    }
-
-    hiddenInputs.fullName.value = fields[0].textContent.trim();
-    hiddenInputs.email.value = fields[1].textContent.trim();
-    hiddenInputs.contactNo.value = fields[2].textContent.trim();
-    hiddenInputs.address.value = fields[3].textContent.trim();
-
-    form.submit();
-  });
-});
-</script>

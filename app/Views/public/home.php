@@ -1,99 +1,56 @@
 <?php
-$heroProduct = null;
-foreach (($featuredProducts ?? []) as $candidate) {
-    if ($candidate['sku'] === 'AVE-SMP-001') {
-        $heroProduct = $candidate;
-        break;
-    }
-}
+$homeRole = auth_user()['role'] ?? null;
+$profileLink = $homeRole === 'customer' ? url('/assessment') : ($homeRole === null ? url('/login') : url('/shop'));
 ?>
-<main id="main-content" tabindex="-1" class="store-home storefront-home">
-  <section class="campaign-hero" aria-labelledby="home-hero-title">
-    <div class="campaign-copy">
-      <span class="eyebrow">THE EVERYDAY COLLECTION</span>
-      <h1 id="home-hero-title">Hair care,<br><em>at your pace.</em></h1>
-      <p>From your first wash to the finishing touch. Find the essentials that fit your everyday routine.</p>
+<main id="main-content" tabindex="-1" class="editorial-home">
+  <section class="editorial-hero" aria-labelledby="home-hero-title">
+    <div class="editorial-hero-visual">
+      <img src="<?= e(asset('images/editorial/hair-campaign.jpg')) ?>" alt="Natural curls photographed close up in warm light" width="2400" height="1998" fetchpriority="high" decoding="async">
+    </div>
+    <div class="editorial-hero-copy">
+      <h1 id="home-hero-title">A routine that<br>starts with you.</h1>
       <div class="hero-actions">
-        <a class="btn btn-primary" href="<?= e(url('/shop')) ?>">Shop products <span aria-hidden="true">↗</span></a>
-        <a class="campaign-text-link" href="#featured">Explore the collection</a>
+        <a class="btn btn-primary" href="<?= e($profileLink) ?>"><?= $homeRole === 'admin' || $homeRole === 'catalog_manager' ? 'Explore the catalog' : 'Find your routine' ?><span aria-hidden="true">→</span></a>
+        <a class="editorial-text-link" href="<?= e(url('/shop')) ?>">Shop Avela <span aria-hidden="true">↗</span></a>
       </div>
-      <p class="campaign-note">Cleanse. Condition. Finish.<br>A little time for yourself, every day.</p>
     </div>
-    <figure class="campaign-image">
-      <a href="<?= e($heroProduct ? url('/product?id=' . (int) $heroProduct['id']) : url('/shop')) ?>" aria-label="<?= e($heroProduct ? 'View ' . $heroProduct['name'] : 'Explore Avela products') ?>">
-        <img src="<?= e(asset('images/products/demo/avela-ave-smp-001.webp')) ?>" alt="Avela Gentle Hydrating Shampoo" width="1200" height="1500" fetchpriority="high" decoding="async">
-      </a>
-      <figcaption><span><?= e($heroProduct['name'] ?? 'The Avela collection') ?></span><?php if ($heroProduct): ?><strong>₱<?= e(number_format((float) $heroProduct['price'], 2)) ?></strong><?php endif; ?></figcaption>
-    </figure>
+    <div class="editorial-hero-caption"><span>INDIVIDUAL HAIR. CONSIDERED CARE.</span><span>THE AVELA APPROACH</span></div>
   </section>
-
-  <section class="store-section home-section category-section">
-    <div class="section-heading-row">
-      <div>
-        <span class="eyebrow">SHOP BY CATEGORY</span>
-        <h2>Your routine, step by step.</h2>
-      </div>
-      <a href="<?= e(url('/shop')) ?>">View all products</a>
-    </div>
-    <div class="category-grid">
-      <?php foreach (($categories ?? []) as $index => $category): ?>
-        <a class="category-card" href="<?= e(url('/shop?category[]=' . (int) $category['id'])) ?>">
-          <span class="category-copy">
-            <small><?= e(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)) ?></small>
-            <strong><?= e($category['name']) ?></strong>
-            <span>Explore <?= e(strtolower($category['name'])) ?></span>
-          </span>
-        </a>
-      <?php endforeach; ?>
-    </div>
-  </section>
-
-  <section class="store-section home-section" id="featured">
-    <div class="section-heading-row">
-      <div>
-        <span class="eyebrow">FROM THE CATALOG</span>
-        <h2>The everyday essentials.</h2>
-      </div>
-      <a href="<?= e(url('/shop')) ?>">Shop the catalog</a>
-    </div>
+  <section class="editorial-section" id="featured" aria-labelledby="home-shop-title">
+    <div class="editorial-section-heading"><h2 id="home-shop-title">Shop Avela.</h2><span>Care for your everyday.</span></div>
+    <nav class="category-tabs" aria-label="Browse product categories">
+      <a href="<?= e(url('/shop')) ?>">All care</a>
+      <?php foreach (($categories ?? []) as $category): ?><a href="<?= e(url('/shop?category[]=' . (int) $category['id'])) ?>"><?= e($category['name']) ?></a><?php endforeach; ?>
+    </nav>
     <?php if (!empty($featuredProducts)): ?>
       <div class="product-grid">
         <?php foreach ($featuredProducts as $product): ?>
           <?php $showExcerpt = false; require dirname(__DIR__) . '/partials/product_card.php'; ?>
         <?php endforeach; ?>
       </div>
-    <?php else: ?>
-      <div class="empty-store-state"><p>The catalog is being prepared. Products added by the Catalog Manager will appear here.</p></div>
-    <?php endif; ?>
+    <?php else: ?><div class="empty-store-state"><p>New additions to the catalog will appear here.</p></div><?php endif; ?>
+    <div class="editorial-collection-footer"><span>Selected from our demonstration collection.</span><a class="editorial-text-link" href="<?= e(url('/shop')) ?>">View all care <span aria-hidden="true">→</span></a></div>
   </section>
-
-  <?php if (!empty($concerns)): ?>
-    <section class="store-section home-section concern-section">
-      <div class="section-heading-row">
-        <div>
-          <span class="eyebrow">SHOP BY HAIR CONCERN</span>
-          <h2>Browse around what matters to your hair.</h2>
-        </div>
-        <a href="<?= e(url('/shop')) ?>">Browse all hair care</a>
-      </div>
-      <div class="concern-grid">
-        <?php foreach ($concerns as $index => $concern): ?>
-          <a class="concern-card" href="<?= e(url('/shop?concern[]=' . rawurlencode((string) $concern['code']))) ?>">
-            <span class="concern-card-index"><?= e(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)) ?></span>
-            <span class="concern-card-copy"><strong><?= e($concern['display_name']) ?></strong><span>View matching products</span></span>
-            <span class="concern-card-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13M14 7l5 5-5 5"/></svg></span>
-          </a>
+  <section class="editorial-concerns" aria-labelledby="home-concern-title">
+    <figure><img src="<?= e(asset('images/editorial/hair-editorial.jpg')) ?>" alt="A close-up study of flowing brunette hair" width="1200" height="1800" loading="lazy" decoding="async"><figcaption>THE TEXTURE OF YOU.</figcaption></figure>
+    <div class="editorial-concern-copy">
+      <h2 id="home-concern-title">Start with<br>what you notice.</h2>
+      <p>Different hair. Different needs. Find your starting point.</p>
+      <div class="editorial-concern-links">
+        <?php foreach (($concerns ?? []) as $concern): ?>
+          <a href="<?= e(url('/shop?concern[]=' . rawurlencode((string) $concern['code']))) ?>"><?= e($concern['display_name']) ?><span aria-hidden="true">↗</span></a>
         <?php endforeach; ?>
       </div>
-    </section>
-  <?php endif; ?>
-
-  <section class="assessment-promo home-section">
-    <div>
-      <span class="eyebrow">FIND YOUR EVERYDAY CARE</span>
-      <h2>Start with what your hair needs.</h2>
-      <p>Save a hair profile, explore products with clear match reasons, and keep a simple routine for your wash days.</p>
+      <small>Browse the catalog by its listed suitability tags.</small>
     </div>
-    <a class="btn btn-primary" href="<?= e(url('/shop')) ?>">Explore hair care</a>
+  </section>
+  <section class="editorial-section editorial-approach" aria-labelledby="home-approach-title">
+    <div><h2 id="home-approach-title">A little about you.<br>A clearer kind of care.</h2><p>Your texture, scalp and concerns. Build a shortlist with explanations you can understand.</p><a class="editorial-text-link" href="<?= e($profileLink) ?>">Explore your care <span aria-hidden="true">→</span></a></div>
+    <div class="editorial-approach-details">
+      <article><h3>A profile, not a guess.</h3><p>Choose your hair details and add an optional description in English or Taglish.</p></article>
+      <article><h3>Know why it matches.</h3><p>Simple language rules and catalog suitability tags give each supported match a clear reason.</p></article>
+      <article><h3>Keep it together.</h3><p>Save your routine, review current prices and availability, and add only what you need to your bag.</p></article>
+      <p class="editorial-disclosure">Avela is a student demonstration store. Matching uses fictional catalog specifications, not verified formulation benefits or medical advice.</p>
+    </div>
   </section>
 </main>

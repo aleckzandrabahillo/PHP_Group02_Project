@@ -43,6 +43,7 @@
     <button class="btn btn-primary" id="profile-submit" type="submit"><?= $hairProfile ? 'Update hair profile' : 'Save hair profile' ?></button>
   </form>
   <aside class="hair-profile-summary">
+    <img class="assessment-editorial" src="<?= e(asset('images/editorial/assessment-lather.jpg')) ?>" alt="A close-up of lather in a hand" width="1200" height="800" loading="lazy" decoding="async">
     <span class="eyebrow"><?= $hairProfile ? 'SAVED TO YOUR ACCOUNT' : 'A LITTLE CONTEXT GOES A LONG WAY' ?></span>
     <h2><?= $hairProfile ? 'Your profile, at a glance.' : 'Scalp and lengths have different needs.' ?></h2>
     <?php if ($hairProfile): ?>

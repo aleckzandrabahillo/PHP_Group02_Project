@@ -961,7 +961,7 @@ function syncStoreHeader() {
   const header = document.querySelector('[data-site-header][data-header-overlay="true"]');
   if (!(header instanceof HTMLElement)) return;
 
-  const transitionDistance = Math.max(150, Math.min(230, window.innerHeight * 0.24));
+  const transitionDistance = 24;
   const progress = Math.min(1, Math.max(0, window.scrollY / transitionDistance));
 
   header.style.setProperty('--header-bg-alpha', (0.96 * progress).toFixed(3));
