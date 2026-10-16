@@ -131,7 +131,7 @@ try {
     check('Unlock history and audit recorded', (int) $pdo->query('SELECT COUNT(*) FROM locked_accounts WHERE user_id=' . $customer['id'] . ' AND unlocked_by=' . $admin['id'])->fetchColumn() === 1 && (int) $pdo->query('SELECT COUNT(*) FROM audit_logs WHERE action="account_unlocked" AND target_id=' . $customer['id'])->fetchColumn() === 1);
     $pdo->prepare('UPDATE users SET failed_attempts=3,locked_until=DATE_SUB(NOW(),INTERVAL 1 SECOND) WHERE id=?')->execute([$customer['id']]);
     $users->recordFailure($customer['id']);
-    check('Expired lock starts a fresh failure window', (int) $users->findById($customer['id'])['failed_attempts'] === 1 && $users->findById($customer['id'])['locked_until'] === null);
+    check('Legacy expired non-persistent lock starts a fresh failure window', (int) $users->findById($customer['id'])['failed_attempts'] === 1 && $users->findById($customer['id'])['locked_until'] === null);
     $workers = [];
     for ($i=0; $i<5; $i++) {
         $command = [PHP_BINARY, __FILE__, ...array_slice($argv, 1), '--worker=' . $customer['id']];

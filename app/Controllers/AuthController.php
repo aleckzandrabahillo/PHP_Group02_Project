@@ -32,6 +32,11 @@ final class AuthController
     {
         AuthGuard::guest();
         Csrf::enforce($_POST['_token'] ?? null);
+        if (!\App\Services\RequestThrottle::allow('login', (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'), 30, 60)) {
+            http_response_code(429);
+            header('Retry-After: 60');
+            exit('Too many sign-in requests. Wait a minute before trying again.');
+        }
         $errors = Validator::login($_POST);
        $recaptchaResponse = (string) ($_POST['g-recaptcha-response'] ?? '');
 

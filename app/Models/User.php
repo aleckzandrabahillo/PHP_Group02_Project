@@ -26,7 +26,8 @@ final class User
 
     public static function isLocked(array $user): bool
     {
-        return !empty($user['locked_until']) && strtotime((string) $user['locked_until']) > time();
+        return (int) ($user['lock_requires_admin'] ?? 0) === 1
+            || (!empty($user['locked_until']) && strtotime((string) $user['locked_until']) > time());
     }
 
     public static function canAuthenticate(?array $user): bool
@@ -98,7 +99,7 @@ final class User
 
     public function resetFailures(int $id): void
     {
-        $stmt = Database::connection()->prepare('UPDATE users SET failed_attempts = 0, locked_until = NULL, last_login_at = NOW(), updated_at = NOW() WHERE id = :id');
+        $stmt = Database::connection()->prepare('UPDATE users SET failed_attempts = 0, locked_until = NULL, lock_requires_admin = 0, last_login_at = NOW(), updated_at = NOW() WHERE id = :id');
         $stmt->execute(['id' => $id]);
     }
 
@@ -115,8 +116,8 @@ final class User
             $attempts = min(255, $attempts);
             $lockedUntil = $attempts >= $policy['max_login_attempts']
                 ? date('Y-m-d H:i:s', time() + $policy['lockout_minutes'] * 60) : null;
-            $pdo->prepare('UPDATE users SET failed_attempts=:attempts, locked_until=:until, updated_at=NOW() WHERE id=:id')
-                ->execute(['attempts' => $attempts, 'until' => $lockedUntil, 'id' => $id]);
+            $pdo->prepare('UPDATE users SET failed_attempts=:attempts, locked_until=:until, lock_requires_admin=:persistent, updated_at=NOW() WHERE id=:id')
+                ->execute(['attempts' => $attempts, 'until' => $lockedUntil, 'persistent' => $lockedUntil !== null ? 1 : 0, 'id' => $id]);
             if ($lockedUntil !== null) {
                 $pdo->prepare('INSERT INTO locked_accounts (user_id, username_snapshot, failed_attempts, locked_at, locked_until)
                     VALUES (:user, :username, :attempts, NOW(), :until)')->execute([

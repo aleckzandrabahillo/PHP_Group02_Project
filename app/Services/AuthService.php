@@ -44,7 +44,7 @@ final class AuthService
 
         if (User::isLocked($user)) {
             $this->logs->auth((int) $user['id'], 'login', 'failure', ['reason' => 'locked']);
-            return ['ok' => false, 'message' => 'This account is temporarily locked. Try again later or contact an administrator.'];
+            return ['ok' => false, 'message' => 'This account is locked. Contact an Administrator to restore access.'];
         }
 
         if (!password_verify($password, (string) $user['password_hash'])) {
@@ -52,7 +52,7 @@ final class AuthService
             $this->logs->auth((int) $user['id'], 'login', 'failure', ['reason' => 'invalid_credentials']);
             if (!empty($failure['locked_until'])) {
                 if ($failure['new_lock']) $this->logs->auth((int) $user['id'], 'lockout', 'success');
-                return ['ok' => false, 'message' => 'Too many failed sign-in attempts. This account is temporarily locked.'];
+                return ['ok' => false, 'message' => 'Too many failed sign-in attempts. Contact an Administrator to restore access.'];
             }
             return ['ok' => false, 'message' => 'Invalid email/username or password.'];
         }

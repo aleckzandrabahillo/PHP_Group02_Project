@@ -35,9 +35,9 @@ final class SecurityManagement
             $this->administrator($actorId);
             $user = (new User())->findById($userId, true);
             if (!$user || !User::isLocked($user) || $user['locked_until'] !== $expectedLock) {
-                throw new DomainException('The account lock changed or expired. Refresh the page before trying again.');
+                throw new DomainException('The account lock changed or was released. Refresh the page before trying again.');
             }
-            $pdo->prepare('UPDATE users SET failed_attempts=0, locked_until=NULL, updated_at=NOW() WHERE id=?')
+            $pdo->prepare('UPDATE users SET failed_attempts=0, locked_until=NULL, lock_requires_admin=0, updated_at=NOW() WHERE id=?')
                 ->execute([$userId]);
             $pdo->prepare('UPDATE locked_accounts SET unlocked_at=NOW(), unlocked_by=:actor
                 WHERE user_id=:user AND locked_until=:until AND unlocked_at IS NULL')
@@ -49,7 +49,7 @@ final class SecurityManagement
     public function lockedAccounts(): array
     {
         return Database::connection()->query('SELECT id, username, role, status, failed_attempts, locked_until
-            FROM users WHERE locked_until > NOW() ORDER BY locked_until DESC, id DESC LIMIT 100')->fetchAll();
+            FROM users WHERE locked_until IS NOT NULL AND (lock_requires_admin=1 OR locked_until>NOW()) ORDER BY locked_until DESC, id DESC LIMIT 100')->fetchAll();
     }
 
     public function history(int $beforeId = 0): array
