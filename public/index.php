@@ -49,6 +49,7 @@ $catalog = new CatalogController($dashboard, $users, $products);
 $admin = new AdminController($dashboard, $users);
 $security = new \App\Controllers\SecurityController(new \App\Services\SecurityManagement());
 $mfa = new \App\Controllers\MfaController(new \App\Services\MfaService($users, $otp, $logs), $authService);
+$hairProfile = new \App\Controllers\HairProfileController(new \App\Models\HairProfile(), new \App\Services\ConcernInterpreter());
 
 $router = new Router();
 $router->get('/', [$public, 'landing']);
@@ -74,7 +75,8 @@ $router->post('/account/mfa', [$mfa, 'manage']);
 $router->get('/account/mfa/recovery', [$mfa, 'recovery']);
 
 $router->get('/customer', [$customer, 'dashboard']);
-$router->get('/assessment', fn() => $customer->page('assessment','Hair Assessment'));
+$router->get('/assessment', [$hairProfile, 'assessment']);
+$router->post('/assessment', [$hairProfile, 'save']);
 $router->get('/routine', [$customer, 'routine']);
 $router->get('/cart', [$customer, 'cart']);
 $router->get('/checkout', [$customer, 'checkout']);

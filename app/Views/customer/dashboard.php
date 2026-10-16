@@ -22,8 +22,8 @@
 
   <a class="action-card" href="<?= e(url('/assessment')) ?>">
     <span>Hair Profile</span>
-    <h3>Hair profile preview</h3>
-    <p>Profile collection and text analysis are planned; this preview does not save responses.</p>
+    <h3>Your hair profile</h3>
+    <p>Save your texture, scalp and length characteristics. Describe concerns in English or Taglish.</p>
   </a>
 
   <a class="action-card" href="<?= e(url('/routine')) ?>">

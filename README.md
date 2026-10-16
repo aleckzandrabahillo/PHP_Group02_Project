@@ -10,10 +10,13 @@ A student hair-care demonstration store for Group 02's Open Source Programming a
 - Catalog Manager/Administrator Category and Product CRUD, image uploads, archive/reactivation and guarded inventory updates.
 - Staff email OTP, optional authenticator enrollment/recovery, bounded login lockout, Administrator unlock/history, password and session policies.
 - Responsive customer/staff pages and staff list filtering, sorting and paging over loaded records.
+- Private, editable hair profiles with separate scalp/length characteristics and bounded English/Taglish concern interpretation using Python.
 
-Hair-profile collection, Python lightweight NLP and new personalized routine building remain planned. Administrator account/order/log viewers are unfinished; recorded authentication and supported mutation audits are distinct from those viewers. Mandatory MFA coverage, activation format, expiration, sensitive-field encryption, privacy/cookie policy, gateway scope and hosted deployment still need final decisions or evidence.
+Personalized product matching and new routine building remain separate increments. Administrator account/order/log viewers are unfinished; recorded authentication and supported mutation audits are distinct from those viewers. Mandatory MFA coverage, activation format, expiration, sensitive-field encryption, privacy/cookie policy, gateway scope and hosted deployment still need final decisions or evidence.
 
 ## Local setup
+
+Concern interpretation requires Python **3.10+** (standard library only) and PHP proc_open. Configure a working NLP_PYTHON_BINARY in private .env; no Python service, packages or external API is required. See [hair-profile setup and limitations](docs/HAIR_PROFILE.md).
 
 Requires PHP **8.2+**, Composer, MySQL/MariaDB with InnoDB, and PHP `pdo_mysql`, `mbstring`, `fileinfo` and `openssl`. PHP must support HTTPS requests for Google verification. Enable required extensions in your development environment; do not replace locked dependencies with an update.
 

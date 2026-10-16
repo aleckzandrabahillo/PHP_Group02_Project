@@ -975,3 +975,6 @@ function syncStoreHeader() {
 window.addEventListener('scroll', syncStoreHeader, {passive: true});
 window.addEventListener('resize', syncStoreHeader);
 document.addEventListener('DOMContentLoaded', syncStoreHeader);
+
+const hairErrorSummary = document.querySelector('[data-error-summary]');
+if (hairErrorSummary) hairErrorSummary.focus();

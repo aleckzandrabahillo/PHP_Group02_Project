@@ -1147,3 +1147,30 @@ html {scroll-padding-top:calc(var(--header-height) + 20px)}
   .staff-main {padding:24px 16px 48px}
   .data-table .btn-sm,.staff-list-summary .btn-sm {min-height:44px}
 }
+
+/* Owner-bound hair assessment. Native controls retain keyboard and touch behavior. */
+.hair-profile-layout {display:grid;grid-template-columns:minmax(0,1.8fr) minmax(260px,1fr);gap:40px;align-items:start}
+.hair-profile-form {min-width:0;background:#fff;border:1px solid var(--line,#e4dad5);padding:32px;border-radius:8px}
+.hair-fieldset {border:0;padding:0;margin:0 0 28px;min-width:0}
+.hair-fieldset legend {font-size:18px;font-weight:650;margin-bottom:8px}
+.hair-fieldset>p {margin:0 0 12px;line-height:1.6}
+.hair-choice-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.hair-choice {display:flex;align-items:center;gap:12px;padding:14px;border:1px solid #d9c9c5;border-radius:4px;cursor:pointer;min-height:48px;line-height:1.45}
+.hair-choice input {width:18px;height:18px;margin:0;flex:0 0 18px;accent-color:var(--berry)}
+.hair-choice:has(input:checked) {border-color:var(--berry);background:var(--mist)}
+.hair-choice:focus-within {outline:2px solid var(--berry);outline-offset:2px}
+.hair-profile-summary {padding:28px;background:var(--mist);border-radius:8px;line-height:1.65}
+.hair-profile-summary h2 {font-size:28px;line-height:1.2;margin:12px 0 24px}
+.hair-profile-summary dl {display:grid;grid-template-columns:1fr 1.5fr;gap:10px}
+.hair-profile-summary dd {margin:0;font-weight:600}
+.hair-profile-summary dt {color:#655b5c}
+.hair-tag-list {padding-left:20px}
+.hair-tag-list small {display:block;color:#655b5c}
+.hair-profile-form textarea {width:100%;resize:vertical;min-height:120px}
+.hair-profile-form .field {display:block}
+.hair-profile-form [data-error-summary] h2 {font-size:18px}
+.hair-profile-form [data-error-summary] a {text-decoration:underline}
+.hair-profile-summary details {border-top:1px solid #d4c1ba;margin:20px 0;padding-top:16px}
+.hair-profile-summary summary {cursor:pointer;min-height:44px}
+@media(max-width:800px) {.hair-profile-layout {grid-template-columns:minmax(0,1fr);gap:24px}.hair-profile-form {padding:22px}.hair-profile-summary {padding:24px}}
+@media(max-width:420px) {.hair-choice-grid {grid-template-columns:minmax(0,1fr)}.hair-profile-form {padding:18px}}
