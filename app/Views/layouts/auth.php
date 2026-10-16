@@ -15,7 +15,8 @@
   <aside class="auth-art">
     <span class="eyebrow">PERSONAL HAIR CARE</span>
     <h2>Care that starts with understanding your hair.</h2>
-    <p>Browse everyday hair care, compare product details, and keep your bag and orders in one place.</p>
+    <p>Everyday essentials. A personal shortlist. Your care, at your own pace.</p>
+    <img class="auth-editorial" src="<?= e(asset('images/editorial/hair-editorial.jpg')) ?>" alt="" width="1200" height="1598" decoding="async">
   </aside>
   <main id="main-content" tabindex="-1" class="auth-panel">
     <?php require dirname(__DIR__) . '/partials/flashes.php'; ?>

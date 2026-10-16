@@ -47,7 +47,14 @@ final class CustomerController
     public function page(string $view, string $title): void
     {
         $user = AuthGuard::roles(['customer']);
+        header('Cache-Control: no-store, private');
+        $extra = [];
+        if ($view === 'profile') {
+            $mfa = new \App\Services\MfaService($this->users, $this->otp, new \App\Services\LogService());
+            $extra['authenticatorEnrolled'] = $mfa->factor((int) $user['id']) !== null;
+        }
         View::render('customer/' . $view, [
+            ...$extra,
             'pageTitle' => $title,
             ...$this->commonData((int) $user['id']),
         ]);
@@ -266,10 +273,18 @@ final class CustomerController
         Response::redirect('/cart');
     }
 
+    public function favoriteState(): void
+    {
+        $user = AuthGuard::roles(['customer']);
+        header('Cache-Control: no-store, private');
+        $ids = $this->favorites->idsForUser((int) $user['id']);
+        Response::json(['ok' => true, 'ids' => $ids, 'count' => count($ids)]);
+    }
+
     public function toggleFavorite(): void
     {
         $user = AuthGuard::roles(['customer']);
-        Csrf::enforce($_POST['_token'] ?? null);
+        Csrf::enforce(is_string($_POST['_token'] ?? null) ? $_POST['_token'] : null);
 
         $productId = filter_var($_POST['product_id'] ?? null, FILTER_VALIDATE_INT);
         if ($productId === false || $productId < 1) {
@@ -464,35 +479,29 @@ public function profileOtpForm(): void
     public function updateProfile(): void
     {
         $user = AuthGuard::roles(['customer']);
-        Csrf::enforce($_POST['_token'] ?? null);
+        Csrf::enforce(is_string($_POST['_token'] ?? null) ? $_POST['_token'] : null);
 
         $userId = (int) $user['id'];
 
-        $fullName = trim((string) ($_POST['full_name'] ?? ''));
-        $email = strtolower(trim((string) ($_POST['email'] ?? '')));
-        $contactNo = trim((string) ($_POST['contact_no'] ?? ''));
-        $deliveryAddress = trim((string) ($_POST['delivery_address'] ?? ''));
-
-        if ($fullName === '' || mb_strlen($fullName) > 100) {
-            Session::flash('warning', 'Please enter a valid full name.');
-            Response::redirect('/profile');
+        $input = [];
+        $errors = [];
+        foreach (['full_name', 'email', 'contact_no', 'delivery_address'] as $field) {
+            $raw = $_POST[$field] ?? '';
+            if (!is_string($raw)) $errors[$field] = 'Enter a valid text value.';
+            $input[$field] = is_string($raw) ? trim($raw) : '';
         }
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 255) {
-            Session::flash('warning', 'Please enter a valid email address.');
-            Response::redirect('/profile');
-        }
-
-        if ($contactNo !== '') {
-            if (mb_strlen($contactNo) > 30 || !preg_match('/^[0-9+\-\s().]+$/', $contactNo)) {
-                Session::flash('warning', 'Please enter a valid contact number.');
-                Response::redirect('/profile');
-            }
-        }
-
-        if ($deliveryAddress !== '' && mb_strlen($deliveryAddress) > 255) {
-            Session::flash('warning', 'Delivery address is too long.');
-            Response::redirect('/profile');
+        $fullName = $input['full_name'];
+        $email = strtolower($input['email']);
+        $contactNo = $input['contact_no'];
+        $deliveryAddress = $input['delivery_address'];
+        if ($fullName === '' || mb_strlen($fullName) > 100) $errors['full_name'] = 'Enter your full name, up to 100 characters.';
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 255) $errors['email'] = 'Enter a valid email address, up to 255 characters.';
+        if ($contactNo !== '' && (mb_strlen($contactNo) > 30 || !preg_match('/^[0-9+\\-\\s().]+$/', $contactNo))) $errors['contact_no'] = 'Enter a contact number using numbers, spaces, +, -, ( or ).';
+        if (mb_strlen($deliveryAddress) > 255) $errors['delivery_address'] = 'Keep the delivery address within 255 characters.';
+        if ($errors) {
+            Session::keepOld($input);
+            Session::put('errors', $errors);
+            Response::redirect('/profile?edit=1');
         }
 
         $currentProfile = $this->users->profileFor($userId);
@@ -514,8 +523,9 @@ public function profileOtpForm(): void
         }
 
         if ($email !== $currentEmail && $this->users->emailExistsForOtherUser($email, $userId)) {
-            Session::flash('warning', 'That email address is already in use.');
-            Response::redirect('/profile');
+            Session::keepOld($input);
+            Session::put('errors', ['email' => 'That email address is already in use.']);
+            Response::redirect('/profile?edit=1');
         }
 
         Session::put('profile_update_flow', [
@@ -532,13 +542,15 @@ public function profileOtpForm(): void
             $issued = $this->otp->issue($userId, $currentEmail, 'profile_update');
             if (!$issued['issued']) {
                 Session::forget('profile_update_flow');
+                Session::keepOld($input);
                 Session::flash('warning', "Please wait {$issued['retry_after']} seconds before requesting another code.");
-                Response::redirect('/profile');
+                Response::redirect('/profile?edit=1');
             }
         } catch (\Throwable $e) {
             Session::forget('profile_update_flow');
+            Session::keepOld($input);
             Session::flash('warning', 'We could not send the verification code. Please try again.');
-            Response::redirect('/profile');
+            Response::redirect('/profile?edit=1');
         }
 
         Session::flash(

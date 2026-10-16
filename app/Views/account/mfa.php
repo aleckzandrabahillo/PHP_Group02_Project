@@ -1,4 +1,4 @@
-<section class="page-head"><div><span class="eyebrow">ACCOUNT SECURITY</span><h1>Authenticator</h1><p>Add an authenticator app to your existing email verification.</p></div></section>
+<section class="page-head"><div><span class="eyebrow">ACCOUNT SECURITY</span><h1><?= (auth_user()['role'] ?? '') === 'customer' ? 'Two-step verification' : 'Authenticator' ?></h1><p>An authenticator app generates temporary codes for an additional layer of sign-in protection.</p></div></section>
 <section class="panel security-panel">
   <?php if ($enabledAt): ?>
     <h2>Your authenticator is enabled</h2>

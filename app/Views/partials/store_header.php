@@ -4,7 +4,7 @@ $role = $current['role'] ?? null;
 $transparentHeader = (bool) ($transparentHeader ?? false);
 $assessmentUrl = $role === 'customer' ? url('/assessment') : ($role === null ? url('/login') : null);
 $storeNav = $storeNav ?? ['categories' => [], 'concerns' => []];
-$favoriteCount = (int) ($favoriteCount ?? 0);
+$favoriteCount = max(0, (int) ($favoriteCount ?? ($role === 'customer' ? (new \App\Models\Favorite())->countForUser((int) $current['id']) : 0)));
 $cartCount = (int) ($cartCount ?? 0);
 $shopActive = is_active_path('/shop') || is_active_path('/product');
 ?>
@@ -69,7 +69,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
           </summary>
           <div class="account-menu-panel">
             <a href="<?= e(url('/profile')) ?>">Profile</a>
-            <a href="<?= e(url('/account/mfa')) ?>">Authenticator</a>
+            <a href="<?= e(url('/account/mfa')) ?>">Two-step verification</a>
             <a href="<?= e(url('/routine')) ?>">My Routine</a>
             <a href="<?= e(url('/orders')) ?>">My Orders</a>
             <form method="post" action="<?= e(url('/logout')) ?>">
@@ -79,7 +79,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
           </div>
         </details>
 
-        <a class="header-icon-link header-favorite-link <?= is_active_path('/favorites') ? 'active' : '' ?>" href="<?= e(url('/favorites')) ?>" aria-label="Favorites" title="Favorites">
+        <a class="header-icon-link header-favorite-link <?= is_active_path('/favorites') ? 'active' : '' ?>" href="<?= e(url('/favorites')) ?>" aria-label="Favorites, <?= $favoriteCount ?> saved product<?= $favoriteCount === 1 ? '' : 's' ?>" title="Favorites" data-favorite-link data-favorite-state-url="<?= e(url('/favorites/state')) ?>">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
           <span class="header-count-badge" data-favorite-count <?= $favoriteCount > 0 ? '' : 'hidden' ?>><?= $favoriteCount ?></span>
         </a>
@@ -125,6 +125,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
   </div>
 </header>
 
+<?php if ($role === 'customer'): ?><div class="customer-feedback" role="status" aria-live="polite" aria-atomic="true" data-favorite-feedback hidden></div><?php endif; ?>
 <div class="global-search-backdrop" data-global-search-backdrop hidden></div>
 <section class="global-search-drawer" data-global-search-drawer data-search-endpoint="<?= e(url('/search/suggest')) ?>" hidden aria-hidden="true">
   <div class="global-search-inner" role="dialog" aria-modal="true" aria-labelledby="global-search-title">

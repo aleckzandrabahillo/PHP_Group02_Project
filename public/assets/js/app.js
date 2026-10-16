@@ -303,7 +303,7 @@ function closeGlobalSearch({restoreFocus = true, immediate = false} = {}) {
     }
   };
 
-  if (immediate) finalize();
+  if (immediate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) finalize();
   else searchCloseTimer = window.setTimeout(finalize, 220);
 }
 
@@ -429,48 +429,87 @@ async function loadSearchSuggestions(input) {
   }
 }
 
+let favoriteFeedbackTimer;
+function announceFavorite(message, persistent = false) {
+  const feedback = document.querySelector('[data-favorite-feedback]');
+  if (!feedback) return;
+  feedback.hidden = false;
+  feedback.textContent = message;
+  window.clearTimeout(favoriteFeedbackTimer);
+  if (!persistent) favoriteFeedbackTimer = window.setTimeout(() => { feedback.hidden = true; }, 5500);
+}
+
 function syncFavoriteUi(productId, favorite, count) {
   document.querySelectorAll(`[data-favorite-form][data-product-id="${CSS.escape(String(productId))}"] .favorite-button`).forEach((button) => {
     button.classList.toggle('is-favorite', favorite);
-    button.setAttribute('aria-pressed', favorite ? 'true' : 'false');
+    button.setAttribute('aria-pressed', String(favorite));
     const label = favorite ? 'Remove from favorites' : 'Add to favorites';
     button.setAttribute('aria-label', label);
     button.setAttribute('title', label);
   });
-
   document.querySelectorAll('[data-favorite-count]').forEach((badge) => {
     badge.textContent = String(count);
     badge.hidden = count < 1;
   });
+  document.querySelectorAll('[data-favorite-link]').forEach((link) => {
+    link.setAttribute('aria-label', `Favorites, ${count} saved product${count === 1 ? '' : 's'}`);
+  });
 }
 
+async function refreshFavoriteState() {
+  const endpoint = document.querySelector('[data-favorite-state-url]')?.dataset.favoriteStateUrl;
+  if (!endpoint) return;
+  const controller = new AbortController();
+  const deadline = window.setTimeout(() => controller.abort(), 5000);
+  let response, data;
+  try {
+    response = await fetch(endpoint, {headers: {'Accept': 'application/json'}, credentials: 'same-origin', cache: 'no-store', signal: controller.signal});
+    data = await response.json();
+  } finally { window.clearTimeout(deadline); }
+  if (!response.ok || !data.ok || !Array.isArray(data.ids) || !Number.isSafeInteger(data.count) || data.count < 0) throw new Error('Favorite state unavailable');
+  const ids = new Set(data.ids.map(String));
+  document.querySelectorAll('[data-favorite-form]').forEach((form) => syncFavoriteUi(form.dataset.productId, ids.has(form.dataset.productId), data.count));
+  // Pages without product buttons still need their header count reconciled.
+  syncFavoriteUi('', false, data.count);
+}
+
+let favoritePending = false;
 async function submitFavorite(form) {
+  if (favoritePending) return;
   const button = form.querySelector('.favorite-button');
   if (!(button instanceof HTMLButtonElement)) return;
-  button.disabled = true;
-
+  favoritePending = true;
+  const buttons = [...document.querySelectorAll('[data-favorite-form] button')];
+  const priorDisabled = buttons.map((item) => item.disabled);
+  buttons.forEach((item) => { item.disabled = true; });
+  form.setAttribute('aria-busy', 'true');
+  const controller = new AbortController();
+  const deadline = window.setTimeout(() => controller.abort(), 10000);
   try {
     const response = await fetch(form.action, {
-      method: 'POST',
-      body: new FormData(form),
-      headers: {'Accept': 'application/json'},
-      credentials: 'same-origin',
+      method: 'POST', body: new FormData(form), headers: {'Accept': 'application/json'},
+      credentials: 'same-origin', signal: controller.signal,
     });
     const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.message || 'Favorite update failed');
-
-    const productId = form.dataset.productId || '';
-    syncFavoriteUi(productId, Boolean(data.favorite), Number(data.count || 0));
-
+    if (!response.ok || !data.ok || typeof data.favorite !== 'boolean' || !Number.isSafeInteger(data.count) || data.count < 0) throw new Error('Favorite update failed');
+    syncFavoriteUi(form.dataset.productId || '', data.favorite, data.count);
+    announceFavorite(`${data.message} ${data.count} saved product${data.count === 1 ? '' : 's'}.`);
     if (!data.favorite && window.location.pathname.endsWith('/favorites')) {
       const card = form.closest('.product-card');
+      const nextFocus = card?.nextElementSibling?.querySelector('a') || card?.previousElementSibling?.querySelector('a') || document.querySelector('[data-favorite-link]');
       card?.remove();
+      nextFocus?.focus();
       if (!document.querySelector('.favorite-grid .product-card')) window.location.reload();
     }
   } catch (_) {
-    form.submit();
+    // A lost response may follow a committed toggle. Read state; never repeat the POST.
+    try { await refreshFavoriteState(); } catch (_) {}
+    announceFavorite('We could not confirm that update. Check the heart state or refresh before trying again.', true);
   } finally {
-    button.disabled = false;
+    window.clearTimeout(deadline);
+    buttons.forEach((item, index) => { item.disabled = priorDisabled[index]; });
+    form.removeAttribute('aria-busy');
+    favoritePending = false;
   }
 }
 
@@ -961,15 +1000,9 @@ function syncStoreHeader() {
   const header = document.querySelector('[data-site-header][data-header-overlay="true"]');
   if (!(header instanceof HTMLElement)) return;
 
-  const transitionDistance = 24;
-  const progress = Math.min(1, Math.max(0, window.scrollY / transitionDistance));
-
-  header.style.setProperty('--header-bg-alpha', (0.96 * progress).toFixed(3));
-  header.style.setProperty('--header-border-alpha', (0.82 * progress).toFixed(3));
-  header.style.setProperty('--header-shadow-alpha', (0.06 * progress).toFixed(3));
-  header.style.setProperty('--header-blur', `${(16 * progress).toFixed(1)}px`);
-  header.classList.toggle('is-scrolled', progress > 0.02);
-  header.classList.toggle('is-solid', progress >= 0.98);
+  const solid = window.scrollY > 24;
+  header.classList.toggle('is-scrolled', solid);
+  header.classList.toggle('is-solid', solid);
 }
 
 window.addEventListener('scroll', syncStoreHeader, {passive: true});
@@ -978,3 +1011,37 @@ document.addEventListener('DOMContentLoaded', syncStoreHeader);
 
 const hairErrorSummary = document.querySelector('[data-error-summary]');
 if (hairErrorSummary) hairErrorSummary.focus();
+
+
+// Only routine success feedback expires. Validation and security notices stay visible.
+document.querySelectorAll('[data-flash-transient]').forEach((notice) => {
+  let timer;
+  const dismiss = () => { window.clearTimeout(timer); notice.remove(); };
+  const schedule = () => { window.clearTimeout(timer); timer = window.setTimeout(dismiss, 5500); };
+  notice.querySelector('[data-flash-dismiss]')?.addEventListener('click', dismiss);
+  notice.addEventListener('mouseenter', () => window.clearTimeout(timer));
+  notice.addEventListener('mouseleave', schedule);
+  notice.addEventListener('focusin', () => window.clearTimeout(timer));
+  notice.addEventListener('focusout', schedule);
+  schedule();
+});
+
+window.addEventListener('pageshow', (event) => {
+  if (!event.persisted) return;
+  document.querySelectorAll('[data-flash-transient]').forEach((notice) => notice.remove());
+  refreshFavoriteState().catch(() => announceFavorite('Refresh this page to check your saved products.'));
+});
+
+document.querySelectorAll('[data-unsaved-form]').forEach((form) => {
+  const initial = new URLSearchParams(new FormData(form)).toString();
+  let submitting = false;
+  const dirty = () => new URLSearchParams(new FormData(form)).toString() !== initial;
+  form.addEventListener('submit', () => { submitting = true; });
+  // Cancel explicitly discards the local draft; other navigation warns if it changed.
+  form.querySelector('[data-profile-cancel]')?.addEventListener('click', () => { submitting = true; });
+  window.addEventListener('beforeunload', (event) => {
+    if (submitting || !dirty()) return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
+});

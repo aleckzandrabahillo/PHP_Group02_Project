@@ -95,6 +95,7 @@ $router->post('/profile/update', [$customer, 'updateProfile']);
 $router->get('/profile/verify-otp', [$customer, 'profileOtpForm']);
 $router->post('/profile/verify-otp', [$customer, 'verifyProfileOtp']);
 $router->get('/favorites', [$customer, 'favorites']);
+$router->get('/favorites/state', [$customer, 'favoriteState']);
 $router->post('/favorites/toggle', [$customer, 'toggleFavorite']);
 
 $router->get('/catalog', [$catalog, 'dashboard']);
