@@ -69,5 +69,6 @@
       <p class="muted small">Optional text is interpreted by simple language rules. It does not diagnose scalp conditions or predict product results.</p>
     <?php endif; ?>
     <a class="text-link" href="<?= e(url('/shop')) ?>">Explore the catalog →</a>
+    <?php if ($hairProfile): ?><a class="btn btn-primary" href="<?= e(url('/recommendations')) ?>">See your matches</a><?php endif; ?>
   </aside>
 </div>

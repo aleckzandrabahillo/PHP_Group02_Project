@@ -11,8 +11,9 @@ A student hair-care demonstration store for Group 02's Open Source Programming a
 - Staff email OTP, optional authenticator enrollment/recovery, bounded login lockout, Administrator unlock/history, password and session policies.
 - Responsive customer/staff pages and staff list filtering, sorting and paging over loaded records.
 - Private, editable hair profiles with separate scalp/length characteristics and bounded English/Taglish concern interpretation using Python.
+- Explainable profile-based product matches and saved routines, using reviewed demonstration suitability metadata and existing cart/Checkout paths.
 
-Personalized product matching and new routine building remain separate increments. Administrator account/order/log viewers are unfinished; recorded authentication and supported mutation audits are distinct from those viewers. Mandatory MFA coverage, activation format, expiration, sensitive-field encryption, privacy/cookie policy, gateway scope and hosted deployment still need final decisions or evidence.
+Administrator account/order/log viewers are unfinished; recorded authentication and supported mutation audits are distinct from those viewers. Mandatory MFA coverage, activation format, expiration, sensitive-field encryption, privacy/cookie policy, gateway scope and hosted deployment still need final decisions or evidence.
 
 ## Local setup
 
@@ -62,6 +63,8 @@ The canonical [catalog manifest](database/demo_catalog.json) contains twenty fic
 - Inter is served locally, unmodified, under its [SIL Open Font License](public/assets/fonts/inter/LICENSE.txt); [source revision/checksum](public/assets/fonts/inter/SOURCE.txt).
 
 ## Verification and deployment
+
+For profile-based matching and saved routines, see [matching rules, evidence and the additive routine migration](docs/RECOMMENDATIONS.md). Existing installations need the guarded routine_contexts addition before deploying those routes. tests/product_matching.php covers the pure rules; tests/matching_integration.php requires a disposable database.
 
 `tests/checkout.php`, `tests/security.php`, `tests/mfa.php` and `tests/create_staff.php` require a verified disposable database and explicit port/data-directory guards. Use the reproduction commands in the focused documents; never point mutating tests at personal/shared data. HTTP/service fixtures, actual browser interaction and real provider/device verification are separate evidence.
 

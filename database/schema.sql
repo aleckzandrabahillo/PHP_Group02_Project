@@ -207,6 +207,16 @@ CREATE TABLE IF NOT EXISTS routine_items (
   UNIQUE KEY uq_routine_step_order (routine_id, step_order)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS routine_contexts (
+  routine_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+  profile_version CHAR(64) NOT NULL,
+  plan_fingerprint CHAR(64) NOT NULL,
+  rules_version VARCHAR(20) NOT NULL,
+  explanation_json JSON NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_routine_context FOREIGN KEY (routine_id) REFERENCES routines(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS otp_codes (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id BIGINT UNSIGNED NOT NULL,

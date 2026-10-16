@@ -29,6 +29,6 @@
   <a class="action-card" href="<?= e(url('/routine')) ?>">
     <span>Routine</span>
     <h3>Your routine space</h3>
-    <p>Review any saved routine. Building new personalized routines is planned.</p>
+    <p>Review supported matches and save a simple routine from your hair profile.</p>
   </a>
 </section>

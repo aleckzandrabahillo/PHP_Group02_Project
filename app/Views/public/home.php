@@ -92,7 +92,7 @@ foreach (($featuredProducts ?? []) as $candidate) {
     <div>
       <span class="eyebrow">FIND YOUR EVERYDAY CARE</span>
       <h2>Start with what your hair needs.</h2>
-      <p>Browse the catalog by hair concern, texture or scalp type. Saved hair profiles and personalized routines are planned for a future update.</p>
+      <p>Save a hair profile, explore products with clear match reasons, and keep a simple routine for your wash days.</p>
     </div>
     <a class="btn btn-primary" href="<?= e(url('/shop')) ?>">Explore hair care</a>
   </section>
