@@ -23,3 +23,13 @@ Back up and restore-test before separately authorized deployment. Run `scripts/m
 `tests/email_activation.php` uses the same disposable identity/session/scratch/HTTP guards as the security suite. It tests digest-only storage, expiry, reuse, malformed proof, locked accounts, concurrent consumption, numeric/link coherence, CSRF, audit and delivery rollback. A one-connection loopback SMTP fixture tests successful verified TLS, rejection of an untrusted certificate and refusal of plaintext. This proves transport behavior only, not provider delivery.
 
 For real evidence, the owner must configure an authorized provider privately, receive a real registration activation email, activate once, confirm reuse is denied, and receive a real staff sign-in OTP. No real-provider delivery is claimed by automated fixtures.
+
+## Guarded operator transport check
+
+`scripts/check_mail.php` is CLI-only and dry-run by default. Supply `--actor=ADMINISTRATOR_USERNAME` and the same exact `--expect-host`, `--expect-port`, `--expect-database`, `--expect-server`, `--expect-server-id`, `--expect-datadir` guards used by the migrations. It requires an active, unlocked Administrator, the reviewed persistent-lock schema and `MAIL_DRIVER=smtp`. It validates strict transport configuration without contacting a provider or modifying records.
+
+After separately authorizing transmission and configuring the provider privately, add `--send`. It sends a non-secret diagnostic message only to that Administrator's existing account address and records a secret-free audit. There is no arbitrary recipient option or credential argument. It neither issues/consumes OTPs nor activates accounts or creates a sign-in session. Account eligibility is rechecked under a row lock before sending.
+
+Provider acceptance is not mailbox receipt; the owner must check the authorized inbox. A sent message cannot be recalled if a later audit/commit fails. The command reports that possibility safely rather than claiming no email was sent. Real activation and staff-OTP verification still require the normal application flow. The tool is not a bulk-mail interface and has no public route.
+
+For Internet delivery, use an explicitly authorized disposable Administrator with a real mailbox address. Local `@avela.test` fixtures cannot receive Internet mail. Do not edit personal accounts merely to run the check; use the supported private staff-creation procedure in the approved test environment.
