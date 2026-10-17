@@ -24,6 +24,7 @@ while(($line=fgets($client,2048))!==false){
   if(!@stream_socket_enable_crypto($client,true,STREAM_CRYPTO_METHOD_TLS_SERVER))break;
  }
  elseif($command==='AUTH LOGIN'){$auth=2;fwrite($client,"334 VXNlcm5hbWU6\r\n");}
+ elseif(str_starts_with($command,'RCPT TO:') && isset($config['expected_recipient']) && !str_contains($command,'<'.$config['expected_recipient'].'>'))fwrite($client,"550 unexpected recipient\r\n");
  elseif(str_starts_with($command,'MAIL FROM:')||str_starts_with($command,'RCPT TO:'))fwrite($client,"250 OK\r\n");
  elseif($command==='DATA'){$data=true;fwrite($client,"354 end with dot\r\n");}
  elseif($command==='QUIT'){fwrite($client,"221 bye\r\n");break;}
