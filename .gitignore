@@ -26,5 +26,9 @@ public/uploads/profile/*
 .DS_Store
 Thumbs.db
 
+<<<<<<< HEAD
+docs/IMPLEMENTATION_PLAN.md
+=======
 __pycache__/
 *.py[cod]
+>>>>>>> 96bb4b7507eb9410521a01e05f1253df57918204
