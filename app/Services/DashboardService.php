@@ -39,7 +39,7 @@ final class DashboardService
             'customers' => $this->scalar('SELECT COUNT(*) FROM users WHERE role = "customer"'),
             'staff' => $this->scalar('SELECT COUNT(*) FROM users WHERE role IN ("admin","catalog_manager")'),
             'orders' => $this->scalar('SELECT COUNT(*) FROM orders'),
-            'locked' => $this->scalar('SELECT COUNT(*) FROM users WHERE locked_until IS NOT NULL AND (lock_requires_admin=1 OR locked_until>NOW())'),
+            'locked' => $this->scalar('SELECT COUNT(*) FROM users WHERE locked_until IS NOT NULL AND (locked_until>NOW())'),
         ];
     }
 }

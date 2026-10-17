@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\Sql;
 use PDO;
 
 final class User
@@ -95,6 +96,87 @@ final class User
         });
     }
 
+    /**
+     * Paginated Administrator / Catalog Manager list for the staff admin screen.
+     * $term matches full name or email; $status is 'active', 'inactive', 'locked' or '' (any).
+     *
+     * @return array{rows: array, total: int}
+     */
+    public function searchStaff(string $term, string $status, int $limit, int $offset): array
+    {
+        $where = ["u.role IN ('admin','catalog_manager')"];
+        $params = [];
+
+        $term = mb_substr(trim($term), 0, 100);
+        if ($term !== '') {
+            $like = Sql::contains($term);
+            $where[] = '(sp.full_name LIKE :s_name OR u.email LIKE :s_email)';
+            $params['s_name'] = $like;
+            $params['s_email'] = $like;
+        }
+
+        if ($status === 'locked') {
+            $where[] = '(u.lock_requires_admin = 1 OR u.locked_until > NOW())';
+        } elseif (in_array($status, ['active', 'inactive'], true)) {
+            $where[] = 'u.status = :status';
+            $params['status'] = $status;
+        }
+
+        $from = 'FROM users u LEFT JOIN staff_profiles sp ON sp.user_id = u.id WHERE ' . implode(' AND ', $where);
+
+        $pdo = Database::connection();
+        $count = $pdo->prepare('SELECT COUNT(*) ' . $from);
+        $count->execute($params);
+
+        $rows = $pdo->prepare(
+            'SELECT u.id, u.email, u.role, u.status, u.locked_until, u.created_at,
+                    COALESCE(sp.full_name, u.username) AS full_name '
+            . $from . ' ORDER BY u.created_at DESC, u.id DESC' . Sql::limitOffset($limit, $offset)
+        );
+        $rows->execute($params);
+
+        return ['rows' => $rows->fetchAll(), 'total' => (int) $count->fetchColumn()];
+    }
+
+    /** Clears an account's failed-attempt lock. Logged as an administrator action. */
+    public function adminUnlock(int $actorId, int $id): void
+    {
+        Database::transaction(function (PDO $pdo) use ($actorId, $id): void {
+            $pdo->prepare('UPDATE users SET failed_attempts=0, locked_until=NULL, lock_requires_admin=0, updated_at=NOW() WHERE id=?')
+                ->execute([$id]);
+            \App\Services\AuditService::record($pdo, $actorId, 'account.unlocked', 'user', $id);
+        });
+    }
+
+    /** Activates or deactivates an account. */
+    public function setStatus(int $actorId, int $id, string $status): void
+    {
+        if (!in_array($status, ['active', 'inactive'], true)) {
+            throw new \InvalidArgumentException('Choose a valid status.');
+        }
+        Database::transaction(function (PDO $pdo) use ($actorId, $id, $status): void {
+            $pdo->prepare('UPDATE users SET status=:status, updated_at=NOW() WHERE id=:id')
+                ->execute(['status' => $status, 'id' => $id]);
+            \App\Services\AuditService::record($pdo, $actorId, 'account.status_changed', 'user', $id, ['status' => $status]);
+        });
+    }
+
+    /** Moves a staff account between 'admin' and 'catalog_manager'. Never touches customer accounts. */
+    public function changeStaffRole(int $actorId, int $id, string $role): void
+    {
+        if (!in_array($role, ['admin', 'catalog_manager'], true)) {
+            throw new \InvalidArgumentException('Choose a valid staff role.');
+        }
+        Database::transaction(function (PDO $pdo) use ($actorId, $id, $role): void {
+            $stmt = $pdo->prepare("UPDATE users SET role=:role, updated_at=NOW() WHERE id=:id AND role IN ('admin','catalog_manager')");
+            $stmt->execute(['role' => $role, 'id' => $id]);
+            if ($stmt->rowCount() === 0) {
+                throw new \DomainException('Staff account not found.');
+            }
+            \App\Services\AuditService::record($pdo, $actorId, 'staff.role_changed', 'user', $id, ['role' => $role]);
+        });
+    }
+
     public function activate(int $id): void
     {
         $stmt = Database::connection()->prepare('UPDATE users SET status = "active", activated_at = NOW(), updated_at = NOW() WHERE id = :id');
@@ -103,7 +185,7 @@ final class User
 
     public function resetFailures(int $id): void
     {
-        $stmt = Database::connection()->prepare('UPDATE users SET failed_attempts = 0, locked_until = NULL, lock_requires_admin = 0, last_login_at = NOW(), updated_at = NOW() WHERE id = :id');
+        $stmt = Database::connection()->prepare('UPDATE users SET failed_attempts = 0, locked_until = NULL, last_login_at = NOW(), updated_at = NOW() WHERE id = :id');
         $stmt->execute(['id' => $id]);
     }
 

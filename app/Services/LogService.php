@@ -3,9 +3,12 @@
 namespace App\Services;
 
 use App\Core\Database;
+use App\Core\Sql;
 
 final class LogService
 {
+    public const RESULTS = ['success', 'failure'];
+
     public function auth(?int $userId, string $event, string $result, array $metadata = []): void
     {
         try {
@@ -23,5 +26,56 @@ final class LogService
             // Sign-in/verification cannot silently succeed without required history. Logout must remain available.
             if($event!=='logout')throw new \RuntimeException('Authentication history is unavailable. Please try again later.');
         }
+    }
+
+    /**
+     * Paginated authentication log. $term matches user email or IP address.
+     * $event is an exact event name; $result is 'success' or 'failure'. Unknown values are ignored.
+     *
+     * @return array{rows: array, total: int}
+     */
+    public function search(string $term, string $event, string $result, int $limit, int $offset): array
+    {
+        $where = [];
+        $params = [];
+
+        $term = mb_substr(trim($term), 0, 100);
+        if ($term !== '') {
+            $like = Sql::contains($term);
+            $where[] = '(u.email LIKE :s_email OR l.ip_address LIKE :s_ip)';
+            $params['s_email'] = $like;
+            $params['s_ip'] = $like;
+        }
+        if ($event !== '') {
+            $where[] = 'l.event = :event';
+            $params['event'] = mb_substr($event, 0, 60);
+        }
+        if (in_array($result, self::RESULTS, true)) {
+            $where[] = 'l.result = :result';
+            $params['result'] = $result;
+        }
+
+        $from = 'FROM auth_logs l LEFT JOIN users u ON u.id = l.user_id'
+              . ($where ? ' WHERE ' . implode(' AND ', $where) : '');
+
+        $pdo = Database::connection();
+        $count = $pdo->prepare('SELECT COUNT(*) ' . $from);
+        $count->execute($params);
+
+        $rows = $pdo->prepare(
+            'SELECT l.id, l.event, l.result, l.ip_address, l.metadata_json, l.created_at, u.email '
+            . $from . ' ORDER BY l.id DESC' . Sql::limitOffset($limit, $offset)
+        );
+        $rows->execute($params);
+
+        return ['rows' => $rows->fetchAll(), 'total' => (int) $count->fetchColumn()];
+    }
+
+    /** @return string[] Event names present in the log, for the filter dropdown. */
+    public function events(): array
+    {
+        return Database::connection()
+            ->query('SELECT DISTINCT event FROM auth_logs ORDER BY event')
+            ->fetchAll(\PDO::FETCH_COLUMN);
     }
 }
