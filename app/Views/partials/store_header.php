@@ -4,7 +4,7 @@ $role = $current['role'] ?? null;
 $transparentHeader = (bool) ($transparentHeader ?? false);
 $assessmentUrl = $role === 'customer' ? url('/assessment') : ($role === null ? url('/login') : null);
 $storeNav = $storeNav ?? ['categories' => [], 'concerns' => []];
-$favoriteCount = (int) ($favoriteCount ?? 0);
+$favoriteCount = max(0, (int) ($favoriteCount ?? ($role === 'customer' ? (new \App\Models\Favorite())->countForUser((int) $current['id']) : 0)));
 $cartCount = (int) ($cartCount ?? 0);
 $shopActive = is_active_path('/shop') || is_active_path('/product');
 ?>
@@ -13,7 +13,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
         data-header-overlay="<?= $transparentHeader ? 'true' : 'false' ?>">
   <div class="site-header-inner">
     <a class="brand site-header-brand" href="<?= e(url('/')) ?>" aria-label="Avela home">
-      <img src="<?= e(asset('images/avela-logo.png')) ?>" alt="Avela">
+      <?php require __DIR__ . '/brand.php'; ?>
     </a>
 
     <nav class="store-nav-links" aria-label="Primary navigation">
@@ -42,7 +42,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
             <section>
               <span class="mega-kicker">PERSONALIZED</span>
               <?php if ($assessmentUrl !== null): ?>
-                <a href="<?= e($assessmentUrl) ?>">Hair profile</a>
+                <a href="<?= e($assessmentUrl) ?>">Hair assessment</a>
               <?php else: ?>
                 <a href="<?= e(url('/shop')) ?>">Explore the catalog</a>
               <?php endif; ?>
@@ -52,7 +52,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
       </div>
 
       <?php if ($assessmentUrl !== null): ?>
-        <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" href="<?= e($assessmentUrl) ?>">Hair profile</a>
+        <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" href="<?= e($assessmentUrl) ?>">Hair assessment</a>
       <?php endif; ?>
       <a class="<?= is_active_path('/about') ? 'active' : '' ?>" href="<?= e(url('/about')) ?>">About</a>
     </nav>
@@ -69,7 +69,8 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
           </summary>
           <div class="account-menu-panel">
             <a href="<?= e(url('/profile')) ?>">Profile</a>
-            <a href="<?= e(url('/account/mfa')) ?>">Authenticator</a>
+            <a href="<?= e(url('/account/mfa')) ?>">Two-step verification</a>
+            <a href="<?= e(url('/account/password')) ?>">Change password</a>
             <a href="<?= e(url('/routine')) ?>">My Routine</a>
             <a href="<?= e(url('/orders')) ?>">My Orders</a>
             <form method="post" action="<?= e(url('/logout')) ?>">
@@ -79,7 +80,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
           </div>
         </details>
 
-        <a class="header-icon-link header-favorite-link <?= is_active_path('/favorites') ? 'active' : '' ?>" href="<?= e(url('/favorites')) ?>" aria-label="Favorites" title="Favorites">
+        <a class="header-icon-link header-favorite-link <?= is_active_path('/favorites') ? 'active' : '' ?>" href="<?= e(url('/favorites')) ?>" aria-label="Favorites, <?= $favoriteCount ?> saved product<?= $favoriteCount === 1 ? '' : 's' ?>" title="Favorites" data-favorite-link data-favorite-state-url="<?= e(url('/favorites/state')) ?>">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
           <span class="header-count-badge" data-favorite-count <?= $favoriteCount > 0 ? '' : 'hidden' ?>><?= $favoriteCount ?></span>
         </a>
@@ -91,8 +92,15 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
       <?php elseif ($role === 'admin' || $role === 'catalog_manager'): ?>
         <a class="btn btn-secondary btn-sm" href="<?= e(url($role === 'admin' ? '/admin' : '/catalog')) ?>">Dashboard</a>
       <?php else: ?>
-        <a class="signin-link" href="<?= e(url('/login')) ?>">Sign in</a>
-        <a class="btn btn-primary btn-sm" href="<?= e(url('/register')) ?>">Create account</a>
+        <a class="header-icon-link" href="<?= e(url('/login')) ?>" aria-label="Sign in" title="Sign in">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>
+        </a>
+        <a class="header-icon-link" href="<?= e(url('/favorites')) ?>" aria-label="Favorites" title="Favorites">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
+        </a>
+        <a class="header-icon-link" href="<?= e(url('/cart')) ?>" aria-label="Shopping bag" title="Shopping bag">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 8.5h11l1 11h-13l1-11Z"/><path d="M9 9V6.5a3 3 0 0 1 6 0V9"/></svg>
+        </a>
       <?php endif; ?>
 
       <details class="mobile-nav-menu">
@@ -105,7 +113,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
             <a class="mobile-nav-sub" href="<?= e(url('/shop?category[]=' . (int) $category['id'])) ?>"><?= e($category['name']) ?></a>
           <?php endforeach; ?>
           <?php if ($assessmentUrl !== null): ?>
-            <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" href="<?= e($assessmentUrl) ?>">Hair profile</a>
+            <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" href="<?= e($assessmentUrl) ?>">Hair assessment</a>
           <?php endif; ?>
           <a class="<?= is_active_path('/about') ? 'active' : '' ?>" href="<?= e(url('/about')) ?>">About</a>
           <?php if ($role === null): ?>
@@ -118,6 +126,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
   </div>
 </header>
 
+<?php if ($role === 'customer'): ?><div class="customer-feedback" role="status" aria-live="polite" aria-atomic="true" data-favorite-feedback hidden></div><?php endif; ?>
 <div class="global-search-backdrop" data-global-search-backdrop hidden></div>
 <section class="global-search-drawer" data-global-search-drawer data-search-endpoint="<?= e(url('/search/suggest')) ?>" hidden aria-hidden="true">
   <div class="global-search-inner" role="dialog" aria-modal="true" aria-labelledby="global-search-title">

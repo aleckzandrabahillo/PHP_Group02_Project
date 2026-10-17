@@ -18,6 +18,9 @@ public/uploads/*
 !public/uploads/products/
 public/uploads/products/*
 !public/uploads/products/.htaccess
+!public/uploads/profile/
+public/uploads/profile/*
+!public/uploads/profile/.htaccess
 
 .vscode/
 .DS_Store

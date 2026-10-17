@@ -6,10 +6,13 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(190) NOT NULL UNIQUE,
   username VARCHAR(40) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
+  password_changed_at DATETIME NULL DEFAULT NULL,
+  password_version CHAR(64) NOT NULL DEFAULT '',
   role ENUM('customer','catalog_manager','admin') NOT NULL DEFAULT 'customer',
   status ENUM('pending','active','inactive') NOT NULL DEFAULT 'pending',
   failed_attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
   locked_until DATETIME NULL,
+  lock_requires_admin TINYINT UNSIGNED NOT NULL DEFAULT 0,
   mfa_enabled TINYINT(1) NOT NULL DEFAULT 0,
   activated_at DATETIME NULL,
   last_login_at DATETIME NULL,
@@ -329,4 +332,22 @@ CREATE TABLE IF NOT EXISTS user_authenticators (
   enabled_at DATETIME NULL,
   credential_version CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   CONSTRAINT fk_authenticator_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS security_rate_limits (
+  bucket_hash CHAR(64) NOT NULL PRIMARY KEY,
+  attempts SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  reset_at DATETIME NOT NULL,
+  INDEX idx_security_rate_reset (reset_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS activation_tokens (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    token_digest CHAR(64) NOT NULL UNIQUE,
+    expires_at DATETIME NOT NULL,
+    used_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_activation_user(user_id),
+    CONSTRAINT fk_activation_user FOREIGN KEY(user_id) REFERENCES users(id)
 ) ENGINE=InnoDB;

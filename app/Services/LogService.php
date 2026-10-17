@@ -22,8 +22,9 @@ final class LogService
                 'metadata' => $metadata ? json_encode($metadata, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : null,
             ]);
         } catch (\Throwable $e) {
-            // Continue the authentication flow if a log write fails.
-            @file_put_contents(dirname(__DIR__, 2) . '/storage/logs/app.log', '[' . date('c') . '] auth log failure: ' . $e->getMessage() . "\n", FILE_APPEND | LOCK_EX);
+            @file_put_contents(dirname(__DIR__, 2) . '/storage/logs/app.log', '[' . date('c') . "] Authentication history write unavailable.\n", FILE_APPEND | LOCK_EX);
+            // Sign-in/verification cannot silently succeed without required history. Logout must remain available.
+            if($event!=='logout')throw new \RuntimeException('Authentication history is unavailable. Please try again later.');
         }
     }
 

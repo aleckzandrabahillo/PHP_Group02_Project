@@ -43,6 +43,15 @@ final class PublicController
         ], 'public');
     }
 
+    public function privacy(): void
+    {
+        $options = $this->products->filterOptions();
+        View::render('public/privacy', [
+            'pageTitle'=>'Privacy & cookies', 'privacyEmail'=>\App\Services\PrivacyContact::configured(),
+            'storeNav'=>$this->storeNavigation($options), ...$this->customerContext(),
+        ], 'public');
+    }
+
     public function shop(): void
     {
         $options = $this->products->filterOptions();
@@ -196,13 +205,11 @@ final class PublicController
             return ['favoriteIds' => [], 'favoriteCount' => 0, 'cartCount' => 0];
         }
 
+        header('Cache-Control: no-store, private');
         $userId = (int) $current['id'];
         return [
-            // Favorites temporarily disabled until the favorites table is created.
-            'favoriteIds' => [],
-            'favoriteCount' => 0,
-
-            // Cart can continue working normally.
+            'favoriteIds' => $this->favorites->idsForUser($userId),
+            'favoriteCount' => $this->favorites->countForUser($userId),
             'cartCount' => $this->cart->countForUser($userId),
             ];
     }

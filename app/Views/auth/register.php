@@ -37,22 +37,26 @@
 
   <div class="field-grid two">
     <label class="field <?= isset($errors['password']) ? 'has-error' : '' ?>">
-      <span>Password</span>
+      <span id="register-password-label">Password</span>
       <div class="password-wrap">
-        <input id="register-password" data-password-input type="password" name="password" autocomplete="new-password" required aria-invalid="<?= isset($errors['password']) ? 'true' : 'false' ?>" aria-describedby="register-password-help register-password-error">
+        <input id="register-password" aria-labelledby="register-password-label" data-password-input type="password" name="password" autocomplete="new-password" required data-password-requirements
+          data-password-minimum="<?= (int)$passwordPolicy['password_min_length'] ?>" data-password-maximum-bytes="72"
+          data-password-uppercase="<?= (int)$passwordPolicy['password_min_uppercase'] ?>" data-password-lowercase="<?= (int)$passwordPolicy['password_min_lowercase'] ?>"
+          data-password-numbers="<?= (int)$passwordPolicy['password_min_numbers'] ?>" data-password-special="<?= (int)$passwordPolicy['password_min_special'] ?>"
+          aria-invalid="<?= isset($errors['password']) ? 'true' : 'false' ?>" aria-describedby="register-password-help register-password-error">
         <button class="password-toggle" type="button" data-password-toggle="register-password" hidden aria-pressed="false" aria-label="Show password" title="Show password">
           <svg class="password-icon password-icon-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.7"/></svg>
           <svg class="password-icon password-icon-hide" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M3 3l18 18M10.6 6.2A10.9 10.9 0 0 1 12 6c6.1 0 9.5 6 9.5 6a16.1 16.1 0 0 1-3.2 3.8M6.4 6.4C3.8 8.2 2.5 12 2.5 12s3.4 6 9.5 6c1.5 0 2.8-.3 4-.8M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
         </button>
       </div>
-      <small id="register-password-help" class="help">At least 12 characters with uppercase, lowercase, a number, and a special character.</small>
+      <?php $passwordInputId='register-password';require dirname(__DIR__).'/partials/password_requirements.php'; ?>
       <small id="register-password-error" class="field-error"><?= e($errors['password'] ?? '') ?></small>
     </label>
 
     <label class="field <?= isset($errors['password_confirmation']) ? 'has-error' : '' ?>">
-      <span>Confirm password</span>
+      <span id="register-password-confirm-label">Confirm password</span>
       <div class="password-wrap">
-        <input id="register-password-confirm" data-password-input type="password" name="password_confirmation" autocomplete="new-password" required aria-invalid="<?= isset($errors['password_confirmation']) ? 'true' : 'false' ?>">
+        <input id="register-password-confirm" aria-labelledby="register-password-confirm-label" data-password-input type="password" name="password_confirmation" autocomplete="new-password" required aria-invalid="<?= isset($errors['password_confirmation']) ? 'true' : 'false' ?>">
         <button class="password-toggle" type="button" data-password-toggle="register-password-confirm" hidden aria-pressed="false" aria-label="Show password" title="Show password">
           <svg class="password-icon password-icon-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.7"/></svg>
           <svg class="password-icon password-icon-hide" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M3 3l18 18M10.6 6.2A10.9 10.9 0 0 1 12 6c6.1 0 9.5 6 9.5 6a16.1 16.1 0 0 1-3.2 3.8M6.4 6.4C3.8 8.2 2.5 12 2.5 12s3.4 6 9.5 6c1.5 0 2.8-.3 4-.8M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
@@ -78,3 +82,4 @@
 </form>
 
 <p class="auth-switch">Already have an account? <a href="<?= e(url('/login')) ?>">Sign in</a></p>
+<script src="<?= e(asset('js/password-policy.js')) ?>" defer></script>

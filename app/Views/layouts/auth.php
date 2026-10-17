@@ -6,19 +6,23 @@
 <title><?= e($pageTitle ?? 'Account') ?> · Avela</title>
 <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 <?php if (!empty($recaptchaSiteKey)): ?><script src="https://www.google.com/recaptcha/api.js" async defer></script><?php endif; ?>
+<link rel="stylesheet" href="<?= e(asset('css/customer.css')) ?>">
 </head>
-<body class="auth-body">
+<body class="customer-experience auth-body">
 <a class="skip-link" href="#main-content">Skip to content</a>
-<a class="auth-logo" href="<?= e(url('/')) ?>"><img src="<?= e(asset('images/avela-logo.png')) ?>" alt="Avela"></a>
+<a class="auth-logo" href="<?= e(url('/')) ?>"><?php require dirname(__DIR__) . '/partials/brand.php'; ?></a>
 <div class="auth-shell">
   <aside class="auth-art">
     <span class="eyebrow">PERSONAL HAIR CARE</span>
-    <h1>Care that starts with understanding your hair.</h1>
-    <p>Browse everyday hair care, compare product details, and keep your bag and orders in one place.</p>
+    <h2>Care that starts with understanding your hair.</h2>
+    <p>Everyday essentials. A personal shortlist. Your care, at your own pace.</p>
+    <img class="auth-editorial" src="<?= e(asset('images/editorial/hair-editorial.jpg')) ?>" alt="" width="1200" height="1598" decoding="async">
   </aside>
   <main id="main-content" tabindex="-1" class="auth-panel">
     <?php require dirname(__DIR__) . '/partials/flashes.php'; ?>
+    <h1 class="sr-only"><?= e($pageTitle ?? 'Your account') ?></h1>
     <?= $content ?>
+    <p class="auth-switch"><a href="<?= e(url('/privacy')) ?>">Privacy &amp; cookies</a></p>
   </main>
 </div>
 <script src="<?= e(asset('js/app.js')) ?>" defer></script>

@@ -6,6 +6,11 @@
   <form class="hair-profile-form" method="post" action="<?= e(url('/assessment')) ?>">
     <?= csrf_field() ?>
     <input type="hidden" name="profile_version" value="<?= e($profileVersion) ?>">
+    <nav class="assessment-sections" aria-label="Assessment sections">
+      <a href="#hair-hair_texture"><span>01</span> Your hair</a>
+      <a href="#hair-scalp_type"><span>02</span> Scalp &amp; lengths</a>
+      <a href="#hair-concerns"><span>03</span> Your concerns</a>
+    </nav>
     <?php if ($errors): ?>
       <div class="alert alert-error" id="profile-errors" role="alert" tabindex="-1" data-error-summary>
         <h2>Please check your answers</h2><ul><?php foreach ($errors as $field => $message): ?>
@@ -43,6 +48,7 @@
     <button class="btn btn-primary" id="profile-submit" type="submit"><?= $hairProfile ? 'Update hair profile' : 'Save hair profile' ?></button>
   </form>
   <aside class="hair-profile-summary">
+    <img class="assessment-editorial" src="<?= e(asset('images/editorial/assessment-lather.jpg')) ?>" alt="A close-up of lather in a hand" width="1200" height="800" loading="lazy" decoding="async">
     <span class="eyebrow"><?= $hairProfile ? 'SAVED TO YOUR ACCOUNT' : 'A LITTLE CONTEXT GOES A LONG WAY' ?></span>
     <h2><?= $hairProfile ? 'Your profile, at a glance.' : 'Scalp and lengths have different needs.' ?></h2>
     <?php if ($hairProfile): ?>

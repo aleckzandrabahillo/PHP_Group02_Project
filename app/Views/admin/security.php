@@ -8,8 +8,10 @@
   <form class="form-stack" method="post" action="<?= e(url('/admin/security')) ?>">
     <?= csrf_field() ?><input type="hidden" name="action" value="save_policy">
     <div class="field-grid two">
-      <?php foreach (['max_login_attempts'=>'Failed sign-in threshold', 'lockout_minutes'=>'Lockout duration (minutes)',
-        'session_timeout_minutes'=>'Inactive session timeout (minutes)', 'password_min_length'=>'Minimum password length'] as $key=>$label): ?>
+      <?php foreach (['max_login_attempts'=>'Failed sign-in threshold', 'lockout_minutes'=>'Incident review interval (minutes)',
+        'session_timeout_minutes'=>'Inactive session timeout (minutes)', 'password_min_length'=>'Minimum password length',
+        'password_min_uppercase'=>'Required uppercase letters', 'password_min_lowercase'=>'Required lowercase letters',
+        'password_min_numbers'=>'Required numbers', 'password_min_special'=>'Required special characters'] as $key=>$label): ?>
         <?php [$min, $max] = \App\Services\SecurityPolicy::RULES[$key]; ?>
         <label class="field"><span><?= e($label) ?></span>
           <input type="number" name="<?= e($key) ?>" value="<?= (int) $policy[$key] ?>" min="<?= $min ?>" max="<?= $max ?>" required>
@@ -24,11 +26,11 @@
 
 <section class="panel security-panel" aria-labelledby="locks-title">
   <h2 id="locks-title">Currently locked accounts</h2>
-  <p class="muted small">Unlocking clears the failed sign-in counter. It does not reactivate an inactive account or change its password or MFA. Up to 100 current locks are shown.</p>
+  <p class="muted small">Unlocking clears the failed sign-in counter. It does not reactivate an inactive account or change its password or MFA. Locks require Administrator release; the review interval never unlocks an account. Up to 100 current locks are shown.</p>
   <?php if (!$lockedAccounts): ?><p class="security-empty">No accounts are currently locked.</p>
   <?php else: ?>
     <div class="security-table-wrap" tabindex="0" role="region" aria-label="Currently locked accounts table">
-      <table class="security-table"><thead><tr><th scope="col">Username</th><th scope="col">Role / status</th><th scope="col">Attempts</th><th scope="col">Locked until</th><th scope="col">Action</th></tr></thead><tbody>
+      <table class="security-table"><thead><tr><th scope="col">Username</th><th scope="col">Role / status</th><th scope="col">Attempts</th><th scope="col">Review after</th><th scope="col">Action</th></tr></thead><tbody>
         <?php foreach ($lockedAccounts as $account): ?><tr>
           <td><?= e($account['username']) ?></td><td><?= e($account['role']) ?><br><small><?= e($account['status']) ?></small></td>
           <td><?= (int) $account['failed_attempts'] ?></td><td><?= e($account['locked_until']) ?></td>
@@ -50,7 +52,7 @@
   <?php if (!$history): ?><p class="security-empty">No recorded lock incidents.</p>
   <?php else: ?>
     <div class="security-table-wrap" tabindex="0" role="region" aria-label="Lock history table">
-      <table class="security-table"><thead><tr><th scope="col">Username at lock</th><th scope="col">Attempts</th><th scope="col">Locked at</th><th scope="col">Locked until</th><th scope="col">Administrator unlock</th></tr></thead><tbody>
+      <table class="security-table"><thead><tr><th scope="col">Username at lock</th><th scope="col">Attempts</th><th scope="col">Locked at</th><th scope="col">Review after</th><th scope="col">Administrator unlock</th></tr></thead><tbody>
         <?php foreach ($history as $entry): ?><tr>
           <td><?= e($entry['username_snapshot']) ?></td><td><?= (int) $entry['failed_attempts'] ?></td>
           <td><?= e($entry['locked_at']) ?></td><td><?= e($entry['locked_until']) ?></td>

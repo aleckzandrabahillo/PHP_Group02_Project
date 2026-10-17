@@ -80,7 +80,7 @@ final class Session
     public static function forgetAuth(): void
     {
         unset(
-            $_SESSION['auth_user'], $_SESSION['last_activity'],
+            $_SESSION['auth_user'], $_SESSION['last_activity'], $_SESSION['auth_password_version'],
             $_SESSION['pending_flow'], $_SESSION['profile_update_flow'],
             $_SESSION['_old'], $_SESSION['errors'], $_SESSION['checkout_intent'], $_SESSION['_csrf'],
             $_SESSION['pending_totp'], $_SESSION['mfa_setup_flow'], $_SESSION['mfa_recovery_codes'], $_SESSION['auth_mfa_version']

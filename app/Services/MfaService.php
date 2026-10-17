@@ -47,7 +47,7 @@ final class MfaService
         $pending = Session::get('mfa_setup_flow');
         if (!$issued['issued'] && is_array($pending) && ($pending['user_id'] ?? 0) === $userId && ($pending['expires_at'] ?? 0) >= time()) return $pending;
         $secret = TOTP::generate()->getSecret();
-        $pending = ['user_id'=>$userId, 'secret'=>$cipher->encrypt($userId,$secret), 'expires_at'=>time()+300];
+        $pending = ['user_id'=>$userId, 'secret'=>$cipher->encrypt($userId,$secret), 'expires_at'=>time()+300, 'password_version'=>$user['password_version']??''];
         Session::put('mfa_setup_flow',$pending);
         return $pending;
     }
@@ -55,7 +55,9 @@ final class MfaService
     public function setupSecret(int $userId): ?string
     {
         $flow=Session::get('mfa_setup_flow');
-        if (!is_array($flow) || ($flow['user_id']??0)!==$userId || ($flow['expires_at']??0)<time()) {
+        $user=$this->users->findById($userId);
+        if (!is_array($flow) || !User::canAuthenticate($user) || ($flow['user_id']??0)!==$userId || ($flow['expires_at']??0)<time()
+            || !hash_equals((string)($user['password_version']??''),(string)($flow['password_version']??''))) {
             Session::forget('mfa_setup_flow'); return null;
         }
         return (new MfaCipher())->decrypt($userId,$flow['secret']);
@@ -67,7 +69,8 @@ final class MfaService
         if ($secret===null) throw new DomainException('Enrollment expired. Start again.');
         $codes=Database::transaction(function(PDO $pdo) use($userId,$secret,$emailCode,$code):array {
             $user=$this->users->findById($userId,true);
-            if (!User::canAuthenticate($user) || $this->factor($userId,true)) throw new DomainException('Account enrollment is unavailable.');
+            if (!User::canAuthenticate($user) || $this->factor($userId,true)
+                || !hash_equals((string)($user['password_version']??''),(string)(Session::get('mfa_setup_flow')['password_version']??''))) throw new DomainException('Account enrollment is unavailable.');
             $step=$this->matchingStep($secret,$code,-1);
             if ($step===null) {
                 $this->users->recordFailure($userId);
@@ -85,7 +88,7 @@ final class MfaService
                 recovery_hashes_json=VALUES(recovery_hashes_json),last_used_step=VALUES(last_used_step),enabled_at=VALUES(enabled_at),credential_version=VALUES(credential_version)')->execute([
                     'user'=>$userId,'secret'=>$cipher->encrypt($userId,$secret),'hashes'=>json_encode($hashes,JSON_THROW_ON_ERROR),'step'=>$step,'version'=>$version,
                 ]);
-            $pdo->prepare('UPDATE users SET mfa_enabled=1,failed_attempts=0,locked_until=NULL,updated_at=NOW() WHERE id=?')->execute([$userId]);
+            $pdo->prepare('UPDATE users SET mfa_enabled=1,failed_attempts=0,locked_until=NULL,lock_requires_admin=0,updated_at=NOW() WHERE id=?')->execute([$userId]);
             $this->audit($pdo,$userId,'authenticator_enrolled');
             return ['ok'=>true,'codes'=>$plain,'version'=>$version];
         });
@@ -101,7 +104,7 @@ final class MfaService
     {
         $factor=$this->factor($userId);
         if (!$factor) throw new DomainException('Authenticator unavailable.');
-        return ['user_id'=>$userId,'expires_at'=>time()+300,'version'=>$factor['credential_version']];
+        return ['user_id'=>$userId,'expires_at'=>time()+300,'version'=>$factor['credential_version'],'password_version'=>$this->users->findById($userId)['password_version']??''];
     }
 
     public function verifyLogin(array $flow, #[\SensitiveParameter] string $code): array
@@ -109,7 +112,8 @@ final class MfaService
         if (($flow['expires_at']??0)<time() || !isset($flow['user_id'],$flow['version'])) return ['ok'=>false,'message'=>'The sign-in challenge expired. Sign in again.','expired'=>true];
         return Database::transaction(function(PDO $pdo) use($flow,$code):array {
             $id=(int)$flow['user_id'];$user=$this->users->findById($id,true);$factor=$this->factor($id,true);
-            if (!User::canAuthenticate($user) || !$factor || !hash_equals($factor['credential_version'],$flow['version'])) {
+            if (!User::canAuthenticate($user) || !$factor || !hash_equals($factor['credential_version'],$flow['version'])
+                || !hash_equals((string)($user['password_version']??''),(string)($flow['password_version']??''))) {
                 return ['ok'=>false,'message'=>'Sign-in is no longer available. Start again.','expired'=>true];
             }
             if (!$this->consume($pdo,$factor,$code)) {
@@ -134,12 +138,22 @@ final class MfaService
             }
             $pdo->prepare('UPDATE user_authenticators SET secret_encrypted=NULL,recovery_hashes_json="[]",enabled_at=NULL,last_used_step=-1,credential_version=? WHERE user_id=?')
                 ->execute([bin2hex(random_bytes(32)),$userId]);
-            $pdo->prepare('UPDATE users SET failed_attempts=0,locked_until=NULL,updated_at=NOW() WHERE id=?')->execute([$userId]);
+            $pdo->prepare('UPDATE users SET failed_attempts=0,locked_until=NULL,lock_requires_admin=0,updated_at=NOW() WHERE id=?')->execute([$userId]);
             // Keep email MFA enabled, including for customers who opted into MFA.
             $this->audit($pdo,$userId,'authenticator_removed');return true;
         });
         if (!$result) throw new DomainException('Password and current authenticator/recovery code could not be confirmed.');
         Session::forget('mfa_recovery_codes');Session::forget('mfa_setup_flow');session_regenerate_id(true);
+    }
+
+    /** Private-console recovery only; never creates an authenticated session or bypasses a web login lock. */
+    public function administratorRecovery(PDO $pdo, int $id, #[\SensitiveParameter] string $password, #[\SensitiveParameter] string $code): bool
+    {
+        if (!$pdo->inTransaction()) throw new DomainException('Recovery requires an atomic operation.');
+        $user=$this->users->findById($id,true);
+        if (!$user || $user['role']!=='admin' || $user['status']!=='active' || !password_verify($password,$user['password_hash'])) return false;
+        $factor=$this->factor($id,true);
+        return $factor ? $this->consume($pdo,$factor,$code) : $this->otp->verify($id,'login',$code)['ok'];
     }
 
     private function consume(PDO $pdo, array $factor, #[\SensitiveParameter] string $code): bool

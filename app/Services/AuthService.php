@@ -10,10 +10,12 @@ use App\Models\User;
 final class AuthService
 {
     private readonly MfaService $mfa;
+    private readonly ActivationService $activation;
 
     public function __construct(private readonly User $users, private readonly OtpService $otp, private readonly LogService $logs)
     {
         $this->mfa = new MfaService($users, $otp, $logs);
+        $this->activation = new ActivationService($otp, new MailService(), $logs);
     }
 
     public function register(array $data): array
@@ -21,15 +23,18 @@ final class AuthService
         if ($this->users->emailExists($data['email'])) return ['ok' => false, 'field' => 'email', 'message' => 'That email is already registered.'];
         if ($this->users->usernameExists($data['username'])) return ['ok' => false, 'field' => 'username', 'message' => 'That username is already taken.'];
 
-        $id = $this->users->createCustomer([
-            'full_name' => trim($data['full_name']),
-            'email' => trim($data['email']),
-            'username' => trim($data['username']),
-            'contact_no' => Validator::normalizePhilippineMobile((string) ($data['contact_no'] ?? '')) ?? '',
-            'password_hash' => password_hash((string) $data['password'], PASSWORD_DEFAULT),
-        ]);
-        $this->logs->auth($id, 'registration', 'success');
-        $this->otp->issue($id, trim($data['email']), 'activation');
+        $id = Database::transaction(function () use ($data): int {
+            $id = $this->users->createCustomer([
+                'full_name' => trim($data['full_name']),
+                'email' => trim($data['email']),
+                'username' => trim($data['username']),
+                'contact_no' => Validator::normalizePhilippineMobile((string) ($data['contact_no'] ?? '')) ?? '',
+                'password_hash' => password_hash((string) $data['password'], PASSWORD_DEFAULT),
+            ]);
+            $this->logs->auth($id, 'registration', 'success');
+            $this->activation->issue($id);
+            return $id;
+        });
         Session::put('pending_flow', ['user_id' => $id, 'purpose' => 'activation', 'email' => trim($data['email']), 'sent_at' => time()]);
         return ['ok' => true];
     }
@@ -44,7 +49,7 @@ final class AuthService
 
         if (User::isLocked($user)) {
             $this->logs->auth((int) $user['id'], 'login', 'failure', ['reason' => 'locked']);
-            return ['ok' => false, 'message' => 'This account is temporarily locked. Try again later or contact an administrator.'];
+            return ['ok' => false, 'message' => 'This account is locked. Contact an Administrator to restore access.'];
         }
 
         if (!password_verify($password, (string) $user['password_hash'])) {
@@ -52,7 +57,7 @@ final class AuthService
             $this->logs->auth((int) $user['id'], 'login', 'failure', ['reason' => 'invalid_credentials']);
             if (!empty($failure['locked_until'])) {
                 if ($failure['new_lock']) $this->logs->auth((int) $user['id'], 'lockout', 'success');
-                return ['ok' => false, 'message' => 'Too many failed sign-in attempts. This account is temporarily locked.'];
+                return ['ok' => false, 'message' => 'Too many failed sign-in attempts. Contact an Administrator to restore access.'];
             }
             return ['ok' => false, 'message' => 'Invalid email/username or password.'];
         }
@@ -63,7 +68,8 @@ final class AuthService
         }
 
         if ($user['status'] === 'pending') {
-            $issued = $this->otp->issue((int) $user['id'], (string) $user['email'], 'activation');
+            $issued = $user['role'] === 'customer' ? $this->activation->issue((int) $user['id'])
+                : $this->otp->issue((int) $user['id'], (string) $user['email'], 'activation');
             if (!$issued['issued'] && !$issued['reusable']) return $this->cooldownResult($issued);
             Session::put('pending_flow', ['user_id' => (int) $user['id'], 'purpose' => 'activation', 'email' => $user['email'], 'sent_at' => time()]);
             if (!$issued['issued']) Session::flash('warning', 'Use the verification code already sent to your email. ' . $this->cooldownResult($issued)['message']);
@@ -77,13 +83,14 @@ final class AuthService
             $factor = $this->mfa->factor((int) $user['id']);
             if (is_array($challenge) && ($challenge['user_id'] ?? 0) === (int) $user['id']
                 && ($challenge['expires_at'] ?? 0) >= time() && $factor
+                && hash_equals((string)($user['password_version']??''),(string)($challenge['password_version']??''))
                 && hash_equals($factor['credential_version'], (string) ($challenge['version'] ?? ''))) {
                 return ['ok' => true, 'next' => 'totp'];
             }
             Session::forget('pending_totp');
             $issued = $this->otp->issue((int) $user['id'], (string) $user['email'], 'login');
             if (!$issued['issued'] && !$issued['reusable']) return $this->cooldownResult($issued);
-            Session::put('pending_flow', ['user_id' => (int) $user['id'], 'purpose' => 'login', 'email' => $user['email'], 'sent_at' => time()]);
+            Session::put('pending_flow', ['user_id' => (int) $user['id'], 'purpose' => 'login', 'email' => $user['email'], 'sent_at' => time(), 'password_version' => $user['password_version'] ?? '']);
             if (!$issued['issued']) Session::flash('warning', 'Use the verification code already sent to your email. ' . $this->cooldownResult($issued)['message']);
             return ['ok' => true, 'next' => 'otp'];
         }
@@ -100,12 +107,13 @@ final class AuthService
         }
         $userId = (int) $flow['user_id'];
         $purpose = (string) $flow['purpose'];
-        $verification = Database::transaction(function () use ($userId, $purpose, $code): array {
+        $verification = Database::transaction(function () use ($userId, $purpose, $code, $flow): array {
             $user = $this->users->findById($userId, true);
             $eligible = $purpose === 'activation'
                 ? $user && $user['status'] === 'pending' && !User::isLocked($user)
                     && in_array($user['role'], ['customer', 'catalog_manager', 'admin'], true)
-                : $purpose === 'login' && User::canAuthenticate($user);
+                : $purpose === 'login' && User::canAuthenticate($user)
+                    && hash_equals((string)($user['password_version']??''),(string)($flow['password_version']??''));
             if (!$eligible) {
                 $this->logs->auth($user ? $userId : null, 'otp_verify', 'failure', ['purpose' => $purpose, 'reason' => 'account_unavailable']);
                 return ['ok' => false, 'reason' => 'account_unavailable'];
@@ -114,6 +122,8 @@ final class AuthService
             if (!$result['ok']) return $result;
             if ($purpose === 'activation') {
                 $this->users->activate($userId);
+                Database::connection()->prepare('UPDATE activation_tokens SET used_at=NOW() WHERE user_id=? AND used_at IS NULL')->execute([$userId]);
+                Database::connection()->prepare('INSERT INTO audit_logs(actor_id,action,target_type,target_id,details) VALUES (?,"account_activated","user",?,"Email verification completed")')->execute([$userId,$userId]);
                 $this->logs->auth($userId, 'activation', 'success');
             } else {
                 if ($this->mfa->factor($userId) !== null) {
@@ -164,9 +174,11 @@ final class AuthService
         $purpose = (string) ($flow['purpose'] ?? '');
         $eligible = $purpose === 'activation'
             ? $user && $user['status'] === 'pending' && !User::isLocked($user)
-            : $purpose === 'login' && User::canAuthenticate($user);
+            : $purpose === 'login' && User::canAuthenticate($user)
+                && hash_equals((string)($user['password_version']??''),(string)($flow['password_version']??''));
         if (!$eligible) return $this->unavailableResult();
-        $issued = $this->otp->issue((int) $user['id'], (string) $user['email'], $purpose);
+        $issued = $purpose === 'activation' && $user['role'] === 'customer'
+            ? $this->activation->issue((int) $user['id']) : $this->otp->issue((int) $user['id'], (string) $user['email'], $purpose);
         if (!$issued['issued']) return $this->cooldownResult($issued);
         $flow['sent_at'] = time();
         Session::put('pending_flow', $flow);
@@ -178,6 +190,7 @@ final class AuthService
         $current = Database::transaction(function () use ($user): ?array {
             $current = $this->users->findById((int) $user['id'], true);
             if (!User::canAuthenticate($current)
+                || !hash_equals((string)$current['password_hash'],(string)($user['password_hash']??''))
                 || (bool) $current['mfa_enabled']
                 || in_array($current['role'], ['admin', 'catalog_manager'], true)
                 || $this->mfa->factor((int) $current['id']) !== null) return null;
@@ -214,6 +227,7 @@ final class AuthService
             'role' => $user['role'],
         ]);
         Session::put('last_activity', time());
+        Session::put('auth_password_version', $user['password_version'] ?? '');
         if ($factorVersion !== null) Session::put('auth_mfa_version', $factorVersion);
     }
 

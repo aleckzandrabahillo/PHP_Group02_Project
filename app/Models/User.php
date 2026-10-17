@@ -26,7 +26,8 @@ final class User
 
     public static function isLocked(array $user): bool
     {
-        return !empty($user['locked_until']) && strtotime((string) $user['locked_until']) > time();
+        return (int) ($user['lock_requires_admin'] ?? 0) === 1
+            || (!empty($user['locked_until']) && strtotime((string) $user['locked_until']) > time());
     }
 
     public static function canAuthenticate(?array $user): bool
@@ -53,8 +54,8 @@ final class User
 
     public function createCustomer(array $data): int
     {
-        return Database::transaction(function (PDO $pdo) use ($data): int {
-            $stmt = $pdo->prepare('INSERT INTO users (email, username, password_hash, role, status, failed_attempts, mfa_enabled, created_at, updated_at) VALUES (:email, :username, :password_hash, "customer", "pending", 0, :mfa_enabled, NOW(), NOW())');
+        $create = function (PDO $pdo) use ($data): int {
+            $stmt = $pdo->prepare('INSERT INTO users (email, username, password_hash, role, status, failed_attempts, mfa_enabled, created_at, updated_at, password_changed_at) VALUES (:email, :username, :password_hash, "customer", "pending", 0, :mfa_enabled, NOW(), NOW(), NOW())');
             $stmt->execute([
                 'email' => strtolower($data['email']),
                 'username' => $data['username'],
@@ -69,8 +70,11 @@ final class User
                 'full_name' => $data['full_name'],
                 'contact_no' => $data['contact_no'] ?: null,
             ]);
+            \App\Services\AuditService::record($pdo,null,'account.registered','user',$id,['role'=>'customer','verification'=>'pending']);
             return $id;
-        });
+        };
+        $pdo = Database::connection();
+        return $pdo->inTransaction() ? $create($pdo) : Database::transaction($create);
     }
 
     public function createStaff(string $role, string $email, string $username, string $passwordHash, string $fullName): int
@@ -79,13 +83,14 @@ final class User
             throw new \InvalidArgumentException('Invalid staff role.');
         }
         return Database::transaction(function (PDO $pdo) use ($role, $email, $username, $passwordHash, $fullName): int {
-            $stmt = $pdo->prepare('INSERT INTO users (email, username, password_hash, role, status, failed_attempts, mfa_enabled, activated_at, created_at, updated_at) VALUES (:email, :username, :password_hash, :role, "active", 0, 1, NOW(), NOW(), NOW())');
+            $stmt = $pdo->prepare('INSERT INTO users (email, username, password_hash, role, status, failed_attempts, mfa_enabled, activated_at, created_at, updated_at, password_changed_at) VALUES (:email, :username, :password_hash, :role, "active", 0, 1, NOW(), NOW(), NOW(), NOW())');
             $stmt->execute([
                 'email' => strtolower($email), 'username' => $username, 'password_hash' => $passwordHash, 'role' => $role
             ]);
             $id = (int) $pdo->lastInsertId();
             $profile = $pdo->prepare('INSERT INTO staff_profiles (user_id, full_name, created_at, updated_at) VALUES (:user_id, :full_name, NOW(), NOW())');
             $profile->execute(['user_id' => $id, 'full_name' => $fullName]);
+            \App\Services\AuditService::record($pdo,null,'staff.created','user',$id,['role'=>$role,'channel'=>'private_staff_setup']);
             return $id;
         });
     }
@@ -98,7 +103,7 @@ final class User
 
     public function resetFailures(int $id): void
     {
-        $stmt = Database::connection()->prepare('UPDATE users SET failed_attempts = 0, locked_until = NULL, last_login_at = NOW(), updated_at = NOW() WHERE id = :id');
+        $stmt = Database::connection()->prepare('UPDATE users SET failed_attempts = 0, locked_until = NULL, lock_requires_admin = 0, last_login_at = NOW(), updated_at = NOW() WHERE id = :id');
         $stmt->execute(['id' => $id]);
     }
 
@@ -115,13 +120,14 @@ final class User
             $attempts = min(255, $attempts);
             $lockedUntil = $attempts >= $policy['max_login_attempts']
                 ? date('Y-m-d H:i:s', time() + $policy['lockout_minutes'] * 60) : null;
-            $pdo->prepare('UPDATE users SET failed_attempts=:attempts, locked_until=:until, updated_at=NOW() WHERE id=:id')
-                ->execute(['attempts' => $attempts, 'until' => $lockedUntil, 'id' => $id]);
+            $pdo->prepare('UPDATE users SET failed_attempts=:attempts, locked_until=:until, lock_requires_admin=:persistent, updated_at=NOW() WHERE id=:id')
+                ->execute(['attempts' => $attempts, 'until' => $lockedUntil, 'persistent' => $lockedUntil !== null ? 1 : 0, 'id' => $id]);
             if ($lockedUntil !== null) {
                 $pdo->prepare('INSERT INTO locked_accounts (user_id, username_snapshot, failed_attempts, locked_at, locked_until)
                     VALUES (:user, :username, :attempts, NOW(), :until)')->execute([
                         'user' => $id, 'username' => $user['username'], 'attempts' => $attempts, 'until' => $lockedUntil,
                     ]);
+                \App\Services\AuditService::record($pdo,null,'account.locked','user',$id,['failed_attempts'=>$attempts]);
             }
             return ['attempts' => $attempts, 'locked_until' => $lockedUntil, 'new_lock' => $lockedUntil !== null];
         };
@@ -162,13 +168,20 @@ public function updateCustomerProfile(
     string $contactNo,
     ?string $deliveryAddress
 ): void {
-    Database::transaction(function (PDO $pdo) use (
+    $update = function (PDO $pdo) use (
         $userId,
         $fullName,
         $email,
         $contactNo,
         $deliveryAddress
     ): void {
+        $user=$this->findById($userId,true);
+        if(!self::canAuthenticate($user)||$user['role']!=='customer')throw new \DomainException('An active customer account is required.');
+        if(trim($fullName)===''||mb_strlen($fullName)>120||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($email)>190
+            ||trim($contactNo)===''||strlen($contactNo)>25||mb_strlen($deliveryAddress??'')>500)throw new \DomainException('Profile values exceed the supported limits.');
+        $before=$this->profileFor($userId);$fields=[];
+        foreach(['full_name'=>$fullName,'email'=>strtolower(trim($email)),'contact_no'=>$contactNo,'delivery_address'=>$deliveryAddress] as $field=>$value)if((string)($before[$field]??'')!==(string)$value)$fields[]=$field;
+        if(!$fields)return;
         $userStmt = $pdo->prepare(
             'UPDATE users
              SET email = :email,
@@ -199,14 +212,20 @@ public function updateCustomerProfile(
                 : null,
             'user_id' => $userId,
         ]);
-    });
+        \App\Services\AuditService::record($pdo,$userId,'profile.updated','user',$userId,['fields'=>$fields]);
+    };
+    $pdo=Database::connection();
+    if($pdo->inTransaction())$update($pdo);else Database::transaction($update);
 }
 
-    public function updateProfileImage(int $userId, string $profileImage): void
+    public function updateProfileImage(int $userId, string $profileImage): ?string
 {
-    $pdo = Database::connection();
-
-    $stmt = $pdo->prepare(
+    return Database::transaction(function(PDO $pdo)use($userId,$profileImage):?string{
+        $user=$this->findById($userId,true);
+        if(!self::canAuthenticate($user)||$user['role']!=='customer')throw new \DomainException('An active customer account is required.');
+        if(!preg_match('~^uploads/profile/[a-f0-9]{32}\.(jpg|png|webp)$~D',$profileImage))throw new \InvalidArgumentException('Invalid profile image path.');
+        $before=$this->profileFor($userId)['profile_image']??null;
+        $stmt = $pdo->prepare(
         'UPDATE customer_profiles
          SET profile_image = :profile_image,
              updated_at = NOW()
@@ -217,5 +236,8 @@ public function updateCustomerProfile(
         'profile_image' => $profileImage,
         'user_id' => $userId,
     ]);
+        \App\Services\AuditService::record($pdo,$userId,'profile.image_updated','user',$userId);
+        return $before;
+    });
 }
 }

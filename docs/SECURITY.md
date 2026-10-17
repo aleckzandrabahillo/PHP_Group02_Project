@@ -7,11 +7,14 @@ Administrators manage `/admin/security`. Catalog Managers and Customers cannot r
 | Control | Allowed values | Default |
 | --- | --- | --- |
 | Failed-login threshold | 1–3 | 3 |
-| Lock duration | 15–120 minutes | 15 |
+| Incident review interval (does not unlock) | 15–120 minutes | 15 |
 | Inactivity timeout | 1–30 minutes | 30 |
 | New-password minimum | 12–64 characters | 12 |
+| Each required uppercase/lowercase/number/special count | 1–4 | 1 |
 
-Uppercase, lowercase, a digit and a non-whitespace special character always remain required. Passwords are limited to 72 bytes to avoid bcrypt truncation. Existing passwords are not invalidated by a stronger minimum. Stored database settings take precedence over environment fallbacks; out-of-range inherited settings are bounded securely.
+Uppercase, lowercase, a digit and a non-whitespace special character always remain required. Administrators can strengthen each required count without disabling a class. Passwords are limited to 72 bytes to avoid bcrypt truncation. Existing passwords are not invalidated by a stronger minimum. Stored database settings take precedence over environment fallbacks; out-of-range inherited settings are bounded securely. [Password changes and proposed expiry](PASSWORDS.md) explain credential revocation, the guarded migration and default-disabled expiration.
+
+Account locks are serialized on the user row and persist until an authorized Administrator releases them. The recorded review interval is informational, never an automatic unlock. The default/hard cap is three; administrators may select a stricter one or two. IAS C9 says maximum three, while C10 offers customization. If the instructor requires exactly three in every configuration, keep the setting at three. Login requests are additionally bounded per network address after CSRF validation; CAPTCHA remains required.
 
 Account locks are serialized on the user row. Each incident records the username, attempts and timestamps in `locked_accounts`. Unlocking resets the counter without changing status, password, MFA or last-login time. Stale unlock requests are rejected. Unlock and policy audits commit with the change; required-history/audit failure rolls back the operation. History starts at deployment and does not reconstruct older incidents.
 
@@ -27,7 +30,9 @@ php scripts/migrate_security.php --expect-host=HOST --expect-port=PORT --expect-
 
 Dry-run is the default. After reviewing the exact target and backup, add `--apply`. Repeat runs validate the table and do nothing; incompatible existing definitions stop for review. Run the migration before deploying this source. Do not run the fresh installer against an existing database.
 
-For rollback, stop the new runtime and restore the previous source. Preserve the additive history table and its records. Restore a database backup only with explicit approval and a reviewed plan for any data added afterward.
+After the original security migration, run `scripts/migrate_locks.php` with the same exact identity guards, first dry-run and then explicitly approved apply. This adds `users.lock_requires_admin` and `security_rate_limits`; it preserves currently active legacy locks without relocking already expired ones. Repeat runs validate definitions. Personal deployment requires separate approval and a fresh restore-tested backup.
+
+Do not roll back to code that ignores persisted locks while they exist. Preserve additive schema and all history. Database restoration requires explicit approval and a plan for newer records.
 
 ## Verification
 
@@ -59,3 +64,11 @@ The test refuses database ports 3306/13307, generates synthetic credentials in m
 - COD remains a demonstration/manual payment method; gateway and fulfillment integration are not claimed.
 
 IAS evidence: workbook C9/C10 (bounded lockout), C11/C12 (password complexity/length), C13 (unlock), C14 (timeout), C15–C19 (preserved access/input/session protections), C24 (lock history), C27 (transactional security audits). Expiration in C11 and remaining production/MFA/privacy items need separate evidence.
+
+## Private-console Administrator recovery
+
+If all Administrators become locked, a trusted host operator can run `scripts/recover_admin.ps1` locally with `-Actor`, `-Target`, `-Php` and the complete `-DatabaseGuards` array used by migrations. Dry-run the PHP script first. An active Administrator must prove their current password and authenticator/unused recovery code, or existing email OTP when unenrolled. Use `-SendCode` for the latter, then run the hidden prompts. Never put proof values in arguments, history, chat or reports.
+
+This operation unlocks the chosen record atomically with incident/audit updates; it does not log the operator in, alter passwords, reactivate users or remove MFA. Proof attempts are persisted and limited to three per fifteen minutes. Host access alone is insufficient without Administrator proof. Keep the private MFA key and a usable staff email channel/recovery codes secured. The recovery script has no HTTP route.
+
+`tests/persistent_locks.php` adds elapsed-time, all-admin recovery, real CLI stdin, history preservation, proof/audit rollback, throttle and malformed-CSRF checks under the same disposable-only guards as `tests/security.php`.

@@ -46,19 +46,18 @@ $recaptcha = new RecaptchaService();
 $audit = new AuditService();
 
 $auth = new AuthController($authService, $recaptcha);
+$activation = new \App\Controllers\ActivationController(new \App\Services\ActivationService($otp, $mail, $logs));
+$passwords = new \App\Controllers\PasswordController();
 $public = new PublicController($products, $favorites, $cart, $reviews);
 $customer = new CustomerController($dashboard, $users, $products, $favorites, $cart, $routines, $otp, new CheckoutService(), new Order());
 $catalog = new CatalogController($dashboard, $users, $products);
-<<<<<<< HEAD
 $orders = new Order();
 $admin = new AdminController($dashboard, $users, $audit, $orders);
-=======
 $admin = new AdminController($dashboard, $users);
 $security = new \App\Controllers\SecurityController(new \App\Services\SecurityManagement());
 $mfa = new \App\Controllers\MfaController(new \App\Services\MfaService($users, $otp, $logs), $authService);
 $hairProfile = new \App\Controllers\HairProfileController(new \App\Models\HairProfile(), new \App\Services\ConcernInterpreter());
 $recommendations = new \App\Controllers\RecommendationController();
->>>>>>> 96bb4b7507eb9410521a01e05f1253df57918204
 
 $router = new Router();
 $router->get('/', [$public, 'landing']);
@@ -66,11 +65,14 @@ $router->get('/login', [$auth, 'loginForm']);
 $router->post('/login', [$auth, 'login']);
 $router->get('/shop', [$public, 'shop']);
 $router->get('/about', [$public, 'about']);
+$router->get('/privacy', [$public, 'privacy']);
 $router->get('/search', [$public, 'search']);
 $router->get('/search/suggest', [$public, 'searchSuggestions']);
 $router->get('/product', [$public, 'product']);
 $router->get('/register', [$auth, 'registerForm']);
 $router->post('/register', [$auth, 'register']);
+$router->get('/activate', [$activation, 'page']);
+$router->post('/activate', [$activation, 'activate']);
 
 
 $router->get('/verify-otp', [$auth, 'otpForm']);
@@ -80,6 +82,8 @@ $router->post('/logout', [$auth, 'logout']);
 $router->get('/verify-authenticator', [$mfa, 'verifyForm']);
 $router->post('/verify-authenticator', [$mfa, 'verify']);
 $router->get('/account/mfa', [$mfa, 'settings']);
+$router->get('/account/password', [$passwords, 'page']);
+$router->post('/account/password', [$passwords, 'change']);
 $router->post('/account/mfa', [$mfa, 'manage']);
 $router->get('/account/mfa/recovery', [$mfa, 'recovery']);
 
@@ -103,6 +107,7 @@ $router->post('/profile/update', [$customer, 'updateProfile']);
 $router->get('/profile/verify-otp', [$customer, 'profileOtpForm']);
 $router->post('/profile/verify-otp', [$customer, 'verifyProfileOtp']);
 $router->get('/favorites', [$customer, 'favorites']);
+$router->get('/favorites/state', [$customer, 'favoriteState']);
 $router->post('/favorites/toggle', [$customer, 'toggleFavorite']);
 
 $router->get('/catalog', [$catalog, 'dashboard']);
@@ -126,9 +131,14 @@ $router->get('/admin/security', fn() => $admin->page('security','Security'));
 $router->get('/admin/orders', fn() => $admin->page('orders','Orders'));
 $router->get('/admin/security', [$security, 'page']);
 $router->post('/admin/security', [$security, 'save']);
+<<<<<<< HEAD
 >>>>>>> 96bb4b7507eb9410521a01e05f1253df57918204
 $router->get('/admin/auth-logs', fn() => $admin->page('auth_logs','Authentication Logs'));
 $router->get('/admin/audit-logs', [$admin, 'auditLogs']);
+=======
+$router->get('/admin/auth-logs', fn() => $admin->logs('auth'));
+$router->get('/admin/audit-logs', fn() => $admin->logs('audit'));
+>>>>>>> 6d84be287d07a173b0e5ae173013928031d906a4
 $router->get('/admin/profile', fn() => $admin->page('profile','Profile'));
 
 $router->dispatch($_SERVER['REQUEST_METHOD'] ?? 'GET', $_SERVER['REQUEST_URI'] ?? '/');

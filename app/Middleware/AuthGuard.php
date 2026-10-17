@@ -25,6 +25,12 @@ final class AuthGuard
             }
             Response::redirect('/login');
         }
+        $current = (new User())->findById((int)$user['id']);
+        $path = parse_url(current_relative_uri(), PHP_URL_PATH);
+        if ($current && \App\Services\PasswordService::expired($current) && !in_array($path,['/account/password','/logout'],true)) {
+            Session::flash('warning','Your password has expired under the configured policy. Change it to continue.');
+            Response::redirect('/account/password');
+        }
         return $user;
     }
 
@@ -37,6 +43,7 @@ final class AuthGuard
         $version = $user ? \App\Services\MfaService::sessionVersion((int) $user['id']) : null;
         // A changed role must pass its normal login/MFA path before gaining access.
         if (!User::canAuthenticate($user) || ($cached['role'] ?? '') !== $user['role']
+            || (($user['password_version'] ?? '') !== '' && !hash_equals($user['password_version'], (string)Session::get('auth_password_version','')))
             || ($version !== null && (!is_string(Session::get('auth_mfa_version')) || !hash_equals($version, Session::get('auth_mfa_version'))))) {
             Session::forgetAuth();
             session_regenerate_id(true);

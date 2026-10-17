@@ -11,6 +11,11 @@
   <p class="matching-disclosure">Products and match explanations are based on demonstration catalog specifications, not verified formulations or medical benefits. Current prices and availability are shown below.</p>
   <ol class="saved-routine-list"><?php foreach ($routineState['items'] as $item): ?>
     <li class="saved-routine-item">
+      <a class="routine-product-art" href="<?= e(url('/product?id=' . (int) $item['product_id'])) ?>" aria-label="View <?= e($item['name']) ?>">
+        <?php $routineImage = product_image_url($item['image_path'] ?? null); ?>
+        <?php if ($routineImage !== null): ?><img src="<?= e($routineImage) ?>" alt="<?= e($item['name']) ?>" width="1200" height="1500" loading="lazy" decoding="async">
+        <?php else: ?><?php $visualCategory = $item['category_name'] ?? ''; $placeholderLarge = false; require dirname(__DIR__) . '/partials/product_placeholder.php'; ?><?php endif; ?>
+      </a>
       <div><span class="eyebrow"><?= e($item['explanation']['title'] ?? ucfirst($item['routine_step'])) ?></span>
         <h2><a href="<?= e(url('/product?id='.(int)$item['product_id'])) ?>"><?= e($item['name']) ?></a></h2>
         <p><?= e($item['category_name']) ?> · ₱<?= e(number_format((float)$item['price'],2)) ?></p>

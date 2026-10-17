@@ -32,6 +32,11 @@ final class AuthController
     {
         AuthGuard::guest();
         Csrf::enforce($_POST['_token'] ?? null);
+        if (!\App\Services\RequestThrottle::allow('login', (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'), 30, 60)) {
+            http_response_code(429);
+            header('Retry-After: 60');
+            exit('Too many sign-in requests. Wait a minute before trying again.');
+        }
         $errors = Validator::login($_POST);
        $recaptchaResponse = (string) ($_POST['g-recaptcha-response'] ?? '');
 
@@ -43,7 +48,12 @@ final class AuthController
             Session::put('errors', $errors);
             Response::redirect('/login');
         }
-        $result = $this->auth->attempt((string) $_POST['identifier'], (string) $_POST['password']);
+        try {
+            $result = $this->auth->attempt((string) $_POST['identifier'], (string) $_POST['password']);
+        } catch (\App\Services\MailDeliveryException $e) {
+            Session::flash('error', $e->getMessage());
+            Response::redirect('/login');
+        }
         if (!$result['ok']) {
             Session::keepOld($_POST);
             Session::put('errors', [
@@ -61,7 +71,8 @@ final class AuthController
     public function registerForm(): void
     {
         AuthGuard::guest();
-        View::render('auth/register', ['pageTitle' => 'Create account', 'recaptchaSiteKey' => env('RECAPTCHA_SITE_KEY', ''), ],'auth');
+        View::render('auth/register', ['pageTitle' => 'Create account', 'recaptchaSiteKey' => env('RECAPTCHA_SITE_KEY', ''),
+            'passwordPolicy' => \App\Services\SecurityPolicy::values()], 'auth');
     }
 
     public function register(): void
@@ -80,13 +91,23 @@ final class AuthController
             Session::put('errors', $errors);
             Response::redirect('/register');
         }
-        $result = $this->auth->register($_POST);
+        try {
+            $result = $this->auth->register($_POST);
+        } catch (\App\Services\MailDeliveryException $e) {
+            Session::keepOld($_POST);
+            Session::flash('error', $e->getMessage() . ' Your registration was not saved.');
+            Response::redirect('/register');
+        } catch (\PDOException) {
+            Session::keepOld($_POST);
+            Session::flash('error', 'Registration could not be completed. If you already registered, try signing in.');
+            Response::redirect('/register');
+        }
         if (!$result['ok']) {
             Session::keepOld($_POST);
             Session::put('errors', [$result['field'] => $result['message']]);
             Response::redirect('/register');
         }
-        Session::flash('success', 'Account created. Enter the activation code we sent to your email.');
+        Session::flash('success', 'Account created. Open your activation email link or enter its verification code.');
         Response::redirect('/verify-otp');
     }
 
@@ -131,7 +152,11 @@ final class AuthController
     {
         AuthGuard::guest();
         Csrf::enforce($_POST['_token'] ?? null);
-        $result = $this->auth->resendPendingOtp();
+        try {
+            $result = $this->auth->resendPendingOtp();
+        } catch (\App\Services\MailDeliveryException $e) {
+            $result = ['ok'=>false, 'message'=>$e->getMessage()];
+        }
         Session::flash($result['ok'] ? 'success' : 'warning', $result['message']);
         Response::redirect('/verify-otp');
     }
