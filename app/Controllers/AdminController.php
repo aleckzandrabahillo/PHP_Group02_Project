@@ -47,6 +47,16 @@ final class AdminController
         Response::redirect($path);
     }
 
+    /** Validates a posted "return" path against the pages allowed to send the user back here. */
+    private function safeReturn(mixed $path): string
+    {
+        $allowed = ['/admin/users', '/admin/staff'];
+        if (!is_string($path) || !in_array(parse_url($path, PHP_URL_PATH), $allowed, true)) {
+            return '/admin/staff';
+        }
+        return $path;
+    }
+
     /** @return array{0:int,1:int,2:int} [limit, offset, page] */
     private function pager(): array
     {
@@ -82,6 +92,118 @@ final class AdminController
     {
         $user = AuthGuard::roles(['admin']);
         View::render('admin/' . $view, ['pageTitle'=>$title, 'profile'=>$this->users->profileFor((int)$user['id'])]);
+    }
+
+    public function staff(): void
+    {
+        $admin = $this->admin();
+        [$limit, $offset, $page] = $this->pager();
+        $term = $this->query('q');
+        $status = $this->query('status');
+
+        $result = $this->users->searchStaff($term, $status, $limit, $offset);
+
+        $this->render($admin, 'staff', 'Staff & Roles', $result + [
+            'page' => $page,
+            'limit' => $limit,
+            'filters' => ['q' => $term, 'status' => $status],
+        ]);
+    }
+
+    public function staffCreate(): void
+    {
+        $actor = $this->mutate();
+        $fullName = trim((string) ($_POST['full_name'] ?? ''));
+        $email = trim((string) ($_POST['email'] ?? ''));
+        $username = trim((string) ($_POST['username'] ?? ''));
+        $role = (string) ($_POST['role'] ?? '');
+        $password = (string) ($_POST['password'] ?? '');
+
+        try {
+            if ($fullName === '' || mb_strlen($fullName) > 120) {
+                throw new \InvalidArgumentException('Enter a valid full name.');
+            }
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 190) {
+                throw new \InvalidArgumentException('Enter a valid email address.');
+            }
+            if (!preg_match('/^[a-zA-Z0-9_.]{3,40}$/D', $username)) {
+                throw new \InvalidArgumentException('Usernames must be 3-40 characters: letters, numbers, dot or underscore.');
+            }
+            if (!in_array($role, ['admin', 'catalog_manager'], true)) {
+                throw new \InvalidArgumentException('Choose a valid staff role.');
+            }
+            if (strlen($password) < 12) {
+                throw new \InvalidArgumentException('Temporary passwords need at least 12 characters.');
+            }
+            if ($this->users->emailExists($email)) {
+                throw new \InvalidArgumentException('That email is already registered.');
+            }
+            if ($this->users->usernameExists($username)) {
+                throw new \InvalidArgumentException('That username is already taken.');
+            }
+
+            $this->users->createStaff($role, $email, $username, password_hash($password, PASSWORD_DEFAULT), $fullName);
+            Session::flash('success', 'Staff account created.');
+        } catch (\InvalidArgumentException $e) {
+            Session::flash('error', $e->getMessage());
+        } catch (\Throwable) {
+            Session::flash('error', 'The staff account could not be created.');
+        }
+        Response::redirect('/admin/staff');
+    }
+
+    public function staffRole(): void
+    {
+        $actor = $this->mutate();
+        $id = (int) ($_POST['id'] ?? 0);
+        $role = (string) ($_POST['role'] ?? '');
+
+        if ($id === (int) $actor['id']) {
+            $this->back('/admin/staff', 'error', 'You cannot change your own role.');
+        }
+
+        try {
+            $this->users->changeStaffRole((int) $actor['id'], $id, $role);
+            $this->back('/admin/staff', 'success', 'Role updated.');
+        } catch (\InvalidArgumentException|\DomainException $e) {
+            $this->back('/admin/staff', 'error', $e->getMessage());
+        } catch (\Throwable) {
+            $this->back('/admin/staff', 'error', 'The role could not be updated.');
+        }
+    }
+
+    public function unlockUser(): void
+    {
+        $actor = $this->mutate();
+        $id = (int) ($_POST['id'] ?? 0);
+        $return = $this->safeReturn($_POST['return'] ?? null);
+
+        if ($id <= 0) {
+            $this->back($return, 'error', 'Invalid account.');
+        }
+        $this->users->adminUnlock((int) $actor['id'], $id);
+        $this->back($return, 'success', 'Account unlocked. Its status, password and MFA requirements are unchanged.');
+    }
+
+    public function updateUserStatus(): void
+    {
+        $actor = $this->mutate();
+        $id = (int) ($_POST['id'] ?? 0);
+        $status = (string) ($_POST['status'] ?? '');
+        $return = $this->safeReturn($_POST['return'] ?? null);
+
+        if ($id === (int) $actor['id']) {
+            $this->back($return, 'error', 'You cannot change your own status.');
+        }
+
+        try {
+            $this->users->setStatus((int) $actor['id'], $id, $status);
+            $this->back($return, 'success', 'Status updated.');
+        } catch (\InvalidArgumentException $e) {
+            $this->back($return, 'error', $e->getMessage());
+        } catch (\Throwable) {
+            $this->back($return, 'error', 'The status could not be updated.');
+        }
     }
 
     public function orders(): void
@@ -132,7 +254,7 @@ final class AdminController
 
         // The status change and its audit entry are saved together or not at all.
         $result = $this->orders->transition($id, $to, function (PDO $pdo, string $from, string $newStatus) use ($actor, $id): void {
-            $this->audit->record((int) $actor['id'], 'order.status', 'order', $id, $from . ' → ' . $newStatus);
+            AuditService::record($pdo, (int) $actor['id'], 'order.status', 'order', $id, ['from' => $from, 'to' => $newStatus]);
         });
 
         if (!empty($result['missing'])) {
@@ -190,5 +312,24 @@ final class AdminController
             'filters' => ['q' => $q, 'event' => $event, 'result' => $result],
             'events' => $this->logs->events(),
         ]);
+    }
+    
+    public function logs(string $kind): void
+    {
+        AuthGuard::roles(['admin']);
+        header('Cache-Control: no-store, private');
+        header('Referrer-Policy: same-origin');
+        try {
+            $data=(new \App\Services\AdminLogReader())->read($kind,$_GET);
+        } catch(\InvalidArgumentException $e) {
+            http_response_code(422);
+            $data=['error'=>$e->getMessage()];
+        } catch(\Throwable) {
+            http_response_code(503);
+            $data=['error'=>'Log records are temporarily unavailable. Please try again later.'];
+        }
+        $data+=['kind'=>$kind,'records'=>[],'events'=>[],'filters'=>array_fill_keys(['q','event','result','from','to','sort'],''),'total'=>0,'page'=>1,'pages'=>1];
+        $data['pageTitle']=$kind==='auth'?'Authentication Logs':'Audit Logs';
+        View::render('admin/'.($kind==='auth'?'auth_logs':'audit_logs'),$data);
     }
 }

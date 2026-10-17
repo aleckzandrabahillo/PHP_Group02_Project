@@ -21,7 +21,6 @@ use App\Models\Favorite;
 use App\Models\Cart;
 use App\Models\Routine;
 use App\Models\Review;
-use App\Models\Order;
 use App\Services\CheckoutService;
 use App\Services\AuthService;
 use App\Services\AuditService;
@@ -52,8 +51,7 @@ $public = new PublicController($products, $favorites, $cart, $reviews);
 $customer = new CustomerController($dashboard, $users, $products, $favorites, $cart, $routines, $otp, new CheckoutService(), new Order());
 $catalog = new CatalogController($dashboard, $users, $products);
 $orders = new Order();
-$admin = new AdminController($dashboard, $users, $audit, $orders);
-$admin = new AdminController($dashboard, $users);
+$admin = new AdminController($dashboard, $users, $audit, $orders, $logs);
 $security = new \App\Controllers\SecurityController(new \App\Services\SecurityManagement());
 $mfa = new \App\Controllers\MfaController(new \App\Services\MfaService($users, $otp, $logs), $authService);
 $hairProfile = new \App\Controllers\HairProfileController(new \App\Models\HairProfile(), new \App\Services\ConcernInterpreter());
@@ -121,24 +119,18 @@ $router->get('/catalog/profile', fn() => $catalog->page('profile','Profile'));
 
 $router->get('/admin', [$admin, 'dashboard']);
 $router->get('/admin/users', fn() => $admin->page('users','Users'));
-$router->get('/admin/staff', fn() => $admin->page('staff','Staff & Roles'));
-<<<<<<< HEAD
+$router->post('/admin/users/unlock', [$admin, 'unlockUser']);
+$router->post('/admin/users/status', [$admin, 'updateUserStatus']);
+$router->get('/admin/staff', [$admin, 'staff']);
+$router->post('/admin/staff/create', [$admin, 'staffCreate']);
+$router->post('/admin/staff/role', [$admin, 'staffRole']);
 $router->get('/admin/orders', [$admin, 'orders']);
 $router->get('/admin/orders/view', [$admin, 'orderView']);
 $router->post('/admin/orders/status', [$admin, 'updateOrderStatus']);
-$router->get('/admin/security', fn() => $admin->page('security','Security'));
-=======
-$router->get('/admin/orders', fn() => $admin->page('orders','Orders'));
 $router->get('/admin/security', [$security, 'page']);
 $router->post('/admin/security', [$security, 'save']);
-<<<<<<< HEAD
->>>>>>> 96bb4b7507eb9410521a01e05f1253df57918204
-$router->get('/admin/auth-logs', fn() => $admin->page('auth_logs','Authentication Logs'));
+$router->get('/admin/auth-logs', [$admin, 'authLogs']);
 $router->get('/admin/audit-logs', [$admin, 'auditLogs']);
-=======
-$router->get('/admin/auth-logs', fn() => $admin->logs('auth'));
-$router->get('/admin/audit-logs', fn() => $admin->logs('audit'));
->>>>>>> 6d84be287d07a173b0e5ae173013928031d906a4
 $router->get('/admin/profile', fn() => $admin->page('profile','Profile'));
 
 $router->dispatch($_SERVER['REQUEST_METHOD'] ?? 'GET', $_SERVER['REQUEST_URI'] ?? '/');
