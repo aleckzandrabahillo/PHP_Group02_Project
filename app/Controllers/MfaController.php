@@ -25,12 +25,18 @@ final class MfaController
         header('Referrer-Policy: no-referrer');
     }
 
+    public function customerSettings(): void
+    {
+        AuthGuard::roles(['customer']);
+        $this->settings();
+    }
+
     public function settings(): void
     {
         $user=AuthGuard::auth();$this->privatePage();
         $factor=$this->mfa->factor((int)$user['id']);
         View::render('account/mfa',[
-            'pageTitle'=>$user['role']==='customer'?'Two-step verification':'Authenticator','enabledAt'=>$factor['enabled_at']??null,
+            'pageTitle'=>$user['role']==='customer'?'Security settings':'Authenticator','enabledAt'=>$factor['enabled_at']??null,
             'remaining'=>$factor?count(json_decode($factor['recovery_hashes_json'],true)):0,
             'configured'=>(new MfaCipher())->configured(),'setupSecret'=>$this->mfa->setupSecret((int)$user['id']),
         ]);

@@ -5,6 +5,8 @@ $filters = $filters ?? [
 ];
 $filterOptions = $filterOptions ?? ['categories' => [], 'concern' => [], 'texture' => [], 'scalp' => [], 'routine_step' => []];
 $sort = $sort ?? 'newest';
+$sortLabel = 'Newest';
+foreach ($sortLinks ?? [] as $option) if ($option['active']) $sortLabel = $option['label'];
 $clearParams = [];
 if (($search ?? '') !== '') $clearParams['q'] = $search;
 if ($sort !== 'newest') $clearParams['sort'] = $sort;
@@ -19,12 +21,13 @@ $clearFilterUrl = url('/shop') . ($clearParams ? '?' . http_build_query($clearPa
   </section>
 
   <nav class="category-tabs" aria-label="Browse product categories">
-    <a href="<?= e(url('/shop')) ?>" <?= !$filters['categories'] ? 'aria-current="page"' : '' ?>>All care</a>
+    <a href="<?= e($categoryLinks['all']) ?>" <?= !$filters['categories'] ? 'aria-current="page"' : '' ?>>All care</a>
     <?php foreach ($filterOptions['categories'] as $category): ?>
-      <a href="<?= e(url('/shop?category[]=' . (int) $category['id'])) ?>" <?= count($filters['categories']) === 1 && in_array((int) $category['id'], $filters['categories'], true) ? 'aria-current="page"' : '' ?>><?= e($category['name']) ?></a>
+      <a href="<?= e($categoryLinks[(int) $category['id']]) ?>" <?= count($filters['categories']) === 1 && in_array((int) $category['id'], $filters['categories'], true) ? 'aria-current="page"' : '' ?>><?= e($category['name']) ?></a>
     <?php endforeach; ?>
   </nav>
   <form class="shop-form" method="get" action="<?= e(url('/shop')) ?>" data-shop-form>
+    <input type="hidden" name="sort" value="<?= e($sort) ?>">
     <?php if (($search ?? '') !== ''): ?><input type="hidden" name="q" value="<?= e($search) ?>"><?php endif; ?>
 
     <div class="shop-results-toolbar">
@@ -36,12 +39,12 @@ $clearFilterUrl = url('/shop') . ($clearParams ? '?' . http_build_query($clearPa
       <div class="shop-toolbar">
         <details class="sort-menu" data-sort-menu>
           <summary class="toolbar-text-control">
-            <span>Sort by</span>
+            <span>Sort by: <?= e($sortLabel) ?></span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"/></svg>
           </summary>
           <div class="sort-menu-panel" aria-label="Sort products">
             <?php foreach (($sortLinks ?? []) as $option): ?>
-              <a class="sort-option <?= !empty($option['active']) ? 'active' : '' ?>" href="<?= e($option['url']) ?>">
+              <a class="sort-option <?= !empty($option['active']) ? 'active' : '' ?>" href="<?= e($option['url']) ?>" <?= !empty($option['active']) ? 'aria-current="true"' : '' ?>>
                 <span class="sort-radio" aria-hidden="true"></span>
                 <span><?= e($option['label']) ?></span>
               </a>
@@ -176,4 +179,8 @@ $clearFilterUrl = url('/shop') . ($clearParams ? '?' . http_build_query($clearPa
       <a class="btn btn-secondary" href="<?= e(url('/shop')) ?>">View all products</a>
     </div>
   <?php endif; ?>
+  <?php if ($catalogPages > 1): ?><nav class="order-pagination" aria-label="Catalog pages">
+    <?php foreach ($pageLinks as $label=>$link): ?><a href="<?= e($link) ?>"><?= e($label) ?></a><?php endforeach; ?>
+    <span>Page <?= (int)$catalogPage ?> of <?= (int)$catalogPages ?></span>
+  </nav><?php endif; ?>
 </main>

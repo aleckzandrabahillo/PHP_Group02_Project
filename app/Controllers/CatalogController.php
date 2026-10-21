@@ -27,9 +27,14 @@ final class CatalogController
     public function dashboard(): void
     {
         $user = AuthGuard::roles(['catalog_manager','admin']);
+        header('Cache-Control: no-store, private');
+        try{$days=\App\Services\DashboardAnalytics::days($_GET['days']??'30');}
+        catch(\InvalidArgumentException){http_response_code(422);$days=30;\App\Core\Session::flash('warning','Choose a valid reporting period.');}
+        $analytics=(new \App\Services\DashboardAnalytics(\App\Core\Database::connection()))->report($days);
         View::render('catalog/dashboard', [
-            'pageTitle'=>'Catalog Dashboard',
+            'analytics'=>$analytics,'pageTitle'=>'Catalog Dashboard',
             'stats'=>$this->dashboard->catalog(),
+            'activity'=>$this->products->recentCatalogActivity(),
             'profile'=>$this->users->profileFor((int)$user['id'])
         ]);
     }
@@ -76,7 +81,7 @@ final class CatalogController
         $errors = [];
         $form = ProductValidator::defaults();
         $current = $action === 'update' && $id !== null ? $this->products->managementFind($id) : null;
-        if (!in_array($action, ['create', 'update', 'archive', 'delete'], true)) {
+        if (!in_array($action, ['create', 'update', 'archive', 'reactivate', 'delete'], true)) {
             $errors['form'] = 'Choose a valid product action.';
         } elseif ($action !== 'create' && ($id === null || ($action === 'update' && $current === null))) {
             $errors['form'] = 'Choose an existing product from the list.';
@@ -99,6 +104,8 @@ final class CatalogController
                     $uploading = false;
                     $saved = $this->products->saveProduct($action === 'update' ? $id : null, $form, $newImage, (int) $user['id']);
                     $oldImage = $saved['old_image'];
+                } elseif ($action === 'reactivate') {
+                    $this->products->reactivateProduct($id, (int) $user['id']);
                 } else {
                     $oldImage = $this->products->removeProduct($id, (int) $user['id'], $action === 'archive');
                 }
@@ -123,7 +130,7 @@ final class CatalogController
                 if ($oldImage !== null && ($action === 'delete' || ($newImage !== null && $newImage !== $oldImage))) {
                     $this->retireProductImage($oldImage);
                 }
-                $messages = ['create' => 'Product created.', 'update' => 'Product updated.', 'archive' => 'Product archived.', 'delete' => 'Unused product deleted.'];
+                $messages = ['create' => 'Product created.', 'update' => 'Product updated.', 'archive' => 'Product archived.', 'reactivate'=>'Product reactivated.', 'delete' => 'Unused product deleted.'];
                 Session::flash('success', $messages[$action]);
                 Response::redirect('/catalog/products');
             }
@@ -151,7 +158,7 @@ final class CatalogController
                 $errors['form'] = 'That product no longer exists. Choose a product from the list.';
             }
         }
-        $this->renderInventory($user, $current, ['mode' => 'add', 'stock_qty' => '', 'expected_stock' => (string) ($current['stock_qty'] ?? '')], $errors);
+        $this->renderInventory($user, $current, ['mode' => 'add', 'stock_qty' => '', 'expected_stock' => (string) ($current['stock_qty'] ?? ''), 'reason'=>''], $errors);
     }
 
     public function updateStock(): void
@@ -161,7 +168,7 @@ final class CatalogController
         $id = $this->categoryId($_POST['id'] ?? null);
         $current = $id === null ? null : $this->products->managementFind($id);
         $form = [];
-        foreach (['mode', 'stock_qty', 'expected_stock'] as $key) $form[$key] = is_string($_POST[$key] ?? null) ? $_POST[$key] : '';
+        foreach (['mode', 'stock_qty', 'expected_stock','reason'] as $key) $form[$key] = is_string($_POST[$key] ?? null) ? $_POST[$key] : '';
         $quantity = ProductValidator::quantity($form['stock_qty']);
         $expected = ProductValidator::quantity($form['expected_stock']);
         $errors = [];
@@ -171,9 +178,12 @@ final class CatalogController
             $errors['stock_qty'] = 'Enter a whole number up to 4,294,967,295; restocking requires at least 1.';
         }
         if ($expected === null) $errors['form'] = 'Reload the stock form before saving changes.';
+        if (ProductValidator::stockReason($form['reason']) === null) {
+            $errors['reason'] = 'Enter a single-line reason of 1–200 characters.';
+        }
         if (!$errors) {
             try {
-                $this->products->changeStock($id, $quantity, $form['mode'] === 'add', $expected, (int) $user['id']);
+                $this->products->changeStock($id, $quantity, $form['mode'] === 'add', $expected, (int) $user['id'], $form['reason']);
                 Session::flash('success', $form['mode'] === 'add' ? 'Product restocked.' : 'Stock quantity updated.');
                 Response::redirect('/catalog/inventory');
             } catch (InvalidArgumentException $e) {

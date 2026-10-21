@@ -1,4 +1,4 @@
-<section class="page-head"><div><span class="eyebrow">FAVORITES</span><h1>Favorites</h1></div></section>
+<section class="page-head"><div><h1>Favorites</h1></div></section>
 <?php if (!empty($favoriteProducts)): ?>
   <div class="product-grid catalog-grid favorite-grid">
     <?php foreach ($favoriteProducts as $product): ?>

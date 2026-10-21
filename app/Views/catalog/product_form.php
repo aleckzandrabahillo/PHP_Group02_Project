@@ -4,7 +4,7 @@
   <form class="form-stack" method="post" enctype="multipart/form-data" action="<?= e(url('/catalog/products')) ?>">
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="<?= $editId !== null ? 'update' : 'create' ?>">
-    <input type="hidden" name="MAX_FILE_SIZE" value="2097152">
+    <input type="hidden" name="MAX_FILE_SIZE" value="5242880">
     <?php if ($editId !== null): ?>
       <input type="hidden" name="id" value="<?= (int) $editId ?>">
       <input type="hidden" name="expected_stock" value="<?= e($form['expected_stock']) ?>">
@@ -38,6 +38,12 @@
         <input type="number" name="stock_qty" value="<?= e($form['stock_qty']) ?>" min="0" max="4294967295" step="1" required aria-invalid="<?= isset($errors['stock_qty']) || isset($errors['expected_stock']) ? 'true' : 'false' ?>" aria-describedby="product-stock-error">
         <small id="product-stock-error" class="field-error"><?= e($errors['stock_qty'] ?? $errors['expected_stock'] ?? '') ?></small>
       </label>
+      <?php if($editId!==null): ?><label class="field <?= isset($errors['stock_reason'])?'has-error':'' ?>">
+        <span>Stock adjustment reason</span>
+        <input name="stock_reason" maxlength="200" value="<?= e($form['stock_reason']) ?>" aria-invalid="<?= isset($errors['stock_reason'])?'true':'false' ?>" aria-describedby="product-stock-reason-help product-stock-reason-error">
+        <small id="product-stock-reason-help" class="help">Required when changing this product's stock quantity.</small>
+        <small id="product-stock-reason-error" class="field-error"><?= e($errors['stock_reason']??'') ?></small>
+      </label><?php endif; ?>
       <label class="field <?= isset($errors['status']) ? 'has-error' : '' ?>">
         <span>Status</span>
         <select name="status" required aria-invalid="<?= isset($errors['status']) ? 'true' : 'false' ?>" aria-describedby="product-status-error">
@@ -59,8 +65,8 @@
       </label>
       <label class="field <?= isset($errors['image']) ? 'has-error' : '' ?>">
         <span>Product image <em>(optional)</em></span>
-        <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" aria-invalid="<?= isset($errors['image']) ? 'true' : 'false' ?>" aria-describedby="product-image-help product-image-error">
-        <small id="product-image-help" class="help">JPEG, PNG or WebP; up to 2 MB. Leave empty to keep the existing image.</small>
+        <input type="file" name="image" data-image-upload accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" aria-invalid="<?= isset($errors['image']) ? 'true' : 'false' ?>" aria-describedby="product-image-help product-image-error">
+        <small id="product-image-help" class="help">JPEG, PNG or WebP; up to 5 MB. Leave empty to keep the existing image.</small>
         <small id="product-image-error" class="field-error"><?= e($errors['image'] ?? '') ?></small>
       </label>
     </div>

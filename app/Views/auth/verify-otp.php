@@ -1,7 +1,7 @@
 <?php use App\Core\Session; $errors = Session::get('errors', []); ?>
 <div class="form-head">
   <span class="eyebrow"><?= e($purpose === 'activation' ? 'ACCOUNT ACTIVATION' : 'SECURE SIGN IN') ?></span>
-  <h2><?= e($purpose === 'activation' ? 'Activate your account' : 'Enter your sign-in code') ?></h2>
+  <h1><?= e($purpose === 'activation' ? 'Activate your account' : 'Enter your sign-in code') ?></h1>
   <p>We sent a 6-digit code to <strong><?= e($maskedEmail) ?></strong>.</p>
   <?php if ($purpose === 'activation'): ?><p>You can also open the activation link in the same email. Either method activates your account once.</p><?php endif; ?>
 </div>
@@ -20,7 +20,3 @@
   <?= csrf_field() ?>
   <button class="text-button" type="submit">Send a new code</button>
 </form>
-
-<?php if (env('APP_ENV', 'production') === 'development' && env('MAIL_DRIVER', 'log') === 'log'): ?>
-  <div class="dev-note"><strong>Local development:</strong> <?= $purpose === 'activation' ? 'Open your own activation message in the configured private development outbox.' : 'Your sign-in code is in the private development mail log.' ?></div>
-<?php endif; ?>

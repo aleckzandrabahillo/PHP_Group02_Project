@@ -77,12 +77,16 @@ final class User
         return $pdo->inTransaction() ? $create($pdo) : Database::transaction($create);
     }
 
-    public function createStaff(string $role, string $email, string $username, string $passwordHash, string $fullName): int
+    public function createStaff(string $role, string $email, string $username, string $passwordHash, string $fullName, ?int $actorId = null): int
     {
         if (!in_array($role, ['admin', 'catalog_manager'], true)) {
             throw new \InvalidArgumentException('Invalid staff role.');
         }
-        return Database::transaction(function (PDO $pdo) use ($role, $email, $username, $passwordHash, $fullName): int {
+        $create = function (PDO $pdo) use ($role, $email, $username, $passwordHash, $fullName, $actorId): int {
+            if($actorId!==null){
+                $actor=$this->findById($actorId,true);
+                if(!self::canAuthenticate($actor)||$actor['role']!=='admin')throw new \DomainException('An active Administrator is required.');
+            }
             $stmt = $pdo->prepare('INSERT INTO users (email, username, password_hash, role, status, failed_attempts, mfa_enabled, activated_at, created_at, updated_at, password_changed_at) VALUES (:email, :username, :password_hash, :role, "active", 0, 1, NOW(), NOW(), NOW(), NOW())');
             $stmt->execute([
                 'email' => strtolower($email), 'username' => $username, 'password_hash' => $passwordHash, 'role' => $role
@@ -90,9 +94,11 @@ final class User
             $id = (int) $pdo->lastInsertId();
             $profile = $pdo->prepare('INSERT INTO staff_profiles (user_id, full_name, created_at, updated_at) VALUES (:user_id, :full_name, NOW(), NOW())');
             $profile->execute(['user_id' => $id, 'full_name' => $fullName]);
-            \App\Services\AuditService::record($pdo,null,'staff.created','user',$id,['role'=>$role,'channel'=>'private_staff_setup']);
+            \App\Services\AuditService::record($pdo,$actorId,'staff.created','user',$id,['role'=>$role,'channel'=>$actorId===null?'private_staff_setup':'admin_staff']);
             return $id;
-        });
+        };
+        $pdo=Database::connection();
+        return $pdo->inTransaction() ? $create($pdo) : Database::transaction($create);
     }
 
     public function activate(int $id): void

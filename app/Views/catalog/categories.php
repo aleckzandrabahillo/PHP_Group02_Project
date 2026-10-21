@@ -79,7 +79,7 @@
             </form>
           <?php endif; ?>
           <?php if ((int) $category['product_count'] === 0): ?>
-            <form method="post" action="<?= e(url('/catalog/categories')) ?>">
+            <form method="post" action="<?= e(url('/catalog/categories')) ?>" data-confirm="Permanently delete this unused category? This cannot be undone.">
               <?= csrf_field() ?>
               <input type="hidden" name="action" value="delete">
               <input type="hidden" name="id" value="<?= (int) $category['id'] ?>">

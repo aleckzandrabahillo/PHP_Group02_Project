@@ -43,6 +43,7 @@ final class Validator
     {
         $policy = \App\Services\SecurityPolicy::values();
         $min = $policy['password_min_length'];
+        if(strlen($password)>72)return 'Use a shorter password.';
         $length = preg_match_all('/./us', $password);
         if ($length === false || $length < $min || strlen($password) > 72
             || preg_match_all('/[A-Z]/', $password) < $policy['password_min_uppercase']
@@ -50,7 +51,7 @@ final class Validator
             || preg_match_all('/[0-9]/', $password) < $policy['password_min_numbers']
             || preg_match_all('/[^A-Za-z0-9\x09-\x0d\x20]/u', $password) < $policy['password_min_special']
             || str_contains($password, "\0")) {
-            return "Use at least {$min} characters, {$policy['password_min_uppercase']} uppercase, {$policy['password_min_lowercase']} lowercase, {$policy['password_min_numbers']} number(s) and {$policy['password_min_special']} special character(s), within 72 bytes.";
+            return "Use at least {$min} characters, {$policy['password_min_uppercase']} uppercase, {$policy['password_min_lowercase']} lowercase, {$policy['password_min_numbers']} number(s) and {$policy['password_min_special']} special character(s).";
         }
         return null;
     }

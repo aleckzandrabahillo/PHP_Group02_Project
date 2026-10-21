@@ -7,6 +7,7 @@ $storeNav = $storeNav ?? ['categories' => [], 'concerns' => []];
 $favoriteCount = max(0, (int) ($favoriteCount ?? ($role === 'customer' ? (new \App\Models\Favorite())->countForUser((int) $current['id']) : 0)));
 $cartCount = (int) ($cartCount ?? 0);
 $shopActive = is_active_path('/shop') || is_active_path('/product');
+$shopSearch = isset($sortLinks, $sort);
 ?>
 <header class="site-header <?= $transparentHeader ? 'site-header--overlay' : 'site-header--solid' ?>"
         data-site-header
@@ -30,7 +31,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
             <section>
               <span class="mega-kicker">BY CATEGORY</span>
               <?php foreach (($storeNav['categories'] ?? []) as $category): ?>
-                <a href="<?= e(url('/shop?category[]=' . (int) $category['id'])) ?>"><?= e($category['name']) ?></a>
+                <a href="<?= e($categoryLinks[(int) $category['id']] ?? url('/shop?category[]=' . (int) $category['id'])) ?>"><?= e($category['name']) ?></a>
               <?php endforeach; ?>
             </section>
             <section>
@@ -52,7 +53,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
       </div>
 
       <?php if ($assessmentUrl !== null): ?>
-        <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" href="<?= e($assessmentUrl) ?>">Hair assessment</a>
+        <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" <?= is_active_path('/assessment') ? 'aria-current="page"' : '' ?> href="<?= e($assessmentUrl) ?>">Hair assessment</a>
       <?php endif; ?>
       <a class="<?= is_active_path('/about') ? 'active' : '' ?>" href="<?= e(url('/about')) ?>">About</a>
     </nav>
@@ -63,22 +64,7 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
       </button>
 
       <?php if ($role === 'customer'): ?>
-        <details class="account-menu">
-          <summary class="header-icon-link" aria-label="Account menu" title="Account">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>
-          </summary>
-          <div class="account-menu-panel">
-            <a href="<?= e(url('/profile')) ?>">Profile</a>
-            <a href="<?= e(url('/account/mfa')) ?>">Two-step verification</a>
-            <a href="<?= e(url('/account/password')) ?>">Change password</a>
-            <a href="<?= e(url('/routine')) ?>">My Routine</a>
-            <a href="<?= e(url('/orders')) ?>">My Orders</a>
-            <form method="post" action="<?= e(url('/logout')) ?>">
-              <?= csrf_field() ?>
-              <button type="submit">Sign out</button>
-            </form>
-          </div>
-        </details>
+        <a class="header-icon-link" href="<?= e(url('/profile')) ?>" aria-label="Your profile" title="Your profile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg></a>
 
         <a class="header-icon-link header-favorite-link <?= is_active_path('/favorites') ? 'active' : '' ?>" href="<?= e(url('/favorites')) ?>" aria-label="Favorites, <?= $favoriteCount ?> saved product<?= $favoriteCount === 1 ? '' : 's' ?>" title="Favorites" data-favorite-link data-favorite-state-url="<?= e(url('/favorites/state')) ?>">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
@@ -110,10 +96,10 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
         <nav class="mobile-nav-panel" aria-label="Mobile navigation">
           <a class="<?= $shopActive ? 'active' : '' ?>" href="<?= e(url('/shop')) ?>">Shop all</a>
           <?php foreach (($storeNav['categories'] ?? []) as $category): ?>
-            <a class="mobile-nav-sub" href="<?= e(url('/shop?category[]=' . (int) $category['id'])) ?>"><?= e($category['name']) ?></a>
+            <a class="mobile-nav-sub" href="<?= e($categoryLinks[(int) $category['id']] ?? url('/shop?category[]=' . (int) $category['id'])) ?>"><?= e($category['name']) ?></a>
           <?php endforeach; ?>
           <?php if ($assessmentUrl !== null): ?>
-            <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" href="<?= e($assessmentUrl) ?>">Hair assessment</a>
+            <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" <?= is_active_path('/assessment') ? 'aria-current="page"' : '' ?> href="<?= e($assessmentUrl) ?>">Hair assessment</a>
           <?php endif; ?>
           <a class="<?= is_active_path('/about') ? 'active' : '' ?>" href="<?= e(url('/about')) ?>">About</a>
           <?php if ($role === null): ?>
@@ -128,9 +114,10 @@ $shopActive = is_active_path('/shop') || is_active_path('/product');
 
 <?php if ($role === 'customer'): ?><div class="customer-feedback" role="status" aria-live="polite" aria-atomic="true" data-favorite-feedback hidden></div><?php endif; ?>
 <div class="global-search-backdrop" data-global-search-backdrop hidden></div>
-<section class="global-search-drawer" data-global-search-drawer data-search-endpoint="<?= e(url('/search/suggest')) ?>" hidden aria-hidden="true">
+<section class="global-search-drawer" data-global-search-drawer data-search-endpoint="<?= e(url('/search/suggest')) ?>" <?= $shopSearch ? 'data-catalog-sort="' . e($sort) . '" data-catalog-filters="' . e(json_encode($shopQuery ?? [], JSON_THROW_ON_ERROR)) . '"' : '' ?> hidden aria-hidden="true">
   <div class="global-search-inner" role="dialog" aria-modal="true" aria-labelledby="global-search-title">
-    <form class="global-search-form" method="get" action="<?= e(url('/search')) ?>">
+    <form class="global-search-form" method="get" action="<?= e(url($shopSearch ? '/shop' : '/search')) ?>">
+      <?php if ($shopSearch): ?><input type="hidden" name="sort" value="<?= e($sort) ?>"><?php foreach ($shopQuery ?? [] as $key=>$value): if($key==='sort')continue; foreach(is_array($value)?$value:[$value] as $item): ?><input type="hidden" name="<?= e($key.(is_array($value)?'[]':'')) ?>" value="<?= e((string)$item) ?>"><?php endforeach; endforeach; endif; ?>
       <label>
         <span class="sr-only" id="global-search-title">Search Avela</span>
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>

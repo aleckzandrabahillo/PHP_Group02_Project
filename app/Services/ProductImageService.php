@@ -7,7 +7,7 @@ use RuntimeException;
 
 final class ProductImageService
 {
-    public const MAX_BYTES = 2 * 1024 * 1024;
+    public const MAX_BYTES = 5 * 1024 * 1024;
     private const DIRECTORY = 'uploads/products/';
 
     public function store(mixed $file): ?string
@@ -18,7 +18,7 @@ final class ProductImageService
         }
         if ($file['error'] === UPLOAD_ERR_NO_FILE) return null;
         if (in_array($file['error'], [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
-            throw new InvalidArgumentException('Product images must be 2 MB or smaller.');
+            throw new InvalidArgumentException('Product images must be 5 MB or smaller.');
         }
         if ($file['error'] !== UPLOAD_ERR_OK || !is_string($file['tmp_name'] ?? null)
             || !is_string($file['name'] ?? null) || !is_uploaded_file($file['tmp_name'])) {
@@ -26,7 +26,7 @@ final class ProductImageService
         }
         $size = filesize($file['tmp_name']);
         if ($size === false || $size < 1 || $size > self::MAX_BYTES) {
-            throw new InvalidArgumentException('Product images must be nonempty and 2 MB or smaller.');
+            throw new InvalidArgumentException('Product images must be nonempty and 5 MB or smaller.');
         }
         $extension = strtolower(pathinfo(str_replace('\\', '/', $file['name']), PATHINFO_EXTENSION));
         $types = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp'];
@@ -34,6 +34,9 @@ final class ProductImageService
         $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
         if (!isset($types[$extension]) || $mime !== $types[$extension] || ($info['mime'] ?? null) !== $mime) {
             throw new InvalidArgumentException('Choose a genuine JPEG, PNG or WebP image with a matching extension.');
+        }
+        if ($info[0] < 1 || $info[1] < 1 || $info[0] > 6000 || $info[1] > 6000 || $info[0] * $info[1] > 16000000) {
+            throw new InvalidArgumentException('Choose an image within 6000 pixels per side and 16 megapixels.');
         }
         $directory = dirname(__DIR__, 2) . '/public/' . self::DIRECTORY;
         // The tracked folder policy prevents script handling; do not silently upload without it.

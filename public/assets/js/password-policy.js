@@ -12,7 +12,7 @@ function passwordRequirementState(value, minimum, maximumBytes, counts = {}) {
   };
 }
 document.querySelectorAll('[data-password-requirements]').forEach((input) => {
-  const checklist = input.closest('label')?.querySelector('[data-password-checklist]');
+  const checklist = document.getElementById(input.id + '-help');
   if (!checklist) return;
   checklist.hidden = true;
   const update = () => {
@@ -24,7 +24,10 @@ document.querySelectorAll('[data-password-requirements]').forEach((input) => {
       item?.classList.toggle('is-met', met);
       if (item) item.dataset.satisfied = String(met);
     });
-    checklist.querySelector('[data-password-progress]').textContent = Object.values(state).filter(Boolean).length + ' of 6 password requirements satisfied.';
+    const sizeError = checklist.querySelector('[data-password-size-error]');
+    if (sizeError) sizeError.hidden = state.bytes;
+    const visibleRules = ['length', 'uppercase', 'lowercase', 'number', 'special'];
+    checklist.querySelector('[data-password-progress]').textContent = visibleRules.filter((rule) => state[rule]).length + ' of 5 password requirements satisfied.' + (state.bytes ? '' : ' Use a shorter password.');
   };
   input.addEventListener('focus', update);
   input.addEventListener('input', update);

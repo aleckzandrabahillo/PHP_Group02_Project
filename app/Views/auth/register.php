@@ -1,9 +1,7 @@
 <?php use App\Core\Session; $errors = Session::get('errors', []); ?>
 
 <div class="form-head">
-  <span class="eyebrow">CREATE YOUR ACCOUNT</span>
-  <h2>Create your Avela account</h2>
-  <p>Create an account to keep your shopping and hair profile in one place.</p>
+  <h1>Create your Avela account</h1>
 </div>
 
 <form method="post" action="<?= e(url('/register')) ?>" class="form-stack" novalidate>
@@ -49,7 +47,6 @@
           <svg class="password-icon password-icon-hide" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M3 3l18 18M10.6 6.2A10.9 10.9 0 0 1 12 6c6.1 0 9.5 6 9.5 6a16.1 16.1 0 0 1-3.2 3.8M6.4 6.4C3.8 8.2 2.5 12 2.5 12s3.4 6 9.5 6c1.5 0 2.8-.3 4-.8M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
         </button>
       </div>
-      <?php $passwordInputId='register-password';require dirname(__DIR__).'/partials/password_requirements.php'; ?>
       <small id="register-password-error" class="field-error"><?= e($errors['password'] ?? '') ?></small>
     </label>
 
@@ -66,8 +63,10 @@
     </label>
   </div>
 
+  <?php $passwordInputId='register-password';require dirname(__DIR__).'/partials/password_requirements.php'; ?>
+
   <div class="captcha-block <?= isset($errors['captcha']) ? 'has-error' : '' ?>">
-    <?php if (empty($recaptchaSiteKey)): ?><p class="muted small" role="status">CAPTCHA is not configured for this environment. Registration remains unavailable until it is configured.</p><?php endif; ?>
+    <?php if (empty($recaptchaSiteKey)): ?><p class="muted small" role="status">Account verification is temporarily unavailable. Please try again later.</p><?php endif; ?>
     <div
       class="g-recaptcha"
       data-sitekey="<?= e($recaptchaSiteKey ?? '') ?>">

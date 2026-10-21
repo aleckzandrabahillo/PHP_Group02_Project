@@ -6,6 +6,8 @@
 <title><?= e($pageTitle ?? 'Avela') ?> · Avela</title>
 <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 <link rel="stylesheet" href="<?= e(asset('css/customer.css')) ?>">
+<link rel="stylesheet" href="<?= e(asset('css/experience.css')) ?>">
+<link rel="stylesheet" href="<?= e(asset('css/motion.css')) ?>">
 </head>
 <?php $isHome = is_active_path('/'); ?>
 <body class="customer-experience public-body <?= $isHome ? 'public-home' : 'public-inner' ?>">
@@ -14,6 +16,9 @@
 <div class="store-flash-stack"><?php require dirname(__DIR__) . '/partials/flashes.php'; ?></div>
 <?= $content ?>
 <?php require dirname(__DIR__) . '/partials/store_footer.php'; ?>
+<script src="<?= e(asset('js/motion.js')) ?>" defer></script>
 <script src="<?= e(asset('js/app.js')) ?>" defer></script>
+<?php require dirname(__DIR__) . '/partials/session_watch.php'; ?>
+<script src="<?= e(asset('js/experience.js')) ?>" defer></script>
 </body>
 </html>

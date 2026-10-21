@@ -22,6 +22,6 @@ final class RecommendationService
         $ranked = $matcher->rank($profile, (new SuitabilityRepository())->candidates($pdo, $lock), $textTreatments);
         $routine = $matcher->routine($profile, $ranked);
         $fingerprint = hash('sha256', json_encode([ProductMatcher::VERSION, HairProfile::version($profile), $ranked, $routine], JSON_THROW_ON_ERROR));
-        return ['profile' => $profile, 'ranked' => $ranked, 'routine' => $routine, 'fingerprint' => $fingerprint];
+        return ['profile' => $profile, 'analysis' => $analysis, 'ranked' => $ranked, 'routine' => $routine, 'fingerprint' => $fingerprint];
     }
 }

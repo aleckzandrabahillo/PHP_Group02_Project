@@ -25,6 +25,22 @@ final class MailService
             'activation_link', $code);
     }
 
+    public function sendOrderConfirmation(#[\SensitiveParameter] array $order, array $items): void
+    {
+        $id=OrderReference::display($order);
+        $lines=['Your Avela order '.$id.' is confirmed.',''];
+        foreach($items as $item)$lines[]=$item['quantity'].' × '.$item['product_name_snapshot'].' — PHP '.number_format((float)$item['unit_price_snapshot'],2);
+        $subtotal=0;foreach($items as $item)$subtotal+=(int)$item['quantity']*(int)round((float)$item['unit_price_snapshot']*100);
+        $lines[]='';$lines[]='Subtotal: PHP '.ShippingService::decimal($subtotal);
+        if(!empty($order['discount']))$lines[]='Discount ('.$order['discount']['code_snapshot'].'): -PHP '.ShippingService::decimal((int)$order['discount']['amount_cents']);
+        $lines[]='Shipping: PHP '.number_format((float)($order['shipping_fee']??0),2);$lines[]='Total: PHP '.number_format((float)$order['total'],2);
+        $lines[]=($order['payment_method']??'cod')==='maya_sandbox'
+            ? 'Debit/Credit Card payment confirmed for this test checkout. No real money was charged.'
+            : 'Cash on delivery. This confirmation is not a payment receipt.';
+        $lines[]='Sign in to your Avela account to view order updates.';
+        $this->deliver($order['contact_email_snapshot'],'Avela order '.$id.' confirmation',implode("\n",$lines),'order_confirmation','');
+    }
+
     /** Strict transport configuration; no SMTP debugging or certificate-validation overrides. */
     public function smtpMailer(): PHPMailer
     {
@@ -78,17 +94,17 @@ final class MailService
         }
         if ($driver !== 'log' || env('APP_ENV', 'production') !== 'development') throw new MailDeliveryException('Configure secure email delivery. Local test mail is unavailable in production.');
         $file = dirname(__DIR__, 2) . '/storage/logs/dev_mail.log';
-        if ($purpose === 'activation_link') {
+        if (in_array($purpose, ['activation_link','order_confirmation'], true)) {
             // A private delivery artifact, never a token in general application/access logs.
             $dir = realpath((string) env('MAIL_DEV_OUTBOX_DIRECTORY', ''));
             $root = str_replace('\\', '/', (string) realpath(dirname(__DIR__, 2)));
             $normal = str_replace('\\', '/', (string) $dir);
             if (!$dir || !is_writable($dir) || str_starts_with(strtolower($normal . '/'), strtolower($root . '/'))) throw new MailDeliveryException('Configure a private development outbox outside the project before testing activation links.');
             if (PHP_OS_FAMILY !== 'Windows' && (fileperms($dir) & 0077) !== 0) throw new MailDeliveryException('The development outbox must be private.');
-            $delivery = $dir . '/activation-' . bin2hex(random_bytes(16)) . '.eml';
+            $delivery = $dir . '/' . ($purpose === 'activation_link' ? 'activation' : 'order') . '-' . bin2hex(random_bytes(16)) . '.eml';
             if (@file_put_contents($delivery, "To: {$email}\nSubject: {$subject}\n\n{$body}\n", LOCK_EX) === false) throw new MailDeliveryException('The local development message could not be saved.');
             @chmod($delivery, 0600);
-            $line = '[' . date('c') . "] TO: {$email} | PURPOSE: activation_link | Private outbox delivery prepared\n";
+            $line = '[' . date('c') . "] TO: {$email} | PURPOSE: {$purpose} | Private outbox delivery prepared\n";
         } else {
             $line = '[' . date('c') . "] TO: {$email} | PURPOSE: {$purpose} | OTP: {$code} | {$subject}\n";
         }

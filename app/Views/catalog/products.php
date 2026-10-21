@@ -43,9 +43,14 @@
               <?= csrf_field() ?><input type="hidden" name="action" value="archive"><input type="hidden" name="id" value="<?= (int) $product['id'] ?>">
               <button class="btn btn-secondary btn-sm" type="submit">Archive</button>
             </form>
+          <?php else: ?>
+            <form method="post" action="<?= e(url('/catalog/products')) ?>">
+              <?= csrf_field() ?><input type="hidden" name="action" value="reactivate"><input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
+              <button class="btn btn-secondary btn-sm" type="submit">Reactivate</button>
+            </form>
           <?php endif; ?>
           <?php if ((bool) $product['can_delete']): ?>
-            <form method="post" action="<?= e(url('/catalog/products')) ?>">
+            <form method="post" action="<?= e(url('/catalog/products')) ?>" data-confirm="Permanently delete this unused product? This cannot be undone.">
               <?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int) $product['id'] ?>">
               <button class="btn btn-secondary btn-sm" type="submit">Delete unused</button>
             </form>

@@ -10,7 +10,7 @@ use InvalidArgumentException;
 final class SecurityPolicy
 {
     public const RULES = [
-        'max_login_attempts' => [1, 3, 3, 'MAX_LOGIN_ATTEMPTS'],
+        'max_login_attempts' => [3, 3, 3, 'MAX_LOGIN_ATTEMPTS'],
         'lockout_minutes' => [15, 120, 15, 'LOCKOUT_MINUTES'],
         'session_timeout_minutes' => [1, 30, 30, 'SESSION_TIMEOUT_MINUTES'],
         'password_min_length' => [12, 64, 12, 'PASSWORD_MIN_LENGTH'],

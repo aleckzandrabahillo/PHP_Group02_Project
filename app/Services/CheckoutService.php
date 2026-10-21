@@ -25,13 +25,10 @@ final class CheckoutService
 
     public function place(int $userId, array $input, string $key, string $signature): int
     {
-        $checked = CheckoutValidator::validate($input);
-        if ($checked['errors']) throw new InvalidArgumentException('Check your contact and delivery information.');
         if (!preg_match('/^[a-f0-9]{64}$/D', $key) || !preg_match('/^[a-f0-9]{64}$/D', $signature)) {
             throw new InvalidArgumentException('Refresh checkout before placing an order.');
         }
-        $values = $checked['values'];
-        return $this->transaction(function (PDO $pdo) use ($userId, $values, $key, $signature): int {
+        return $this->transaction(function (PDO $pdo) use ($userId, $input, $key, $signature): int {
             $customer = $this->lockCustomer($pdo, $userId);
             // User-row locking serializes same-customer cart mutations and repeated submissions.
             // The customer lock handles replays; avoid absent-key gap locks before stock locking.
@@ -41,6 +38,9 @@ final class CheckoutService
                 if ((int) $existing['user_id'] !== $userId) throw new InvalidArgumentException('Refresh checkout before placing an order.');
                 return (int) $existing['id'];
             }
+            $checked = CheckoutValidator::validate($input);
+            if ($checked['errors']) throw new InvalidArgumentException('Check your contact and delivery information.');
+            $values = $checked['values'];
             $bag = $this->lockBag($pdo, $userId);
             if (!$bag['items']) throw new InvalidArgumentException('Your bag is empty.');
             if (!$bag['checkout_ready']) throw new InvalidArgumentException('Review unavailable items or quantities in your bag.');
@@ -48,9 +48,25 @@ final class CheckoutService
                 throw new InvalidArgumentException('Your bag or product details changed. Review the updated summary before placing your order.');
             }
             if (!filter_var($customer['email'], FILTER_VALIDATE_EMAIL)) throw new InvalidArgumentException('Your account needs a valid email address before checkout.');
-            $stmt = $pdo->prepare('INSERT INTO orders (user_id,delivery_address_snapshot,recipient_name_snapshot,contact_email_snapshot,contact_no_snapshot,payment_method,subtotal,total,status,checkout_key) VALUES (?,?,?,?,?,"cod",?,?,"pending",?)');
-            $stmt->execute([$userId, $values['delivery_address'], $values['full_name'], $customer['email'], $values['contact_no'], $bag['subtotal'], $bag['subtotal'], $key]);
+            $maya = $values['payment_method'] === 'maya_sandbox';
+            $stmt = $pdo->prepare('INSERT INTO orders (user_id,delivery_address_snapshot,recipient_name_snapshot,contact_email_snapshot,contact_no_snapshot,payment_method,subtotal,total,status,checkout_key) VALUES (?,?,?,?,?,?,?,?,"pending",?)');
+            $shipping = ShippingService::quote($values['postal_code'], $values['shipping_method'], $values['city'], $values['region']);
+            $discounts=new DiscountService();$discount=null;
+            if($values['discount_code']!==''){
+                if(!preg_match('/^[a-f0-9]{32}$/D',$values['discount_revision']))throw new InvalidArgumentException('Apply the discount before placing your order.');
+                $discount=$discounts->quote($pdo,$userId,$values['discount_code'],self::cents($bag['subtotal']),true,$values['discount_revision']);
+            }
+            $totalCents = self::cents($bag['subtotal']) - ($discount['amount_cents']??0) + $shipping['cents'];
+            if($totalCents > self::MAX_CENTS)throw new InvalidArgumentException('Your order exceeds the maximum total. Reduce quantities in your bag.');
+            $total = self::decimal($totalCents);
+            $stmt->execute([$userId, $values['delivery_address'], $values['full_name'], $customer['email'], $values['contact_no'], $maya ? 'manual' : 'cod', $bag['subtotal'], $total, $key]);
             $orderId = (int) $pdo->lastInsertId();
+            OrderReference::create($pdo,$orderId);
+            if ($maya) MayaPaymentService::reserve($pdo, $orderId, $totalCents);
+            if ($discount) $discounts->reserve($pdo,$orderId,$userId,$discount,$maya);
+            $pdo->prepare('INSERT INTO order_delivery_details(order_id,country,first_name,last_name,address_line,barangay,postal_code,city,region,shipping_method,shipping_fee) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
+                ->execute([$orderId,$values['country'],$values['first_name'],$values['last_name'],$values['address_line'],$values['barangay'],$values['postal_code'],$values['city'],$values['region'],$shipping['method'],$shipping['fee']]);
+            (new OrderWorkflow())->created($pdo, $orderId, $userId, !$maya);
             $insert = $pdo->prepare('INSERT INTO order_items (order_id,product_id,product_name_snapshot,quantity,unit_price_snapshot) VALUES (?,?,?,?,?)');
             $deduct = $pdo->prepare('UPDATE products SET stock_qty=stock_qty-?,updated_at=NOW() WHERE id=? AND stock_qty>=? AND status="active"');
             foreach ($bag['items'] as $item) {
@@ -61,7 +77,7 @@ final class CheckoutService
             $convert = $pdo->prepare('UPDATE carts SET status="converted",updated_at=NOW() WHERE id=? AND user_id=? AND status="active"');
             foreach ($bag['cart_ids'] as $id) $convert->execute([$id, $userId]);
             $audit = $pdo->prepare('INSERT INTO audit_logs (actor_id,action,target_type,target_id,details) VALUES (?,"order.create","order",?,?)');
-            $audit->execute([$userId, $orderId, 'Checkout / Order Processing; items ' . $bag['item_count'] . '; COD; total PHP ' . $bag['subtotal']]);
+            $audit->execute([$userId, $orderId, 'Checkout / Order Processing; items ' . $bag['item_count'] . ($maya ? '; Maya Sandbox reserved; total PHP ' : '; COD; total PHP ') . $total]);
             return $orderId;
         });
     }

@@ -124,15 +124,15 @@ function closeFilterDrawer({restoreFocus = true, immediate = false} = {}) {
     }
   };
 
-  if (immediate) finalize();
-  else filterCloseTimer = window.setTimeout(finalize, 220);
+  if (immediate || window.AvelaMotion?.reduced()) finalize();
+  else filterCloseTimer = window.setTimeout(finalize, (window.AvelaMotion?.duration('base')??220)+40);
 }
 
 const headerSurfaceReasons = new Set();
 
 function closeHeaderDetails() {
   document.querySelectorAll('.account-menu[open], .mobile-nav-menu[open]').forEach((details) => {
-    details.removeAttribute('open');
+    if(window.AvelaMotion)window.AvelaMotion.setDetails(details,false);else details.removeAttribute('open');
   });
 }
 
@@ -303,8 +303,8 @@ function closeGlobalSearch({restoreFocus = true, immediate = false} = {}) {
     }
   };
 
-  if (immediate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) finalize();
-  else searchCloseTimer = window.setTimeout(finalize, 220);
+  if (immediate || (window.AvelaMotion?.reduced()??window.matchMedia('(prefers-reduced-motion: reduce)').matches)) finalize();
+  else searchCloseTimer = window.setTimeout(finalize,(window.AvelaMotion?.duration('base')??220)+40);
 }
 
 function appendHighlightedText(target, text, query) {
@@ -415,7 +415,17 @@ async function loadSearchSuggestions(input) {
   searchAbortController = new AbortController();
 
   try {
-    const response = await fetch(`${endpoint}?q=${encodeURIComponent(query)}`, {
+    const searchUrl = new URL(endpoint, window.location.href);
+    searchUrl.searchParams.set('q', query);
+    if (drawer.dataset.catalogSort) searchUrl.searchParams.set('sort', drawer.dataset.catalogSort);
+    if (drawer.dataset.catalogFilters) {
+      const filters = JSON.parse(drawer.dataset.catalogFilters);
+      Object.entries(filters).forEach(([key, value]) => {
+        if (Array.isArray(value)) value.forEach((item) => searchUrl.searchParams.append(`${key}[]`, item));
+        else searchUrl.searchParams.set(key, value);
+      });
+    }
+    const response = await fetch(searchUrl, {
       headers: {'Accept': 'application/json'},
       credentials: 'same-origin',
       signal: searchAbortController.signal,
@@ -431,6 +441,7 @@ async function loadSearchSuggestions(input) {
 
 let favoriteFeedbackTimer;
 function announceFavorite(message, persistent = false) {
+  if (window.AvelaToast) { window.AvelaToast(message, persistent ? 'error' : 'success'); return; }
   const feedback = document.querySelector('[data-favorite-feedback]');
   if (!feedback) return;
   feedback.hidden = false;
@@ -678,10 +689,11 @@ function activateProductTab(button) {
   root.querySelectorAll('[data-product-panel]').forEach((panel) => {
     const active = panel.dataset.productPanel === key;
     panel.classList.toggle('active', active);
-    panel.hidden = !active;
+    panel.hidden = !active; if(active)window.AvelaMotion?.reveal(panel);
   });
 }
 
+let staffMotionTimer=null;
 function setStaffNavigation(requestedOpen, restoreFocus = true) {
   const sidebar = document.querySelector('.staff-sidebar');
   const toggle = document.querySelector('.sidebar-toggle');
@@ -694,7 +706,9 @@ function setStaffNavigation(requestedOpen, restoreFocus = true) {
   sidebar.classList.toggle('open', open);
   sidebar.inert = mobile && !open;
   workspace.inert = open;
-  backdrop.hidden = !open;
+  clearTimeout(staffMotionTimer);
+  if(open){backdrop.hidden=false;requestAnimationFrame(()=>{if(sidebar.classList.contains('open'))backdrop.classList.add('is-open');});}
+  else{backdrop.classList.remove('is-open');const finish=()=>{if(!sidebar.classList.contains('open'))backdrop.hidden=true;};if(!mobile||window.AvelaMotion?.reduced())finish();else staffMotionTimer=setTimeout(finish,(window.AvelaMotion?.duration('base')??220)+40);}
   toggle.setAttribute('aria-expanded', String(open));
   if (mobile && !open) sidebar.setAttribute('aria-hidden', 'true');
   else sidebar.removeAttribute('aria-hidden');
@@ -808,7 +822,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const field = document.getElementById(link.getAttribute('href').slice(1));
       if (!(field instanceof HTMLElement)) return;
       event.preventDefault();
-      field.focus();
+      const focusTarget = field.matches('input,select,textarea,button,[tabindex]')
+        ? field : field.querySelector('input,select,textarea,button,[tabindex]');
+      if (focusTarget instanceof HTMLElement) focusTarget.focus();
     });
   });
 });
@@ -880,10 +896,13 @@ document.addEventListener('keydown', (event) => {
     if (filterOpen) { closeFilterDrawer(); return; }
     closeMegaMenu(true);
     document.querySelectorAll('.mobile-nav-menu[open], .account-menu[open]').forEach((menu) => {
-      menu.removeAttribute('open');
+      window.AvelaMotion?window.AvelaMotion.setDetails(menu,false):menu.removeAttribute('open');
       menu.querySelector('summary')?.focus();
     });
-    document.querySelectorAll('[data-sort-menu][open]').forEach((menu) => menu.removeAttribute('open'));
+    document.querySelectorAll('[data-sort-menu][open]').forEach((menu) => {
+      window.AvelaMotion?window.AvelaMotion.setDetails(menu,false):menu.removeAttribute('open');
+      menu.querySelector('summary')?.focus();
+    });
     return;
   }
 
@@ -913,11 +932,11 @@ document.addEventListener('click', async (event) => {
   if (!target) return;
 
   document.querySelectorAll('.account-menu[open]').forEach((menu) => {
-    if (!menu.contains(target)) menu.removeAttribute('open');
+    if (!menu.contains(target)) window.AvelaMotion?window.AvelaMotion.setDetails(menu,false):menu.removeAttribute('open');
   });
 
   document.querySelectorAll('[data-sort-menu][open]').forEach((menu) => {
-    if (!menu.contains(target)) menu.removeAttribute('open');
+    if (!menu.contains(target)) window.AvelaMotion?window.AvelaMotion.setDetails(menu,false):menu.removeAttribute('open');
   });
 
   const quantityMinus = target.closest('[data-quantity-minus]');
@@ -1000,32 +1019,80 @@ function syncStoreHeader() {
   const header = document.querySelector('[data-site-header][data-header-overlay="true"]');
   if (!(header instanceof HTMLElement)) return;
 
-  const solid = window.scrollY > 24;
+  const progress = Math.min(1, Math.max(0, (window.scrollY - 8) / 144));
+  header.style.setProperty('--header-opacity', String(progress));
+  const solid = progress >= 0.65;
   header.classList.toggle('is-scrolled', solid);
   header.classList.toggle('is-solid', solid);
 }
 
-window.addEventListener('scroll', syncStoreHeader, {passive: true});
+let headerFrame = 0;
+window.addEventListener('scroll', () => {
+  if (headerFrame) return;
+  headerFrame = window.requestAnimationFrame(() => { headerFrame = 0; syncStoreHeader(); });
+}, {passive: true});
 window.addEventListener('resize', syncStoreHeader);
 document.addEventListener('DOMContentLoaded', syncStoreHeader);
 
-const hairErrorSummary = document.querySelector('[data-error-summary]');
-if (hairErrorSummary) hairErrorSummary.focus();
-
-
-// Only routine success feedback expires. Validation and security notices stay visible.
-document.querySelectorAll('[data-flash-transient]').forEach((notice) => {
-  let timer;
-  const dismiss = () => { window.clearTimeout(timer); notice.remove(); };
-  const schedule = () => { window.clearTimeout(timer); timer = window.setTimeout(dismiss, 5500); };
-  notice.querySelector('[data-flash-dismiss]')?.addEventListener('click', dismiss);
-  notice.addEventListener('mouseenter', () => window.clearTimeout(timer));
-  notice.addEventListener('mouseleave', schedule);
-  notice.addEventListener('focusin', () => window.clearTimeout(timer));
-  notice.addEventListener('focusout', schedule);
-  schedule();
+document.querySelectorAll('.assessment-jump-links a').forEach((link) => {
+  link.addEventListener('click', (event) => {
+    const section = document.getElementById(link.hash.slice(1));
+    if (!(section instanceof HTMLElement)) return;
+    event.preventDefault();
+    window.history.replaceState(null, '', link.hash);
+    const menu = link.closest('.assessment-sections');
+    if (menu instanceof HTMLDetailsElement) {if(window.AvelaMotion)window.AvelaMotion.setDetails(menu,false);else menu.open=false;}
+    section.scrollIntoView({block:'start',behavior:window.AvelaMotion?.reduced()?'auto':'smooth'});
+    section?.querySelector('h2')?.focus({preventScroll: true});
+  });
 });
 
+document.querySelectorAll('[data-assessment-form]').forEach((form) => {
+  const button = form.querySelector('button[type="submit"]');
+  if (!(button instanceof HTMLButtonElement)) return;
+  const label = button.innerHTML;
+  form.addEventListener('submit', () => {
+    button.disabled = true;
+    button.textContent = 'Finding your matches…';
+    form.setAttribute('aria-busy', 'true');
+  });
+  window.addEventListener('pageshow', () => {
+    button.disabled = false;
+    button.innerHTML = label;
+    form.removeAttribute('aria-busy');
+  });
+});
+
+
+document.querySelectorAll('[data-image-upload]').forEach((input) => {
+  const feedback = document.createElement('small');
+  feedback.className = 'field-error';
+  feedback.setAttribute('role', 'alert');
+  input.insertAdjacentElement('afterend', feedback);
+  input.addEventListener('change', () => {
+    const file = input.files?.[0];
+    const message = file && (file.size === 0 || file.size > 5 * 1024 * 1024)
+      ? 'Choose a nonempty image of 5 MB or smaller.' : '';
+    input.setCustomValidity(message);
+    feedback.textContent = message;
+    input.setAttribute('aria-invalid', message ? 'true' : 'false');
+  });
+});
+const addressChoices = document.querySelectorAll('[data-address-source]');
+const deliveryField = document.querySelector('[data-delivery-address]');
+if (addressChoices.length && deliveryField) {
+  const syncAddress = () => {
+    const saved = document.querySelector('[data-address-source]:checked')?.value === 'saved';
+    deliveryField.hidden = saved;
+    const input = deliveryField.querySelector('textarea');
+    input.disabled = saved;
+    input.required = !saved;
+  };
+  addressChoices.forEach((input) => input.addEventListener('change', syncAddress));
+  syncAddress();
+}
+
+// Shared overlay notifications are managed by experience.js.
 window.addEventListener('pageshow', (event) => {
   if (!event.persisted) return;
   document.querySelectorAll('[data-flash-transient]').forEach((notice) => notice.remove());

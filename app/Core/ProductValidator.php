@@ -9,7 +9,7 @@ final class ProductValidator
     public static function defaults(): array
     {
         return ['name' => '', 'sku' => '', 'category_id' => '', 'description' => '', 'price' => '',
-            'stock_qty' => '0', 'status' => 'active', 'routine_step' => '', 'tag_ids' => [], 'expected_stock' => ''];
+            'stock_qty' => '0', 'status' => 'active', 'routine_step' => '', 'tag_ids' => [], 'expected_stock' => '', 'stock_reason' => ''];
     }
 
     public static function quantity(mixed $value): ?int
@@ -69,9 +69,13 @@ final class ProductValidator
         if ($category === null || ($category['status'] !== 'active' && (int) ($current['category_id'] ?? 0) !== (int) $category['id'])) {
             $errors['category_id'] = 'Choose an existing active category. An existing inactive category may only be retained.';
         }
+        // There is one supported form contract: flat numeric tag_ids[]. Reject stale grouped forms.
+        if (array_key_exists('tags', $input)) {
+            $errors['tag_ids'] = 'Reload the product form and choose the listed suitability tags.';
+        }
         $submittedTags = $input['tag_ids'] ?? [];
         $allowedIds = array_map('strval', array_column($tags, 'id'));
-        if (!is_array($submittedTags) || count($submittedTags) > count($allowedIds)) {
+        if (!is_array($submittedTags) || !array_is_list($submittedTags) || count($submittedTags) > count($allowedIds)) {
             $errors['tag_ids'] = 'Choose only the listed suitability tags.';
         } else {
             foreach ($submittedTags as $id) {
@@ -83,6 +87,18 @@ final class ProductValidator
             }
             $values['tag_ids'] = array_values(array_unique($values['tag_ids']));
         }
+        $stockChanging = $current !== null && self::quantity($values['stock_qty']) !== null
+            && (int) $values['stock_qty'] !== (int) $current['stock_qty'];
+        if (($stockChanging || $values['stock_reason'] !== '') && self::stockReason($values['stock_reason']) === null) {
+            $errors['stock_reason'] = 'Enter a single-line reason of 1–200 characters for the stock adjustment.';
+        }
         return ['values' => $values, 'errors' => $errors];
+    }
+
+    public static function stockReason(mixed $value): ?string
+    {
+        if (!is_string($value) || !mb_check_encoding($value, 'UTF-8')) return null;
+        $value = trim($value);
+        return $value === '' || mb_strlen($value, 'UTF-8') > 200 || preg_match('/[\x00-\x1f\x7f]/', $value) ? null : $value;
     }
 }

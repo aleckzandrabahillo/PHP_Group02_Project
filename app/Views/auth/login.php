@@ -1,8 +1,7 @@
 <?php use App\Core\Session; $errors = Session::get('errors', []); ?>
 <div class="form-head">
-  <span class="eyebrow">WELCOME BACK</span>
-  <h2>Sign in to Avela</h2>
-  <p>Use your email or username and password.</p>
+  <h1>Sign in to Avela</h1>
+
 </div>
 
 <form method="post" action="<?= e(url('/login')) ?>" class="form-stack" novalidate>
@@ -27,7 +26,7 @@
   </label>
 
   <div class="captcha-block <?= isset($errors['captcha']) ? 'has-error' : '' ?>">
-    <?php if (empty($recaptchaSiteKey)): ?><p class="muted small" role="status">CAPTCHA is not configured for this environment. Sign-in remains unavailable until it is configured.</p><?php endif; ?>
+    <?php if (empty($recaptchaSiteKey)): ?><p class="muted small" role="status">Account verification is temporarily unavailable. Please try again later.</p><?php endif; ?>
 
     <div
         class="g-recaptcha"

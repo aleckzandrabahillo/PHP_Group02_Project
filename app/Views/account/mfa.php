@@ -1,4 +1,6 @@
-<section class="page-head"><div><span class="eyebrow">ACCOUNT SECURITY</span><h1><?= (auth_user()['role'] ?? '') === 'customer' ? 'Two-step verification' : 'Authenticator' ?></h1><p>An authenticator app generates temporary codes for an additional layer of sign-in protection.</p></div></section>
+<?php $customerSecurity = (auth_user()['role'] ?? '') === 'customer'; ?>
+<?php if ($customerSecurity): ?><nav class="product-breadcrumb" aria-label="Breadcrumb"><a href="<?= e(url('/settings')) ?>">Account settings</a><span aria-hidden="true">/</span><span>Security</span></nav><?php endif; ?>
+<section class="page-head"><div><?php if (!$customerSecurity): ?><span class="eyebrow">ACCOUNT SECURITY</span><?php endif; ?><h1><?= $customerSecurity ? 'Security settings' : 'Authenticator' ?></h1><p>An authenticator app generates temporary codes for an additional layer of sign-in protection.</p></div></section>
 <section class="panel security-panel">
   <?php if ($enabledAt): ?>
     <h2>Your authenticator is enabled</h2>

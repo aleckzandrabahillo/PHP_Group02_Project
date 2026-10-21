@@ -1,6 +1,6 @@
 # Image-upload controls
 
-Product and profile images require genuine PHP uploads, actual nonempty byte sizes up to 2 MB, an allowed JPEG/PNG/WebP extension, matching fileinfo MIME and image-header MIME, and random server-generated filenames. Profile photos additionally allow at most 6000 pixels on either side and 16 megapixels. These checks do not prove full raster decoding or absence of malware.
+Product and profile images require genuine PHP uploads, actual nonempty byte sizes up to 5 MB (5,242,880 bytes), an allowed JPEG/PNG/WebP extension, matching fileinfo MIME and image-header MIME, and random server-generated filenames. Both flows allow at most 6000 pixels on either side and 16 megapixels. Browser feedback rejects oversized selections early; server checks remain authoritative. PHP/host request limits must accommodate multipart overhead above 5 MB. These checks do not prove full raster decoding or absence of malware.
 
 Both upload directories have tracked Apache policies restricting public files to generated raster names, disabling listing/CGI and forcing the default handler. Uploads fail closed if their storage policy is missing. Confirm policy enforcement on the actual Apache host; PHP's local development server does not exercise Apache directives. Alternative hosts need an equivalent static-only configuration, and private files must remain outside their public document root.
 
