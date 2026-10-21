@@ -6,7 +6,7 @@
     <li data-password-rule="lowercase"><?= (int)$passwordPolicy['password_min_lowercase'] ?> lowercase letter(s) (a–z)</li>
     <li data-password-rule="number"><?= (int)$passwordPolicy['password_min_numbers'] ?> number(s) (0–9)</li>
     <li data-password-rule="special"><?= (int)$passwordPolicy['password_min_special'] ?> special character(s)</li>
-    <li data-password-rule="bytes">No more than 72 UTF-8 bytes</li>
   </ul>
+  <p class="field-error" data-password-size-error hidden>Use a shorter password.</p>
   <p class="sr-only" role="status" data-password-progress></p>
 </div>

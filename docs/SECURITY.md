@@ -6,7 +6,7 @@ Administrators manage `/admin/security`. Catalog Managers and Customers cannot r
 
 | Control | Allowed values | Default |
 | --- | --- | --- |
-| Failed-login threshold | 1–3 | 3 |
+| Failed-login threshold | Exactly 3 | 3 |
 | Incident review interval (does not unlock) | 15–120 minutes | 15 |
 | Inactivity timeout | 1–30 minutes | 30 |
 | New-password minimum | 12–64 characters | 12 |
@@ -14,7 +14,7 @@ Administrators manage `/admin/security`. Catalog Managers and Customers cannot r
 
 Uppercase, lowercase, a digit and a non-whitespace special character always remain required. Administrators can strengthen each required count without disabling a class. Passwords are limited to 72 bytes to avoid bcrypt truncation. Existing passwords are not invalidated by a stronger minimum. Stored database settings take precedence over environment fallbacks; out-of-range inherited settings are bounded securely. [Password changes and proposed expiry](PASSWORDS.md) explain credential revocation, the guarded migration and default-disabled expiration.
 
-Account locks are serialized on the user row and persist until an authorized Administrator releases them. The recorded review interval is informational, never an automatic unlock. The default/hard cap is three; administrators may select a stricter one or two. IAS C9 says maximum three, while C10 offers customization. If the instructor requires exactly three in every configuration, keep the setting at three. Login requests are additionally bounded per network address after CSRF validation; CAPTCHA remains required.
+Account locks are serialized on the user row and persist until an authorized Administrator releases them. The recorded review interval is informational, never an automatic unlock. The failed-login threshold is fixed at three; submitted or inherited values cannot weaken or change it. Other controls retain their documented secure bounds. Login requests are additionally bounded per network address after CSRF validation; CAPTCHA remains required.
 
 Account locks are serialized on the user row. Each incident records the username, attempts and timestamps in `locked_accounts`. Unlocking resets the counter without changing status, password, MFA or last-login time. Stale unlock requests are rejected. Unlock and policy audits commit with the change; required-history/audit failure rolls back the operation. History starts at deployment and does not reconstruct older incidents.
 

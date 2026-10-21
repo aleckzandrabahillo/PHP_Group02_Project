@@ -39,9 +39,9 @@ final class HairProfileController
         try {
             $analysis = $this->interpreter->interpret($checked['values']['concern_text']);
             $this->profiles->save((int) $user['id'], $checked['values'], $analysis['tags'], $version);
-            Session::flash('success', 'Your hair profile has been saved.');
+            Session::flash('success', 'Your hair profile is saved. Here are your current matches.');
             http_response_code(303);
-            Response::redirect('/assessment');
+            Response::redirect('/recommendations');
         } catch (\InvalidArgumentException $e) {
             http_response_code(409);
             $this->render((int) $user['id'], $checked['values'], ['form' => $e->getMessage()], $version);
@@ -54,15 +54,11 @@ final class HairProfileController
     private function render(int $userId, ?array $values = null, array $errors = [], ?string $version = null): void
     {
         $profile = $this->profiles->forUser($userId);
-        $analysis = null;
-        if ($profile && $values === null) {
-            try { $analysis = $this->interpreter->interpret((string) $profile['concern_text']); }
-            catch (\Throwable) { $analysis = ['tags' => [], 'matches' => [], 'warnings' => ['Text interpretation is temporarily unavailable. Your saved profile remains intact.']]; }
-        }
         $options = (new \App\Models\Product())->filterOptions();
         View::render('customer/assessment', ['pageTitle' => 'Your Hair Profile', 'hairProfile' => $profile,
+            'editing' => !$profile || $values !== null || ($_GET['edit'] ?? '') === '1',
             'values' => $values ?? HairProfile::values($profile), 'errors' => $errors,
-            'profileVersion' => $version ?? HairProfile::version($profile), 'analysis' => $analysis,
+            'profileVersion' => $version ?? HairProfile::version($profile),
             'choices' => HairProfileValidator::CHOICES,
             'storeNav' => ['categories' => $options['categories'], 'concerns' => $options['concern']],
             'favoriteIds' => (new \App\Models\Favorite())->idsForUser($userId),

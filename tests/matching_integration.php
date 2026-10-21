@@ -64,7 +64,8 @@ try {
     $preview=$service->forUser($a);$scores=array_column($preview['ranked'],'score','sku');
     verifyHair('Profile-first live recommendations exist',count($preview['ranked'])>0&&count($preview['routine']['items'])>0);
     verifyHair('Scalp-incompatible shampoo absent',!isset($scores['AVE-SMP-001'])&&isset($scores['AVE-SMP-002']));
-    verifyHair('Rendered reasons and demo disclosure',str_contains(hairRequest('/recommendations',$client)['body'],'Why it matches')&&str_contains(hairRequest('/recommendations',$client)['body'],'fictional product specifications'));
+    $matchesPage=hairRequest('/recommendations',$client)['body'];
+    verifyHair('Rendered reasons and accurate matching limits',str_contains($matchesPage,'Why it matches')&&str_contains($matchesPage,'listed product attributes')&&str_contains($matchesPage,'not a guarantee of results')&&str_contains($matchesPage,'does not verify ingredients, treatment compatibility or effectiveness'));
     $before=routineStateHash($pdo);
     verifyHair('Invalid CSRF rejected without writes',hairRequest('/routine',$client,['_token'=>'bad','plan_fingerprint'=>$preview['fingerprint']])['code']===419&&routineStateHash($pdo)===$before);
     verifyHair('Array CSRF rejected safely',hairRequest('/routine',$client,['_token'=>['bad']])['code']===419);

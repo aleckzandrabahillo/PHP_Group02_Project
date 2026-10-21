@@ -34,6 +34,11 @@
           <small id="stock-quantity-error" class="field-error"><?= e($errors['stock_qty'] ?? '') ?></small>
         </label>
       </div>
+      <label class="field <?= isset($errors['reason'])?'has-error':'' ?>">
+        <span>Reason for adjustment</span>
+        <input name="reason" maxlength="200" required value="<?= e($form['reason']) ?>" aria-invalid="<?= isset($errors['reason'])?'true':'false' ?>" aria-describedby="stock-reason-error" placeholder="For example, received shipment or stock count correction">
+        <small id="stock-reason-error" class="field-error"><?= e($errors['reason']??'') ?></small>
+      </label>
       <div class="catalog-actions">
         <button class="btn btn-primary" type="submit">Save Stock</button>
         <a class="btn btn-secondary" href="<?= e(url('/catalog/inventory?stock=' . (int) $currentProduct['id'] . '#stock-form')) ?>">Reload stock form</a>

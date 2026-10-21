@@ -6,6 +6,8 @@
 <title><?= e($pageTitle ?? 'Checkout') ?> · Avela</title>
 <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 <link rel="stylesheet" href="<?= e(asset('css/customer.css')) ?>">
+<link rel="stylesheet" href="<?= e(asset('css/experience.css')) ?>">
+<link rel="stylesheet" href="<?= e(asset('css/motion.css')) ?>">
 </head>
 <body class="customer-experience checkout-body">
 <a class="skip-link" href="#main-content">Skip to content</a>
@@ -23,6 +25,10 @@
 </header>
 <div class="checkout-flash-stack"><?php require dirname(__DIR__) . '/partials/flashes.php'; ?></div>
 <main id="main-content" tabindex="-1"><?= $content ?></main>
+<script src="<?= e(asset('js/motion.js')) ?>" defer></script>
 <script src="<?= e(asset('js/app.js')) ?>" defer></script>
+<script src="<?= e(asset('js/checkout-delivery.js')) ?>" defer></script>
+<?php require dirname(__DIR__) . '/partials/session_watch.php'; ?>
+<script src="<?= e(asset('js/experience.js')) ?>" defer></script>
 </body>
 </html>

@@ -15,15 +15,15 @@ final class ProfileImageService
             throw new InvalidArgumentException('Choose a valid profile photograph.');
         }
         if (in_array($file['error'], [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
-            throw new InvalidArgumentException('Profile photographs must be 2 MB or smaller.');
+            throw new InvalidArgumentException('Profile photographs must be 5 MB or smaller.');
         }
         if ($file['error'] !== UPLOAD_ERR_OK || !is_string($file['tmp_name'] ?? null)
             || !is_string($file['name'] ?? null) || !is_uploaded_file($file['tmp_name'])) {
             throw new InvalidArgumentException('Choose the photograph again; the upload did not complete.');
         }
         $size = filesize($file['tmp_name']);
-        if ($size === false || $size < 1 || $size > 2 * 1024 * 1024) {
-            throw new InvalidArgumentException('Profile photographs must be nonempty and 2 MB or smaller.');
+        if ($size === false || $size < 1 || $size > ProductImageService::MAX_BYTES) {
+            throw new InvalidArgumentException('Profile photographs must be nonempty and 5 MB or smaller.');
         }
         $extension = strtolower(pathinfo(str_replace('\\', '/', $file['name']), PATHINFO_EXTENSION));
         $types = ['jpg'=>'image/jpeg', 'jpeg'=>'image/jpeg', 'png'=>'image/png', 'webp'=>'image/webp'];

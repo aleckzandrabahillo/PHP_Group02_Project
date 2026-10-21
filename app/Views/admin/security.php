@@ -14,7 +14,7 @@
         'password_min_numbers'=>'Required numbers', 'password_min_special'=>'Required special characters'] as $key=>$label): ?>
         <?php [$min, $max] = \App\Services\SecurityPolicy::RULES[$key]; ?>
         <label class="field"><span><?= e($label) ?></span>
-          <input type="number" name="<?= e($key) ?>" value="<?= (int) $policy[$key] ?>" min="<?= $min ?>" max="<?= $max ?>" required>
+          <input type="number" name="<?= e($key) ?>" value="<?= (int) $policy[$key] ?>" min="<?= $min ?>" max="<?= $max ?>" required <?= $key==='max_login_attempts'?'readonly aria-readonly="true"':'' ?>>
           <small class="muted">Allowed range: <?= $min ?>–<?= $max ?>.</small>
         </label>
       <?php endforeach; ?>

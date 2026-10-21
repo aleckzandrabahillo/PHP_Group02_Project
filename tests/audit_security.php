@@ -27,7 +27,7 @@ try{
  $before=$cart->contentsForUser($id);verifyHair('Cart audit fault rolls back new cart/item',auditFault(fn()=>$cart->add($id,$product,1))&&$cart->contentsForUser($id)===$before);
  $before=$favorites->idsForUser($id);verifyHair('Favorite audit fault rolls back selection',auditFault(fn()=>$favorites->toggle($id,$product))&&$favorites->idsForUser($id)===$before);
  $profile=$users->profileFor($id);verifyHair('Profile audit fault rolls back account/contact fields',auditFault(fn()=>$users->updateCustomerProfile($id,'Changed synthetic',$profile['email'],$profile['contact_no'],'Synthetic address'))&&$users->profileFor($id)===$profile);
- $flow=['user_id'=>$id,'current_email'=>$profile['email'],'email'=>$profile['email'],'full_name'=>'Verified synthetic change','contact_no'=>$profile['contact_no'],'delivery_address'=>'Synthetic address'];$otp->issue($id,$profile['email'],'profile_update');$code=null;
+ $flow=['user_id'=>$id,'current_email'=>$profile['email'],'email'=>$prefix.'_changed@example.invalid','before_full_name'=>$profile['full_name'],'before_contact_no'=>$profile['contact_no'],'full_name'=>'Verified synthetic change','contact_no'=>$profile['contact_no'],'delivery_address'=>'Synthetic address'];$otp->issue($id,$profile['email'],'profile_update');$code=null;
  foreach(array_reverse(file(dirname(__DIR__).'/storage/logs/dev_mail.log')) as $line)if(str_contains($line,'TO: '.$profile['email'].' | PURPOSE: profile_update')&&preg_match('/OTP: ([0-9]{6})/',$line,$m)){$code=$m[1];break;}
  $confirm=new App\Services\CustomerProfileService($otp);
  verifyHair('Profile audit fault also preserves single-use OTP for retry',auditFault(fn()=>$confirm->confirm($id,$flow,$code))&&$users->profileFor($id)===$profile);

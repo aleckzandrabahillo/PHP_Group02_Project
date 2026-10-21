@@ -7,6 +7,8 @@
 <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 <?php if (!empty($recaptchaSiteKey)): ?><script src="https://www.google.com/recaptcha/api.js" async defer></script><?php endif; ?>
 <link rel="stylesheet" href="<?= e(asset('css/customer.css')) ?>">
+<link rel="stylesheet" href="<?= e(asset('css/experience.css')) ?>">
+<link rel="stylesheet" href="<?= e(asset('css/motion.css')) ?>">
 </head>
 <body class="customer-experience auth-body">
 <a class="skip-link" href="#main-content">Skip to content</a>
@@ -20,11 +22,14 @@
   </aside>
   <main id="main-content" tabindex="-1" class="auth-panel">
     <?php require dirname(__DIR__) . '/partials/flashes.php'; ?>
-    <h1 class="sr-only"><?= e($pageTitle ?? 'Your account') ?></h1>
     <?= $content ?>
+
     <p class="auth-switch"><a href="<?= e(url('/privacy')) ?>">Privacy &amp; cookies</a></p>
   </main>
 </div>
+<script src="<?= e(asset('js/motion.js')) ?>" defer></script>
 <script src="<?= e(asset('js/app.js')) ?>" defer></script>
+<?php require dirname(__DIR__) . '/partials/session_watch.php'; ?>
+<script src="<?= e(asset('js/experience.js')) ?>" defer></script>
 </body>
 </html>

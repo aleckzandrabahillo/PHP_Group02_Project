@@ -18,7 +18,12 @@ final class CustomerProfileService
                 || ($flow['current_email']??'')!==$user['email'])return ['ok'=>false,'reason'=>'account_unavailable'];
             $result=$this->otp->verify($id,'profile_update',$code);
             if(!$result['ok'])return $result;
-            (new User())->updateCustomerProfile($id,$flow['full_name'],$flow['email'],$flow['contact_no'],$flow['delivery_address']?:null);
+            $profile=(new User())->profileFor($id);
+            (new User())->updateCustomerProfile($id,
+                isset($flow['before_full_name'])&&(string)$profile['full_name']===$flow['before_full_name']?$flow['full_name']:$profile['full_name'],
+                $flow['email'],
+                isset($flow['before_contact_no'])&&(string)$profile['contact_no']===$flow['before_contact_no']?$flow['contact_no']:$profile['contact_no'],
+                $profile['delivery_address']?:null);
             return $result;
         });
     }

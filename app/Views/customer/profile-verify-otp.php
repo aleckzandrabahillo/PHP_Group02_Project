@@ -2,7 +2,7 @@
 
 <div class="form-head">
   <span class="eyebrow">PROFILE UPDATE</span>
-  <h2>Confirm your profile update</h2>
+  <h1>Confirm your profile update</h1>
   <p>We sent a 6-digit code to <strong><?= e($maskedEmail) ?></strong>.</p>
 </div>
 
@@ -30,10 +30,3 @@
     Verify code
   </button>
 </form>
-
-<?php if (env('APP_ENV', 'production') === 'development' && env('MAIL_DRIVER', 'log') === 'log'): ?>
-  <div class="dev-note">
-    <strong>Local development:</strong>
-    the OTP is written to <code>storage/logs/dev_mail.log</code>.
-  </div>
-<?php endif; ?>

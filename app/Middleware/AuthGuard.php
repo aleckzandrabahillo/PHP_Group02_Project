@@ -14,6 +14,19 @@ final class AuthGuard
         if (self::currentUser()) Response::redirect(self::dashboardPath());
     }
 
+    public static function sessionStatus(bool $activity = false): never
+    {
+        header('Cache-Control: no-store, private');
+        $user=self::currentUser();
+        if(!$user)Response::json(['authenticated'=>false,'redirect'=>url('/login')],401);
+        if($activity){
+            \App\Core\Csrf::enforce(is_string($_POST['_token']??null)?$_POST['_token']:null);
+            Session::put('last_activity',time());
+        }
+        $timeout=\App\Services\SecurityPolicy::values()['session_timeout_minutes']*60;
+        Response::json(['authenticated'=>true,'expires_at'=>(int)Session::get('last_activity',time())+$timeout]);
+    }
+
     public static function auth(): array
     {
         $user = self::currentUser();

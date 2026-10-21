@@ -1,5 +1,5 @@
 <?php $state=$routineState['state']; ?>
-<section class="page-head"><div><span class="eyebrow">MY ROUTINE</span><h1>Your routine, in the right order.</h1><p>Your saved shortlist. Buy only what you need.</p></div>
+<section class="page-head"><div><h1>Your saved routine</h1></div>
   <a class="btn btn-secondary" href="<?= e(url('/recommendations')) ?>">Review current matches</a>
 </section>
 <?php if ($state==='assessment_needed'): ?>
@@ -8,7 +8,7 @@
   <section class="empty-state"><h2>Your profile is ready.</h2><p>Review the supported matches and save a routine that fits your needs.</p><a class="btn btn-primary" href="<?= e(url('/recommendations')) ?>">See your matches</a></section>
 <?php else: ?>
   <?php if ($routineState['stale']): ?><div class="alert alert-warning" role="status">Your profile or the catalog has changed since this routine was saved, or its original explanations are unavailable. Review current matches before using it as a recommendation.</div><?php endif; ?>
-  <p class="matching-disclosure">Products and match explanations are based on demonstration catalog specifications, not verified formulations or medical benefits. Current prices and availability are shown below.</p>
+  <p class="matching-disclosure">Based on your saved match reasons. Current prices and availability are shown below; matches do not verify ingredients or effectiveness.</p>
   <ol class="saved-routine-list"><?php foreach ($routineState['items'] as $item): ?>
     <li class="saved-routine-item">
       <a class="routine-product-art" href="<?= e(url('/product?id=' . (int) $item['product_id'])) ?>" aria-label="View <?= e($item['name']) ?>">

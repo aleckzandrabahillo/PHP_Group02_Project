@@ -73,18 +73,18 @@ try {
     $overview = hairRequest('/profile', $client);
     verifyHair('Profile defaults to read-only overview', str_contains($overview['body'], 'Your profile') && !str_contains($overview['body'], 'class="form-stack customer-profile-form"'));
     verifyHair('Overview provides explicit edit action', str_contains($overview['body'], '/profile?edit=1'));
-    verifyHair('Two-step verification accurately shows no authenticator', str_contains($overview['body'], 'Authenticator app not connected'));
+    verifyHair('Profile links to settings without enrollment controls', str_contains($overview['body'], '/settings') && !str_contains($overview['body'], 'Start authenticator setup'));
     $edit = hairRequest('/profile?edit=1', $client);
-    verifyHair('Explicit edit shows save and cancel', str_contains($edit['body'], 'Save and verify') && str_contains($edit['body'], '>Cancel</a>'));
+    verifyHair('Explicit edit shows save and cancel', str_contains($edit['body'], 'Save changes') && str_contains($edit['body'], '>Cancel</a>'));
     verifyHair('Editing retains CSRF and email verification explanation', str_contains($edit['body'], 'name="_token"') && str_contains($edit['body'], 'current email address'));
     $before = $users->profileFor($a);
     $form = ['_token' => $client['csrf'], 'full_name' => $before['full_name'], 'email' => $before['email'], 'contact_no' => $before['contact_no'], 'delivery_address' => 'Synthetic delivery address'];
-    foreach (['full_name' => '', 'email' => 'invalid', 'contact_no' => '<script>', 'delivery_address' => str_repeat('a', 256), 'full_name_array' => ['bad']] as $field => $bad) {
+    foreach (['full_name' => '', 'email' => 'invalid', 'contact_no' => '<script>', 'delivery_address' => str_repeat('a', 501), 'full_name_array' => ['bad']] as $field => $bad) {
         $target = $field === 'full_name_array' ? 'full_name' : $field;
         $response = hairRequest('/profile/update', $client, array_replace($form, [$target => $bad]));
         verifyHair('Invalid profile ' . $field . ' returns to edit mode', $response['code'] === 302 && in_array('Location: /profile?edit=1', $response['headers'], true));
         $errorPage = hairRequest('/profile?edit=1', $client);
-        verifyHair('Invalid profile ' . $field . ' has actionable errors', str_contains($errorPage['body'], 'data-error-summary') && str_contains($errorPage['body'], 'aria-invalid="true"') && $users->profileFor($a) === $before);
+        verifyHair('Invalid profile ' . $field . ' has actionable errors', str_contains($errorPage['body'], 'data-error-summary') && ($field==='delivery_address'||str_contains($errorPage['body'], 'aria-invalid="true"')) && $users->profileFor($a) === $before);
     }
     hairRequest('/profile/update', $client, array_replace($form, ['full_name' => '<script>alert("draft")</script>', 'email' => 'invalid']));
     $encoded = hairRequest('/profile?edit=1', $client);
@@ -93,8 +93,9 @@ try {
     $response = hairRequest('/profile/update', $client, array_replace($form, ['_token' => 'invalid']));
     verifyHair('Profile invalid CSRF changes nothing', $response['code'] === 419 && $users->profileFor($a) === $before);
     $form['full_name'] = 'Updated Synthetic UX Customer';
+    $form['email']='changed_'.bin2hex(random_bytes(5)).'@example.invalid';
     $response = hairRequest('/profile/update', $client, $form);
-    verifyHair('Valid edits start existing OTP verification', $response['code'] === 302 && in_array('Location: /profile/verify-otp', $response['headers'], true));
+    verifyHair('Sensitive email edit starts existing OTP verification', $response['code'] === 302 && in_array('Location: /profile/verify-otp', $response['headers'], true));
     verifyHair('No account details saved before verification', $users->profileFor($a) === $before);
     $matches = [];
     foreach (file(dirname(__DIR__) . '/storage/logs/dev_mail.log', FILE_IGNORE_NEW_LINES) as $line) {
@@ -114,8 +115,18 @@ try {
     verifyHair('Sign-out feedback explicitly marked transient', str_contains($notice['body'], 'data-flash-transient') && str_contains($notice['body'], 'You have been signed out.'));
     verifyHair('Consumed sign-out notice does not recur on refresh', !str_contains(hairRequest('/login', $client)['body'], 'You have been signed out.'));
     $shop = hairRequest('/shop');
-    verifyHair('All twenty catalog products remain available', substr_count($shop['body'], 'class="product-card"') === 20);
-    verifyHair('All six category links remain available', substr_count($shop['body'], '/shop?category[]=') >= 6);
+    $secondPage=hairRequest('/shop?page=2',$client);
+    verifyHair('All twenty catalog products remain available across pages', substr_count($shop['body'], 'class="product-card"') + substr_count($secondPage['body'], 'class="product-card"') === 20);
+    preg_match('~<nav class="category-tabs"[^>]*>(.*?)</nav>~s', $shop['body'], $categoryNav);
+    preg_match_all('~href="([^"]+)"~', $categoryNav[1] ?? '', $categoryHrefs);
+    $linkedCategories=[];
+    foreach($categoryHrefs[1] as $href){
+        parse_str(parse_url(html_entity_decode($href, ENT_QUOTES, 'UTF-8'), PHP_URL_QUERY) ?? '', $params);
+        foreach($params['category'] ?? [] as $id)$linkedCategories[]=(int)$id;
+    }
+    sort($linkedCategories);
+    $activeCategories=array_map('intval',$pdo->query('SELECT id FROM categories WHERE status="active" ORDER BY id')->fetchAll(PDO::FETCH_COLUMN));
+    verifyHair('All six category links remain available', count($linkedCategories) === 6 && $linkedCategories === $activeCategories);
     $result = ['checks' => $checks, 'pass' => count(array_filter($checks, static fn($c) => $c['status'] === 'PASS')), 'fail' => count(array_filter($checks, static fn($c) => $c['status'] === 'FAIL'))];
     if (isset($options['output'])) file_put_contents($options['output'], json_encode($result, JSON_PRETTY_PRINT));
     ob_end_flush(); exit($result['fail'] ? 1 : 0);

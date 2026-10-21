@@ -39,7 +39,7 @@ function request(string $path, ?array $client=null, ?array $data=null): array {
 function form(array $client): array {
     $r=request('/checkout',$client);if($r['code']!==200)throw new RuntimeException('Checkout form fixture not ready.');
     preg_match('/name="checkout_key" value="([a-f0-9]{64})"/',$r['body'],$m);
-    return ['_token'=>$client['csrf'],'checkout_key'=>$m[1]??'','full_name'=>'Synthetic Recipient','contact_no'=>'09123456789','delivery_address'=>'12 Test Street, Test Barangay, Pasig, Metro Manila 1600, Philippines','payment_method'=>'cod'];
+    return ['_token'=>$client['csrf'],'checkout_key'=>$m[1]??'','country'=>'PH','first_name'=>'Synthetic','last_name'=>'Recipient','contact_no'=>'09123456789','address_line'=>'12 Test Street','barangay'=>'Test Barangay','postal_code'=>'1600','city'=>'Pasig','region'=>'NCR','shipping_method'=>'standard','payment_method'=>'cod'];
 }
 function reject(string $name, callable $fn, PDO $pdo): void {
     $before=state($pdo);$denied=false;try{$fn();}catch(InvalidArgumentException){$denied=true;}
@@ -99,7 +99,7 @@ try {
     $p=(int)$pdo->query("SELECT id FROM products WHERE sku='AVE-SMP-002'")->fetchColumn();
     $p2=(int)$pdo->query("SELECT id FROM products WHERE sku='AVE-TOL-001'")->fetchColumn();
     $cart->add($a,$p,2);$cart->add($a,$p2,1);$f=form($qa);
-    verify('Checkout form has CSRF, submission key and COD',strlen($f['checkout_key'])===64&&str_contains(request('/checkout',$qa)['body'],'Cash on delivery (demonstration)'));
+    verify('Checkout form has CSRF, submission key and COD',strlen($f['checkout_key'])===64&&str_contains(request('/checkout',$qa)['body'],'Cash on delivery'));
     verify('Checkout response prevents private page caching',request('/checkout',$qa)['no_store']);
     $before=state($pdo);
     $cartUpdate=request('/cart/update',$qa,['_token'=>$qa['csrf'],'product_id'=>$p,'quantity'=>'3']);
@@ -117,17 +117,17 @@ try {
         $before=state($pdo);$bad=$f;if($token===null)unset($bad['_token']);else $bad['_token']=$token;
         verify('Missing / invalid / array CSRF rejected',request('/checkout',$qa,$bad)['code']===419&&state($pdo)===$before);
     }
-    $cases=['empty name'=>['full_name'=>''],'long name'=>['full_name'=>str_repeat('a',121)],'array name'=>['full_name'=>['bad']],'invalid UTF8'=>['full_name'=>chr(255)],
-        'control name'=>['full_name'=>"Test\x00Name"],'blank unicode name'=>['full_name'=>"\u{00A0}"],
+    $cases=['empty name'=>['first_name'=>''],'long name'=>['first_name'=>str_repeat('a',61)],'array name'=>['first_name'=>['bad']],'invalid UTF8'=>['first_name'=>chr(255)],
+        'control name'=>['first_name'=>"Test\x00Name"],'blank unicode name'=>['first_name'=>"\u{00A0}"],
         'empty phone'=>['contact_no'=>''],'bad phone'=>['contact_no'=>'not a phone'],'long phone'=>['contact_no'=>str_repeat('9',26)],
-        'empty address'=>['delivery_address'=>''],'long address'=>['delivery_address'=>str_repeat('x',501)],
-        'array address'=>['delivery_address'=>['bad']],'control address'=>['delivery_address'=>"Bad\x00address"],
+        'empty address'=>['address_line'=>''],'long address'=>['address_line'=>str_repeat('x',201)],
+        'array address'=>['address_line'=>['bad']],'control address'=>['address_line'=>"Bad\x00address"],
         'gateway'=>['payment_method'=>'card'],'manual not offered'=>['payment_method'=>'manual'],'array payment'=>['payment_method'=>['cod']],
         'missing key'=>['checkout_key'=>''],'array key'=>['checkout_key'=>['bad']],'wrong key'=>['checkout_key'=>str_repeat('f',64)]];
     foreach($cases as $label=>$bad){$before=state($pdo);$r=request('/checkout',$qa,array_replace($f,$bad));verify('Invalid '.$label.' rejected with no writes',$r['code']===422&&state($pdo)===$before);}
-    $escaped=request('/checkout',$qa,array_replace($f,['full_name'=>'<script>alert(1)</script>','contact_no'=>'invalid']));
+    $escaped=request('/checkout',$qa,array_replace($f,['first_name'=>'<script>alert(1)</script>','contact_no'=>'invalid']));
     verify('Invalid submitted text is encoded',str_contains($escaped['body'],'&lt;script&gt;')&&!str_contains($escaped['body'],'<script>alert(1)</script>'));
-    $limits=App\Core\CheckoutValidator::validate([...$f,'full_name'=>str_repeat('é',120),'delivery_address'=>str_repeat('界',500)]);
+    $limits=App\Core\CheckoutValidator::validate([...$f,'first_name'=>str_repeat('é',59),'last_name'=>str_repeat('é',60),'address_line'=>str_repeat('界',200),'barangay'=>str_repeat('界',100),'city'=>str_repeat('界',100),'postal_code'=>'2500','region'=>'R1']);
     verify('Schema character limits accept valid multi-byte input',$limits['errors']===[]);
     // Only private synthetic session state is aged; application authentication is unchanged.
     session_id(substr($qa['cookie'],strpos($qa['cookie'],'=')+1));session_start();$_SESSION['checkout_intent']['issued_at']=time()-1801;session_write_close();
@@ -172,24 +172,25 @@ try {
         verify('Injected '.$stage.' failure rolls back order, items, stock, cart and audit',$failed&&state($pdo)===$before);
     }
     $f=form($qa);$beforeOrder=state($pdo);$profileBefore=$users->profileFor($a);
-    $f['full_name']='<b>Literal Recipient</b>';$f['delivery_address']="<script>literal</script>\nPasig, Philippines";
+    $f['first_name']='<b>Literal';$f['last_name']='Recipient</b>';$f['address_line']='<script>literal</script>';
     $placed=request('/checkout',$qa,[...$f,'total'=>'0.01','subtotal'=>'0.01','price'=>'0.01','user_id'=>$other,'product_id'=>$p2,'quantity'=>'99']);
     preg_match('/id=([0-9]+)/',$placed['location'],$m);$orderId=(int)($m[1]??0);
     verify('Valid real POST creates order and redirects 303',$placed['code']===303&&$orderId>0);
     $order=(new App\Models\Order())->owned($orderId,$a);
-    verify('Server totals ignore submitted price/quantity/customer',is_array($order)&&$order['total']===$quote['subtotal']&&$order['user_id']==$a&&count($order['items'])===2);
-    verify('Recipient and contact snapshots stored, profile unchanged',$order['recipient_name_snapshot']===$f['full_name']&&$order['contact_no_snapshot']==='+639123456789'&&$order['contact_email_snapshot']===$profileBefore['email']&&$users->profileFor($a)===$profileBefore);
+    verify('Server totals ignore submitted price/quantity/customer',is_array($order)&&$order['total']===number_format((float)$quote['subtotal']+80,2,'.','')&&$order['delivery']['shipping_fee']==='80.00'&&$order['user_id']==$a&&count($order['items'])===2);
+    verify('Recipient and contact snapshots stored, profile unchanged',$order['recipient_name_snapshot']===$f['first_name'].' '.$f['last_name']&&$order['contact_no_snapshot']==='+639123456789'&&$order['contact_email_snapshot']===$profileBefore['email']&&$users->profileFor($a)===$profileBefore);
     verify('Pending COD order and exact price snapshots',$order['status']==='pending'&&$order['payment_method']==='cod'&&$order['items'][0]['unit_price_snapshot']===$quote['items'][0]['price']);
     verify('Stock deducted exactly once',(int)$pdo->query('SELECT stock_qty FROM products WHERE id='.$p)->fetchColumn()===(int)$origP['stock_qty']-2);
     verify('Active bag converted and emptied',$cart->contentsForUser($a)['items']===[]);
     verify('Exactly one transactional non-PII audit',(int)$pdo->query('SELECT COUNT(*) FROM audit_logs WHERE action="order.create" AND target_id='.$orderId)->fetchColumn()===1
-        &&!str_contains((string)$pdo->query('SELECT details FROM audit_logs WHERE action="order.create" AND target_id='.$orderId)->fetchColumn(),$f['delivery_address']));
+        &&!str_contains((string)$pdo->query('SELECT details FROM audit_logs WHERE action="order.create" AND target_id='.$orderId)->fetchColumn(),$f['address_line']));
     $after=state($pdo);$repeat=request('/checkout',$qa,$f);
     verify('Repeated POST returns same order without writes',$repeat['location']===$placed['location']&&state($pdo)===$after);
-    verify('Order history displays own order',str_contains(request('/orders',$qa)['body'],'View order #'.$orderId));
+    $displayReference=\App\Services\OrderReference::display((new \App\Models\Order())->owned($orderId,$a));
+    verify('Order history displays own order reference',str_contains(request('/orders',$qa)['body'],$displayReference));
     verify('Other customer cannot read order',request('/orders/view?id='.$orderId,$qo)['code']===404);
     verify('Unknown/malformed order IDs return 404',request('/orders/view?id[]=1',$qa)['code']===404&&request('/orders/view?id=99999999',$qa)['code']===404);
-    verify('Other history does not reveal order',!str_contains(request('/orders',$qo)['body'],'View order #'.$orderId));
+    verify('Other history does not reveal order',!str_contains(request('/orders',$qo)['body'],$displayReference));
     $detail=request('/orders/view?id='.$orderId,$qa);
     verify('Order details prevent private page caching',$detail['no_store']);
     verify('Stored order text is safely encoded',str_contains($detail['body'],'&lt;b&gt;Literal Recipient&lt;/b&gt;')&&str_contains($detail['body'],'&lt;script&gt;literal&lt;/script&gt;')&&!str_contains($detail['body'],'<script>literal</script>'));

@@ -28,7 +28,7 @@ final class Session
                 session_regenerate_id(true);
                 self::put('_auth_expired_notice', true);
                 self::flash('warning', 'Your session expired because it was inactive. Please sign in again.');
-            } else {
+            } elseif (!in_array(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), ['/account/session','/account/session/activity'], true)) {
                 $_SESSION['last_activity'] = time();
             }
         }

@@ -1,6 +1,5 @@
 <div class="form-head">
-  <span class="eyebrow">EMAIL VERIFICATION</span>
-  <h2>Activate your account</h2>
+  <h1>Activate your account</h1>
   <p>Confirm the activation link from your Avela email. This does not sign you in.</p>
 </div>
 <form method="post" action="<?= e(url('/activate')) ?>" class="form-stack" data-activation-form>

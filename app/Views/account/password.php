@@ -1,4 +1,6 @@
-<section class="page-head"><div><span class="eyebrow">ACCOUNT SECURITY</span><h1>Change password</h1><p>Confirm your current password. After saving, sign in again on each device with your usual verification.</p></div></section>
+<?php $customerPassword = (auth_user()['role'] ?? '') === 'customer'; ?>
+<?php if ($customerPassword): ?><nav class="product-breadcrumb" aria-label="Breadcrumb"><a href="<?= e(url('/settings')) ?>">Account settings</a><span aria-hidden="true">/</span><span>Change password</span></nav><?php endif; ?>
+<section class="page-head"><div><?php if (!$customerPassword): ?><span class="eyebrow">ACCOUNT SECURITY</span><?php endif; ?><h1>Change password</h1><p>Confirm your current password. After saving, sign in again on each device with your usual verification.</p></div></section>
 <section class="panel security-panel">
   <form class="form-stack" method="post" action="<?= e(url('/account/password')) ?>" novalidate>
     <?= csrf_field() ?>
