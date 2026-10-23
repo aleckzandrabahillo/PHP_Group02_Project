@@ -39,7 +39,7 @@ function request(string $path, ?array $client=null, ?array $data=null): array {
 function form(array $client): array {
     $r=request('/checkout',$client);if($r['code']!==200)throw new RuntimeException('Checkout form fixture not ready.');
     preg_match('/name="checkout_key" value="([a-f0-9]{64})"/',$r['body'],$m);
-    return ['_token'=>$client['csrf'],'checkout_key'=>$m[1]??'','country'=>'PH','first_name'=>'Synthetic','last_name'=>'Recipient','contact_no'=>'09123456789','address_line'=>'12 Test Street','barangay'=>'Test Barangay','postal_code'=>'1600','city'=>'Pasig','region'=>'NCR','shipping_method'=>'standard','payment_method'=>'cod'];
+    return ['_token'=>$client['csrf'],'checkout_key'=>$m[1]??'','country'=>'PH','first_name'=>'Synthetic','last_name'=>'Recipient','contact_no'=>'09123456789','address_line'=>'12 Test Street','barangay'=>'Test Barangay','postal_code'=>'1600','city'=>'Pasig','region'=>'NCR','province'=>'Metro Manila','shipping_method'=>'standard','payment_method'=>'cod'];
 }
 function reject(string $name, callable $fn, PDO $pdo): void {
     $before=state($pdo);$denied=false;try{$fn();}catch(InvalidArgumentException){$denied=true;}
@@ -127,7 +127,7 @@ try {
     foreach($cases as $label=>$bad){$before=state($pdo);$r=request('/checkout',$qa,array_replace($f,$bad));verify('Invalid '.$label.' rejected with no writes',$r['code']===422&&state($pdo)===$before);}
     $escaped=request('/checkout',$qa,array_replace($f,['first_name'=>'<script>alert(1)</script>','contact_no'=>'invalid']));
     verify('Invalid submitted text is encoded',str_contains($escaped['body'],'&lt;script&gt;')&&!str_contains($escaped['body'],'<script>alert(1)</script>'));
-    $limits=App\Core\CheckoutValidator::validate([...$f,'first_name'=>str_repeat('é',59),'last_name'=>str_repeat('é',60),'address_line'=>str_repeat('界',200),'barangay'=>str_repeat('界',100),'city'=>str_repeat('界',100),'postal_code'=>'2500','region'=>'R1']);
+    $limits=App\Core\CheckoutValidator::validate([...$f,'first_name'=>str_repeat('é',59),'last_name'=>str_repeat('é',60),'address_line'=>str_repeat('界',200),'barangay'=>str_repeat('界',100),'city'=>str_repeat('界',100),'postal_code'=>'2500','region'=>'R1','province'=>'La Union']);
     verify('Schema character limits accept valid multi-byte input',$limits['errors']===[]);
     // Only private synthetic session state is aged; application authentication is unchanged.
     session_id(substr($qa['cookie'],strpos($qa['cookie'],'=')+1));session_start();$_SESSION['checkout_intent']['issued_at']=time()-1801;session_write_close();

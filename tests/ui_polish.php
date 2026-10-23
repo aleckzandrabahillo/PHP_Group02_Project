@@ -1,0 +1,30 @@
+<?php
+declare(strict_types=1);
+if(PHP_SAPI!=='cli'){http_response_code(404);exit;}
+define('AVELA_HAIR_TEST_LIBRARY',true);require __DIR__.'/hair_profiles.php';
+use App\Core\Database;
+use App\Services\{ShippingService,DiscountService};
+function polishHttp(string $path,array $client,?array $post=null):array{
+ global $base;$options=['method'=>$post===null?'GET':'POST','header'=>'Cookie: '.$client['cookie']."\r\nConnection: close\r\n",'ignore_errors'=>true,'follow_location'=>0,'timeout'=>15];if($post!==null){$options['header'].="Content-Type: application/x-www-form-urlencoded\r\n";$options['content']=http_build_query($post);}$body=file_get_contents($base.$path,false,stream_context_create(['http'=>$options]));preg_match('/ ([0-9]{3}) /',$http_response_header[0]??'',$m);return ['code'=>(int)($m[1]??0),'body'=>(string)$body];
+}
+try{
+ $o=getopt('',['expect-database:','expect-port:','expect-server:','expect-server-id:','expect-datadir:','base-url:','session-directory:','scratch-directory:','output:']);$pdo=Database::connection();$id=$pdo->query('SELECT DATABASE() db,@@port port,@@hostname host,@@server_id sid,@@datadir dir')->fetch();$base=$o['base-url']??'';$norm=fn($s)=>strtolower(rtrim(str_replace('\\','/',$s),'/'));
+ if($id['db']!=='avela_demo_images_test_personalization_20261016'||($o['expect-database']??'')!==$id['db']||(int)$id['port']!==13321||($o['expect-port']??'')!=='13321'||($o['expect-server']??'')!==$id['host']||(int)($o['expect-server-id']??0)!==(int)$id['sid']||$norm($o['expect-datadir']??'')!==$norm($id['dir'])||env('MAIL_DRIVER')!=='log'||$base!=='http://127.0.0.1:18118')throw new RuntimeException('Disposable guards');
+ ini_set('session.save_path',$o['session-directory']);$checks=[];$fixture=json_decode(file_get_contents($o['scratch-directory'].'/followup-browser.json'),true,512,JSON_THROW_ON_ERROR);$q=$pdo->prepare('SELECT username FROM users WHERE id=?');$q->execute([$fixture['user']]);if($q->fetchColumn()!==$fixture['prefix']||!preg_match('/^refine_[a-f0-9]{10}$/D',$fixture['prefix']))throw new RuntimeException('Fixture guard');
+ foreach([99999,100000,120000] as $subtotal)foreach(['standard','priority'] as $method){$quote=ShippingService::quote('1600',$method,'Pasig','Metro Manila',$subtotal);$baseFee=$method==='standard'?8000:14000;verifyHair('Original shipping retained '.$subtotal.' '.$method,$quote['calculated_cents']===$baseFee);verifyHair('Only charged shipping enters total '.$subtotal.' '.$method,$quote['cents']===($subtotal>=100000?0:$baseFee));}
+ $high=ShippingService::eligible(['standard'=>['cents'=>125000]],100000);verifyHair('High area fee retained with exact waiver',$high['standard']['calculated_cents']===125000&&$high['standard']['cents']===0);
+ verifyHair('Percentage badge contains only benefit',DiscountService::benefit(['kind'=>'percentage','value_units'=>1000])==='10% off');verifyHair('Fractional percentage is retained',DiscountService::benefit(['kind'=>'percentage','value_units'=>1250])==='12.5% off');verifyHair('Fixed discounts stay accurately labelled',DiscountService::benefit(['kind'=>'fixed','value_units'=>5000])==='₱50.00 off');
+ foreach(['customer'=>[$fixture['user'],'/profile'],'catalog'=>[$fixture['manager'],'/catalog/profile'],'admin'=>[$fixture['admin'],'/admin/profile']] as $role=>[$user,$path]){
+  $client=hairClient($user);$page=polishHttp($path,$client);$html=$page['body'];verifyHair($role.' profile loads',$page['code']===200);
+  verifyHair($role.' photo requirements are tooltip',str_contains($html,'role="tooltip" id="photo-requirements"')&&str_contains($html,'aria-describedby="photo-requirements"'));
+  verifyHair($role.' email proof remains explained in tooltip',str_contains($html,'id="profile-email-help"')&&str_contains($html,'Changing your email requires a code sent to your current email address.'));
+  verifyHair($role.' edit has Cancel before Save',str_contains($html,'data-ux-close>Cancel</button><button class="btn btn-primary" type="submit">Save changes'));
+  verifyHair($role.' redundant dialog close and prose removed',!str_contains($html,'Close profile editor')&&!str_contains($html,'Name and contact changes save directly.'));
+  if($role==='customer')verifyHair('Address dialog keeps Cancel without redundant X',str_contains($html,'data-dialog-close>Cancel')&&!str_contains($html,'Close address form'));
+  else{verifyHair($role.' sidebar exposes POST CSRF sign out',preg_match('/<form class="account-signout staff-signout" method="post" action="[^\"]*\/logout">.*?name="_token".*?>Sign out<\/button>/s',$html)===1);verifyHair($role.' logout rejects missing CSRF',polishHttp('/logout',$client,[])['code']===419);$logout=polishHttp('/logout',$client,['_token'=>$client['csrf']]);verifyHair($role.' logout succeeds and protects staff routes',$logout['code']===302&&polishHttp($path,$client)['code']===302);}
+ }
+ $customer=hairClient($fixture['user']);foreach(['/orders','/favorites'] as $path){$page=polishHttp($path,$customer);verifyHair($path.' shared automatic filters remain',str_contains($page['body'],'class="collection-filters"')&&str_contains($page['body'],'data-auto-collection=')&&!str_contains($page['body'],'Apply filters'));}
+ foreach(['/account/password','/account/mfa'] as $path){$page=polishHttp($path,$customer);verifyHair($path.' centered layout and removed intro',str_contains($page['body'],'account-security-heading')&&!str_contains($page['body'],'You will stay signed in here; other devices')&&!str_contains($page['body'],'An authenticator app generates temporary codes'));}
+ $settings=polishHttp('/settings',$customer);verifyHair('Settings contains concise choices',!str_contains($settings['body'],'Manage how you protect')&&!str_contains($settings['body'],'Update your password and sign in again securely'));
+ file_put_contents($o['output'],json_encode(['checks'=>$checks],JSON_PRETTY_PRINT|JSON_THROW_ON_ERROR));ob_end_flush();exit(count(array_filter($checks,fn($row)=>$row['status']==='FAIL'))?1:0);
+}catch(Throwable $e){fwrite(STDERR,'UI polish verification stopped at line '.$e->getLine().'; details suppressed.'.PHP_EOL);exit(1);}

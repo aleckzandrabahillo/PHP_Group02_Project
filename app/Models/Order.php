@@ -14,7 +14,12 @@ final class Order
         $pdo=$this->connection??Database::connection();$status=$filters['status']??'';$search=$filters['q']??'';
         if(!is_string($status)||!in_array($status,['','pending','processing','shipped','delivered','cancelled'],true)||!is_string($search)||!mb_check_encoding($search,'UTF-8')||mb_strlen($search)>60||preg_match('/[\x00-\x1f\x7f]/u',$search))throw new \InvalidArgumentException('Choose valid order filters.');
         $where=['o.user_id=?'];$params=[$userId];if($status!==''){$where[]='o.status=?';$params[]=$status;}
-        if(trim($search)!==''){$where[]="(CAST(o.id AS CHAR) LIKE ? ESCAPE '!' OR o.public_reference LIKE ? ESCAPE '!')";$term='%'.strtr(trim($search),['!'=>'!!','%'=>'!%','_'=>'!_']).'%';$params[]=$term;$params[]=$term;}
+        $search=trim($search);
+        if($search!==''){
+            $needle=preg_replace('/^#\s*/u','',$search);
+            $where[]="(CAST(o.id AS CHAR) LIKE ? ESCAPE '!' OR UPPER(o.public_reference) LIKE UPPER(?) ESCAPE '!' OR CONCAT('AVE-',DATE_FORMAT(o.created_at,'%Y%m%d'),'-L',UPPER(CONV(o.id,10,36))) LIKE UPPER(?) ESCAPE '!' OR EXISTS(SELECT 1 FROM order_items search_items WHERE search_items.order_id=o.id AND search_items.product_name_snapshot LIKE ? ESCAPE '!'))";
+            $term='%'.strtr($needle,['!'=>'!!','%'=>'!%','_'=>'!_']).'%';array_push($params,$term,$term,$term,$term);
+        }
         $filter=' WHERE '.implode(' AND ',$where);$q=$pdo->prepare('SELECT COUNT(*) FROM orders o'.$filter);$q->execute($params);$total=(int)$q->fetchColumn();$pages=max(1,(int)ceil($total/10));$page=max(1,min($page,$pages));$maya=\App\Services\MayaMigration::installed($pdo);
         $query='SELECT o.id,o.public_reference,o.total,o.status,o.payment_method,o.created_at,'.($maya?'mp.state,mp.checkout_id,mp.merchant_reference':'NULL AS state,NULL AS checkout_id,NULL AS merchant_reference').' FROM orders o'.($maya?' LEFT JOIN maya_payments mp ON mp.order_id=o.id':'').$filter.' ORDER BY o.id DESC LIMIT 10 OFFSET '.(($page-1)*10);
         $q=$pdo->prepare($query);$q->execute($params);$rows=$q->fetchAll();$byId=[];

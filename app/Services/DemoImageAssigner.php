@@ -145,7 +145,7 @@ final class DemoImageAssigner
             || str_replace('\\','/',(string)realpath($file))!==$file)
             throw new DomainException('Missing or unsafe image asset for '.$image['sku'].'.');
         $size=filesize($file);
-        if ($size===false || $size<20 || $size>ProductImageService::MAX_BYTES)
+        if ($size===false || $size<20 || $size>5*1024*1024)
             throw new DomainException('Image asset size is invalid for '.$image['sku'].'.');
         $bytes=@file_get_contents($file);
         if ($bytes===false || strlen($bytes)!==$size || !hash_equals($image['sha256'],hash('sha256',$bytes)))

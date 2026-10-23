@@ -28,3 +28,8 @@ Thumbs.db
 
 __pycache__/
 *.py[cod]
+
+# Local design tooling and generated review artifacts
+.agents/
+skills-lock.json
+.taste-skill/

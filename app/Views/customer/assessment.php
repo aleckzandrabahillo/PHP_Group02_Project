@@ -1,27 +1,10 @@
+<?php if ($hairProfile && !$editing): ?>
+<?php require dirname(__DIR__).'/partials/saved_hair_profile.php'; ?>
+<?php else: ?>
 <section class="page-head assessment-page-head"><div>
   <span class="eyebrow">HAIR ASSESSMENT</span>
-  <h1><?= $hairProfile && !$editing ? 'Your saved hair profile' : 'Find your starting point.' ?></h1>
+  <h1>Find your starting point.</h1>
 </div></section>
-<?php if ($hairProfile && !$editing): ?>
-<section class="assessment-entry" aria-label="Your saved assessment">
-  <p>Your answers are saved. Explore your current matches or revisit your assessment.</p>
-  <dl class="results-characteristics"><?php foreach (['hair_texture'=>'Texture','scalp_type'=>'Scalp','hair_condition'=>'Lengths & ends'] as $field=>$label): ?>
-    <div><dt><?= e($label) ?></dt><dd><?= e($choices[$field][$hairProfile[$field]] ?? 'Not specified') ?></dd></div>
-  <?php endforeach; ?></dl>
-  <div class="account-form-actions"><a class="btn btn-primary" href="<?= e(url('/recommendations')) ?>">View my results <span aria-hidden="true">→</span></a>
-    <a class="btn btn-secondary" href="<?= e(url('/assessment?edit=1')) ?>">Retake assessment</a></div>
-  <p class="muted small">Retaking does not replace your saved answers until you submit the form.</p>
-</section>
-<?php else: ?>
-<details class="assessment-sections">
-  <summary>Jump to a section</summary>
-  <nav class="assessment-jump-links" aria-label="Assessment sections">
-    <a href="#assessment-1">Hair</a>
-    <a href="#assessment-2">Scalp &amp; lengths</a>
-    <a href="#assessment-3">Concerns</a>
-    <a href="#assessment-4">Details</a>
-  </nav>
-</details>
 <div class="hair-profile-layout">
   <form class="hair-profile-form" method="post" action="<?= e(url('/assessment')) ?>" data-assessment-form>
     <?= csrf_field() ?>
@@ -34,15 +17,17 @@
         <?php endforeach; ?></ul>
       </div>
     <?php endif; ?>
+    <div class="quiz-progress" data-quiz-progress hidden><p data-quiz-label aria-live="polite"></p><progress value="1" max="5" aria-label="Assessment progress"></progress></div>
     <?php
     $titles = ['hair_texture' => 'Your natural texture', 'scalp_type' => 'How your scalp usually feels',
         'hair_condition' => 'How your lengths and ends usually feel', 'concerns' => 'What would you like help with?', 'treatments' => 'Recent treatments or styling'];
     ?>
     <?php $groups = ['Hair characteristics' => ['hair_texture'], 'Scalp and lengths' => ['scalp_type', 'hair_condition'], 'Concerns' => ['concerns'], 'Additional details' => ['treatments']]; ?>
-    <?php $sectionNumber = 0; foreach ($groups as $group => $fields): $sectionNumber++; ?><section class="assessment-group" id="assessment-<?= $sectionNumber ?>" aria-labelledby="assessment-heading-<?= $sectionNumber ?>"><h2 id="assessment-heading-<?= $sectionNumber ?>" tabindex="-1"><span aria-hidden="true"><?= sprintf('%02d', $sectionNumber) ?></span><?= e($group) ?></h2><div class="assessment-fields">
+    <?php $sectionNumber = 0; foreach ($groups as $group => $fields): $sectionNumber++; ?><section class="assessment-group" data-quiz-step id="assessment-<?= $sectionNumber ?>" aria-labelledby="assessment-heading-<?= $sectionNumber ?>"><h2 id="assessment-heading-<?= $sectionNumber ?>" tabindex="-1"><?= e($group) ?></h2><div class="assessment-fields">
     <?php foreach ($fields as $field): $title = $titles[$field]; $multiple = in_array($field, ['concerns', 'treatments'], true); ?>
       <fieldset id="hair-<?= e($field) ?>" class="hair-fieldset" aria-describedby="error-<?= e($field) ?>">
         <legend><?= e($title) ?><?= $multiple ? ' <span class="muted small">(optional)</span>' : '' ?></legend>
+        <?php if($field==='hair_texture')require dirname(__DIR__).'/partials/texture_guide.php'; ?>
         <div class="hair-choice-grid"><?php foreach ($choices[$field] as $code => $label): ?>
           <label class="hair-choice">
             <input type="<?= $multiple ? 'checkbox' : 'radio' ?>" name="<?= e($field) ?><?= $multiple ? '[]' : '' ?>" value="<?= e($code) ?>"
@@ -60,6 +45,8 @@
       <small class="field-error" id="error-concern_text"><?= e($errors['concern_text'] ?? '') ?></small>
     </div>
     <?php endif; ?></div></section><?php endforeach; ?>
+    <section hidden class="assessment-group quiz-review" data-quiz-step><h2 tabindex="-1">Review your answers</h2><dl class="quiz-review-list" data-quiz-review></dl></section>
+    <nav class="quiz-controls" data-quiz-controls hidden aria-label="Assessment steps"><button type="button" class="btn btn-secondary" data-quiz-previous>Previous</button><button type="button" class="btn btn-primary" data-quiz-next>Next <span aria-hidden="true">→</span></button></nav>
     <div class="assessment-actions">
       <p class="muted small">Your answers stay with your account. Matches guide cosmetic product discovery, not medical care.</p>
       <button class="btn btn-primary" id="profile-submit" type="submit"><?= $hairProfile ? 'Update and see results' : 'See my results' ?><span aria-hidden="true">→</span></button>
@@ -81,3 +68,5 @@
   </aside>
 </div>
 <?php endif; ?>
+
+<script src="<?= e(asset('js/assessment.js')) ?>" defer></script>

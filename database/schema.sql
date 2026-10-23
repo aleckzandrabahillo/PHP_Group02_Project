@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS customer_profiles (
 CREATE TABLE IF NOT EXISTS staff_profiles (
   user_id BIGINT UNSIGNED PRIMARY KEY,
   full_name VARCHAR(120) NOT NULL,
+  contact_no VARCHAR(25) NULL DEFAULT NULL,
+  profile_image VARCHAR(255) NULL DEFAULT NULL,
   created_at DATETIME NOT NULL,
   updated_at DATETIME NOT NULL,
   CONSTRAINT fk_staff_profile_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

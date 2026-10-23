@@ -19,10 +19,10 @@ final class PasswordService
             && strtotime($user['password_changed_at'])+$days*86400<=time();
     }
 
-    public function change(int $id, #[\SensitiveParameter] string $current, #[\SensitiveParameter] string $new): void
+    public function change(int $id, #[\SensitiveParameter] string $current, #[\SensitiveParameter] string $new): string
     {
         if ($error=Validator::passwordError($new)) throw new DomainException($error);
-        $ok=Database::transaction(function(PDO $pdo)use($id,$current,$new):bool{
+        $ok=Database::transaction(function(PDO $pdo)use($id,$current,$new):string|false{
             $user=(new User())->findById($id,true);
             if(!User::canAuthenticate($user))throw new DomainException('Account security is unavailable. Sign in again.');
             if(!password_verify($current,$user['password_hash'])){
@@ -31,14 +31,16 @@ final class PasswordService
                 return false;
             }
             if(password_verify($new,$user['password_hash']))throw new DomainException('Choose a password different from your current password.');
+            $version=bin2hex(random_bytes(32));
             $pdo->prepare('UPDATE users SET password_hash=?,password_changed_at=NOW(),password_version=?,failed_attempts=0,updated_at=NOW() WHERE id=?')
-                ->execute([password_hash($new,PASSWORD_DEFAULT),bin2hex(random_bytes(32)),$id]);
+                ->execute([password_hash($new,PASSWORD_DEFAULT),$version,$id]);
             $pdo->prepare('UPDATE otp_codes SET used_at=NOW() WHERE user_id=? AND used_at IS NULL')->execute([$id]);
             $pdo->prepare('UPDATE activation_tokens SET used_at=NOW() WHERE user_id=? AND used_at IS NULL')->execute([$id]);
-            $pdo->prepare('INSERT INTO audit_logs(actor_id,action,target_type,target_id,details) VALUES (?,"password_changed","user",?,"Password replaced; existing sessions and pending verification revoked")')->execute([$id,$id]);
+            $pdo->prepare('INSERT INTO audit_logs(actor_id,action,target_type,target_id,details) VALUES (?,"password_changed","user",?,"Password replaced; other sessions and pending verification revoked")')->execute([$id,$id]);
             (new LogService())->auth($id,'password_change','success');
-            return true;
+            return $version;
         });
         if(!$ok)throw new DomainException('Your current password could not be confirmed.');
+        return $ok;
     }
 }

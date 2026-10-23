@@ -21,7 +21,9 @@ final class AccountExperienceMigration
   $exists=$pdo->query('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME="customer_delivery_addresses"')->fetchColumn();
   if(!$exists)$pending[]=$ddl;
   else{
-   $columns=$pdo->query('SHOW COLUMNS FROM customer_delivery_addresses')->fetchAll();$expected=['user_id'=>'bigint(20) unsigned','country'=>'char(2)','first_name'=>'varchar(60)','last_name'=>'varchar(60)','address_line'=>'varchar(200)','barangay'=>'varchar(100)','postal_code'=>'char(4)','city'=>'varchar(100)','region'=>'varchar(16)','contact_no'=>'varchar(25)','revision'=>'char(32)','created_at'=>'datetime','updated_at'=>'datetime'];
+   $columns=$pdo->query('SHOW COLUMNS FROM customer_delivery_addresses')->fetchAll();
+   foreach($columns as $extension)if($extension['Field']==='province'&&(strtolower($extension['Type'])!=='varchar(80)'||$extension['Null']!=='YES'))throw new DomainException('Unexpected province extension.');
+   $columns=array_values(array_filter($columns,fn($column)=>$column['Field']!=='province'));$expected=['user_id'=>'bigint(20) unsigned','country'=>'char(2)','first_name'=>'varchar(60)','last_name'=>'varchar(60)','address_line'=>'varchar(200)','barangay'=>'varchar(100)','postal_code'=>'char(4)','city'=>'varchar(100)','region'=>'varchar(16)','contact_no'=>'varchar(25)','revision'=>'char(32)','created_at'=>'datetime','updated_at'=>'datetime'];
    if(!self::addressesInstalled($pdo)||array_column($columns,'Field')!==array_keys($expected))throw new DomainException('Unexpected saved-address schema.');
    foreach($columns as $c)if(strtolower($c['Type'])!==$expected[$c['Field']]||$c['Null']!=='NO')throw new DomainException('Unexpected address column.');
    $key=$pdo->query('SHOW INDEX FROM customer_delivery_addresses WHERE Key_name="PRIMARY"')->fetchAll();$create=$pdo->query('SHOW CREATE TABLE customer_delivery_addresses')->fetch(PDO::FETCH_NUM)[1];

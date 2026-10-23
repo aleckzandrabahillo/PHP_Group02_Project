@@ -11,7 +11,9 @@ function passwordRequirementState(value, minimum, maximumBytes, counts = {}) {
     bytes: new TextEncoder().encode(value).length <= maximumBytes && !value.includes('\0'),
   };
 }
-document.querySelectorAll('[data-password-requirements]').forEach((input) => {
+document.querySelectorAll('[data-password-requirements]').forEach(setupPasswordInput);
+function setupPasswordInput(input){
+  if(input.dataset.avelaPasswordReady)return;input.dataset.avelaPasswordReady='true';
   const checklist = document.getElementById(input.id + '-help');
   if (!checklist) return;
   checklist.hidden = true;
@@ -32,12 +34,11 @@ document.querySelectorAll('[data-password-requirements]').forEach((input) => {
   input.addEventListener('focus', update);
   input.addEventListener('input', update);
   if (input.value) update();
-});
-document.querySelector('[data-reveal-setup-key]')?.addEventListener('click', (event) => {
-  const input = document.querySelector('#authenticator-setup-key');
-  if (!input) return;
-  const reveal = input.type === 'password';
-  input.type = reveal ? 'text' : 'password';
-  event.currentTarget.textContent = reveal ? 'Hide setup key' : 'Show setup key';
-  event.currentTarget.setAttribute('aria-pressed', String(reveal));
+}
+document.addEventListener('avela:content',()=>document.querySelectorAll('[data-password-requirements]').forEach(setupPasswordInput));
+document.addEventListener('click',event=>{
+  const button=event.target.closest?.('[data-reveal-setup-key]');if(!button)return;
+  const input=document.querySelector('#authenticator-setup-key');if(!input)return;
+  const reveal=input.type==='password';input.type=reveal?'text':'password';
+  button.textContent=reveal?'Hide setup key':'Show setup key';button.setAttribute('aria-pressed',String(reveal));
 });

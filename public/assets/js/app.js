@@ -509,6 +509,7 @@ async function submitFavorite(form) {
       const card = form.closest('.product-card');
       const nextFocus = card?.nextElementSibling?.querySelector('a') || card?.previousElementSibling?.querySelector('a') || document.querySelector('[data-favorite-link]');
       card?.remove();
+      const resultCount=document.querySelector('[data-favorite-result-count]');if(resultCount){const remaining=Math.max(0,Number(resultCount.dataset.matchingTotal)-1);resultCount.dataset.matchingTotal=String(remaining);resultCount.textContent=document.querySelectorAll('.favorite-grid .product-card').length+' shown · '+remaining+' matching favorites';}
       nextFocus?.focus();
       if (!document.querySelector('.favorite-grid .product-card')) window.location.reload();
     }
@@ -730,7 +731,8 @@ function setStaffNavigation(requestedOpen, restoreFocus = true) {
 }
 
 function setupStaffInterface() {
-  if (document.querySelector('.staff-sidebar')) {
+  if (document.querySelector('.staff-sidebar')&&!document.querySelector('.staff-sidebar').dataset.avelaInitialized) {
+    document.querySelector('.staff-sidebar').dataset.avelaInitialized='true';
     document.body.classList.add('staff-enhanced');
     setStaffNavigation(false, false);
     const sidebar = document.querySelector('.staff-sidebar');
@@ -742,6 +744,7 @@ function setupStaffInterface() {
     window.matchMedia('(max-width:1000px)').addEventListener('change', () => setStaffNavigation(false));
   }
   document.querySelectorAll('[data-staff-list]').forEach((root) => {
+    if(root.dataset.avelaInitialized)return;root.dataset.avelaInitialized='true';
     const rows = [...root.querySelectorAll('[data-staff-row]')];
     if (!rows.length) return;
     const search = root.querySelector('[data-staff-search]');
@@ -781,7 +784,7 @@ function setupStaffInterface() {
     previous.addEventListener('click', () => { page--; render(); });
     next.addEventListener('click', () => { page++; render(); });
     root.querySelector('[data-staff-reset]').addEventListener('click', () => {
-      search.value = ''; status.value = ''; sort.value = 'original'; page = 1; render(); search.focus();
+      search.value = ''; status.value = ''; sort.value = 'original'; page = 1; render(); status.dispatchEvent(new Event('change',{bubbles:true})); sort.dispatchEvent(new Event('change',{bubbles:true})); search.focus();
     });
     render();
   });
@@ -1064,20 +1067,25 @@ document.querySelectorAll('[data-assessment-form]').forEach((form) => {
 });
 
 
-document.querySelectorAll('[data-image-upload]').forEach((input) => {
+function mountImageUploads(root=document){
+root.querySelectorAll('[data-image-upload]').forEach((input) => {
+  if(input.dataset.avelaUploadReady)return;input.dataset.avelaUploadReady='true';
   const feedback = document.createElement('small');
   feedback.className = 'field-error';
   feedback.setAttribute('role', 'alert');
   input.insertAdjacentElement('afterend', feedback);
   input.addEventListener('change', () => {
     const file = input.files?.[0];
-    const message = file && (file.size === 0 || file.size > 5 * 1024 * 1024)
-      ? 'Choose a nonempty image of 5 MB or smaller.' : '';
+    const message = file && (file.size === 0 || file.size > Number(input.dataset.maxBytes || 2621440))
+      ? 'Choose a nonempty image of ' + (input.dataset.maxLabel || '2.5 MB') + ' or smaller.' : '';
     input.setCustomValidity(message);
     feedback.textContent = message;
     input.setAttribute('aria-invalid', message ? 'true' : 'false');
   });
 });
+}
+mountImageUploads();
+document.addEventListener('avela:content',event=>{setupStaffInterface();syncAllPasswordToggles();mountImageUploads(event.detail?.root||document);});
 const addressChoices = document.querySelectorAll('[data-address-source]');
 const deliveryField = document.querySelector('[data-delivery-address]');
 if (addressChoices.length && deliveryField) {
@@ -1099,16 +1107,8 @@ window.addEventListener('pageshow', (event) => {
   refreshFavoriteState().catch(() => announceFavorite('Refresh this page to check your saved products.'));
 });
 
-document.querySelectorAll('[data-unsaved-form]').forEach((form) => {
-  const initial = new URLSearchParams(new FormData(form)).toString();
-  let submitting = false;
-  const dirty = () => new URLSearchParams(new FormData(form)).toString() !== initial;
-  form.addEventListener('submit', () => { submitting = true; });
-  // Cancel explicitly discards the local draft; other navigation warns if it changed.
-  form.querySelector('[data-profile-cancel]')?.addEventListener('click', () => { submitting = true; });
-  window.addEventListener('beforeunload', (event) => {
-    if (submitting || !dirty()) return;
-    event.preventDefault();
-    event.returnValue = '';
-  });
-});
+const unsavedBaselines=new WeakMap(),submittedDrafts=new WeakSet();
+function mountUnsavedForms(root=document){root.querySelectorAll('[data-unsaved-form]').forEach(form=>{if(!unsavedBaselines.has(form))unsavedBaselines.set(form,new URLSearchParams(new FormData(form)).toString());});}
+mountUnsavedForms();document.addEventListener('avela:content',event=>mountUnsavedForms(event.detail?.root||document));
+document.addEventListener('submit',event=>{if(event.target.matches('[data-unsaved-form]'))submittedDrafts.add(event.target);});
+window.addEventListener('beforeunload',event=>{for(const form of document.querySelectorAll('[data-unsaved-form]')){if(submittedDrafts.has(form)||!form.getClientRects().length)continue;if(new URLSearchParams(new FormData(form)).toString()!==unsavedBaselines.get(form)){event.preventDefault();event.returnValue='';break;}}});

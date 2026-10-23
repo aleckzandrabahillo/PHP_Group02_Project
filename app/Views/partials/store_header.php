@@ -53,7 +53,7 @@ $shopSearch = isset($sortLinks, $sort);
       </div>
 
       <?php if ($assessmentUrl !== null): ?>
-        <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" <?= is_active_path('/assessment') ? 'aria-current="page"' : '' ?> href="<?= e($assessmentUrl) ?>">Hair assessment</a>
+        <a class="<?= (is_active_path('/assessment') || is_active_path('/recommendations')) ? 'active' : '' ?>" <?= (is_active_path('/assessment') || is_active_path('/recommendations')) ? (is_active_path('/assessment') ? 'aria-current="page"' : 'aria-current="location"') : '' ?> href="<?= e($assessmentUrl) ?>">Hair assessment</a>
       <?php endif; ?>
       <a class="<?= is_active_path('/about') ? 'active' : '' ?>" href="<?= e(url('/about')) ?>">About</a>
     </nav>
@@ -99,7 +99,7 @@ $shopSearch = isset($sortLinks, $sort);
             <a class="mobile-nav-sub" href="<?= e($categoryLinks[(int) $category['id']] ?? url('/shop?category[]=' . (int) $category['id'])) ?>"><?= e($category['name']) ?></a>
           <?php endforeach; ?>
           <?php if ($assessmentUrl !== null): ?>
-            <a class="<?= is_active_path('/assessment') ? 'active' : '' ?>" <?= is_active_path('/assessment') ? 'aria-current="page"' : '' ?> href="<?= e($assessmentUrl) ?>">Hair assessment</a>
+            <a class="<?= (is_active_path('/assessment') || is_active_path('/recommendations')) ? 'active' : '' ?>" <?= (is_active_path('/assessment') || is_active_path('/recommendations')) ? (is_active_path('/assessment') ? 'aria-current="page"' : 'aria-current="location"') : '' ?> href="<?= e($assessmentUrl) ?>">Hair assessment</a>
           <?php endif; ?>
           <a class="<?= is_active_path('/about') ? 'active' : '' ?>" href="<?= e(url('/about')) ?>">About</a>
           <?php if ($role === null): ?>

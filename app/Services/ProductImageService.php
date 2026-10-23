@@ -7,7 +7,7 @@ use RuntimeException;
 
 final class ProductImageService
 {
-    public const MAX_BYTES = 5 * 1024 * 1024;
+    public const MAX_BYTES = ImageUploadPolicy::MAX_BYTES;
     private const DIRECTORY = 'uploads/products/';
 
     public function store(mixed $file): ?string
@@ -18,15 +18,15 @@ final class ProductImageService
         }
         if ($file['error'] === UPLOAD_ERR_NO_FILE) return null;
         if (in_array($file['error'], [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
-            throw new InvalidArgumentException('Product images must be 5 MB or smaller.');
+            throw new InvalidArgumentException('Product images must be ' . ImageUploadPolicy::label() . ' or smaller.');
         }
         if ($file['error'] !== UPLOAD_ERR_OK || !is_string($file['tmp_name'] ?? null)
             || !is_string($file['name'] ?? null) || !is_uploaded_file($file['tmp_name'])) {
             throw new InvalidArgumentException('The image upload failed. Choose the file again.');
         }
         $size = filesize($file['tmp_name']);
-        if ($size === false || $size < 1 || $size > self::MAX_BYTES) {
-            throw new InvalidArgumentException('Product images must be nonempty and 5 MB or smaller.');
+        if ($size === false || $size < 1 || $size > ImageUploadPolicy::maxBytes()) {
+            throw new InvalidArgumentException('Product images must be nonempty and ' . ImageUploadPolicy::label() . ' or smaller.');
         }
         $extension = strtolower(pathinfo(str_replace('\\', '/', $file['name']), PATHINFO_EXTENSION));
         $types = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp'];
@@ -40,13 +40,11 @@ final class ProductImageService
         }
         $directory = dirname(__DIR__, 2) . '/public/' . self::DIRECTORY;
         // The tracked folder policy prevents script handling; do not silently upload without it.
-        if (!is_dir($directory) || !is_file($directory . '.htaccess') || !is_writable($directory)) {
+        if (!is_dir($directory) || !is_file($directory . '.htaccess') || !is_writable($directory) || is_link(rtrim($directory, '/'))) {
             throw new RuntimeException('Product image storage is unavailable.');
         }
         $path = self::DIRECTORY . bin2hex(random_bytes(16)) . '.' . ($extension === 'jpeg' ? 'jpg' : $extension);
-        if (!move_uploaded_file($file['tmp_name'], dirname(__DIR__, 2) . '/public/' . $path)) {
-            throw new RuntimeException('Product image storage is unavailable.');
-        }
+        ImageUploadPolicy::store($file['tmp_name'], dirname(__DIR__, 2) . '/public/' . $path, $mime);
         return $path;
     }
 

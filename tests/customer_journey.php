@@ -41,7 +41,7 @@ try {
     $response=hairRequest('/assessment',$client,$form);
     verifyHair('Assessment redirects to current results',$response['code']===303&&(bool)array_filter($response['headers'],static fn($h)=>strtolower(trim($h))==='location: /recommendations'));
     $results=hairRequest('/recommendations',$client);
-    foreach(['Your hair, at a glance','From your answers','From your description','Wavy','Oily roots / scalp','Dry lengths or ends','Why it matches','Your suggested routine'] as $text)verifyHair('Results display saved evidence: '.$text,$results['code']===200&&str_contains($results['body'],$text));
+    foreach(['Your hair, at a glance','Your priorities','From your description','Wavy','Oily roots / scalp','Dry lengths or ends','Why it matches','Your suggested routine'] as $text)verifyHair('Results display saved evidence: '.$text,$results['code']===200&&str_contains($results['body'],$text));
     verifyHair('Results do not echo raw concern text',!str_contains($results['body'],$form['concern_text']));
     verifyHair('Other customer cannot view owner results',!str_contains(hairRequest('/recommendations?user_id='.$a,$other)['body'],'Your hair, at a glance'));
     $plan=(new App\Services\RecommendationService())->forUser($a);

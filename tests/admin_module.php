@@ -180,7 +180,7 @@ try {
         $pdo->prepare('INSERT INTO carts(user_id,status) VALUES (?,"active")')->execute([$customer]);$cart=(int)$pdo->lastInsertId();
         $pdo->prepare('INSERT INTO cart_items(cart_id,product_id,quantity) VALUES (?,?,?)')->execute([$cart,$product,$quantity]);
         $quote=$checkout->quote($customer);
-        return $checkout->place($customer,['country'=>'PH','first_name'=>'Synthetic','last_name'=>'Recipient','address_line'=>'1 Test Street','barangay'=>'Test','postal_code'=>'1600','city'=>'Pasig','region'=>'NCR','contact_no'=>'09123456789','shipping_method'=>'standard','payment_method'=>'cod'],bin2hex(random_bytes(32)),$quote['signature']);
+        return $checkout->place($customer,['country'=>'PH','first_name'=>'Synthetic','last_name'=>'Recipient','address_line'=>'1 Test Street','barangay'=>'Test','postal_code'=>'1600','city'=>'Pasig','region'=>'NCR','province'=>'Metro Manila','contact_no'=>'09123456789','shipping_method'=>'standard','payment_method'=>'cod'],bin2hex(random_bytes(32)),$quote['signature']);
     };
     $stock=fn()=>(int)$pdo->query('SELECT stock_qty FROM products WHERE id='.$product)->fetchColumn();
     $status=fn($order)=>$pdo->query('SELECT status FROM orders WHERE id='.(int)$order)->fetchColumn();

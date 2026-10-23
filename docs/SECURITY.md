@@ -72,3 +72,9 @@ If all Administrators become locked, a trusted host operator can run `scripts/re
 This operation unlocks the chosen record atomically with incident/audit updates; it does not log the operator in, alter passwords, reactivate users or remove MFA. Proof attempts are persisted and limited to three per fifteen minutes. Host access alone is insufficient without Administrator proof. Keep the private MFA key and a usable staff email channel/recovery codes secured. The recovery script has no HTTP route.
 
 `tests/persistent_locks.php` adds elapsed-time, all-admin recovery, real CLI stdin, history preservation, proof/audit rollback, throttle and malformed-CSRF checks under the same disposable-only guards as `tests/security.php`.
+
+## Staff self-service profiles
+
+Staff may edit only their own name, contact number and photograph. Email changes require the existing current-mailbox OTP flow; pending email/login proofs are invalidated when the change commits. Role, eligibility and ownership checks run again under the account lock, with actor-attributed auditing. scripts/migrate_staff_profiles.php adds only nullable contact_no and profile_image columns, guarded like the existing migrations. Back up and restore-test before applying it to an existing database; personal deployments require separate authorization.
+
+A successful current-password change renews the initiating session ID and CSRF token while retaining its existing MFA proof. Other sessions retain the old password version and are rejected; pending verification is revoked.

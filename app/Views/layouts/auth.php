@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="<?= e(asset('css/customer.css')) ?>">
 <link rel="stylesheet" href="<?= e(asset('css/experience.css')) ?>">
 <link rel="stylesheet" href="<?= e(asset('css/motion.css')) ?>">
+<link rel="stylesheet" href="<?= e(asset('css/refinement.css')) ?>">
 </head>
 <body class="customer-experience auth-body">
 <a class="skip-link" href="#main-content">Skip to content</a>
@@ -31,5 +32,8 @@
 <script src="<?= e(asset('js/app.js')) ?>" defer></script>
 <?php require dirname(__DIR__) . '/partials/session_watch.php'; ?>
 <script src="<?= e(asset('js/experience.js')) ?>" defer></script>
+<script src="<?= e(asset('js/refinement.js')) ?>" defer></script>
+<script src="<?= e(asset('js/collections.js')) ?>" defer></script>
+<script src="<?= e(asset('js/photo-actions.js')) ?>" defer></script>
 </body>
 </html>
