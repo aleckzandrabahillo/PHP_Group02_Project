@@ -32,7 +32,4 @@ $path=$staffMode?'/admin/staff':'/admin/users';$self=(int)(auth_user()['id']??0)
 <?php endif; ?></div></td></tr>
 <?php endforeach; ?></tbody></table></div>
 <?php endif; ?>
-<nav class="order-pagination" aria-label="<?= $staffMode?'Staff':'Customer' ?> account pages">
-<?php foreach(['Previous'=>$listing['page']-1,'Next'=>$listing['page']+1] as $label=>$page):if($page<1||$page>$listing['pages'])continue; ?>
-<a href="<?= e(url($path.'?'.http_build_query($filters+['page'=>$page]))) ?>"><?= e($label) ?></a>
-<?php endforeach; ?><span>Page <?= (int)$listing['page'] ?> of <?= (int)$listing['pages'] ?></span></nav>
+<?= pagination_nav((int)$listing['page'],(int)$listing['pages'],static fn(int $n):string=>url($path.'?'.http_build_query($filters+['page'=>$n])),($staffMode?'Staff':'Customer').' account pages') ?>

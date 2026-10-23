@@ -747,12 +747,46 @@ function setupStaffInterface() {
     const search = root.querySelector('[data-staff-search]');
     const status = root.querySelector('[data-staff-status]');
     const sort = root.querySelector('[data-staff-sort]');
-    const previous = root.querySelector('[data-staff-previous]');
-    const next = root.querySelector('[data-staff-next]');
+    const numbers = root.querySelector('[data-staff-numbers]');
     const initialOrder = new Map(rows.map((row, index) => [row, index]));
     const normalize = (value) => value.normalize('NFKC').toLocaleLowerCase();
     const pageSize = 10;
     let page = 1;
+    const renderNumbers = (pages) => {
+      numbers.replaceChildren();
+      if (pages <= 1) return;
+      const add = (text, target, label, current) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn-secondary btn-sm';
+        button.textContent = text;
+        button.dataset.staffGoto = String(target);
+        button.setAttribute('aria-label', label);
+        button.disabled = target < 1 || target > pages;
+        if (current) { button.setAttribute('aria-current', 'page'); button.disabled = true; }
+        numbers.appendChild(button);
+      };
+      const shown = [...new Set([1, pages, ...[-2, -1, 0, 1, 2].map((d) => page + d)])]
+        .filter((n) => n >= 1 && n <= pages).sort((a, b) => a - b);
+      add('Previous', page - 1, 'Previous page', false);
+      let last = 0;
+      shown.forEach((n) => {
+        if (last && n - last > 1) {
+          const gap = document.createElement('span');
+          gap.className = 'page-gap'; gap.textContent = '…'; gap.setAttribute('aria-hidden', 'true');
+          numbers.appendChild(gap);
+        }
+        add(String(n), n, `Page ${n}`, n === page);
+        last = n;
+      });
+      add('Next', page + 1, 'Next page', false);
+    };
+    numbers.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-staff-goto]');
+      if (!button || button.disabled) return;
+      page = Number(button.dataset.staffGoto);
+      render();
+    });
     const render = () => {
       const query = normalize(search.value.trim());
       const matches = rows.filter((row) => normalize(row.dataset.listSearch).includes(query)
@@ -767,8 +801,7 @@ function setupStaffInterface() {
       const visible = new Set(matches.slice((page - 1) * pageSize, page * pageSize));
       rows.forEach((row) => { row.hidden = !visible.has(row); });
       matches.forEach((row) => row.parentElement.appendChild(row));
-      previous.disabled = page === 1;
-      next.disabled = page === pages;
+      renderNumbers(pages);
       root.querySelector('[data-staff-page]').textContent = `Page ${page} of ${pages}`;
       root.querySelector('[data-staff-count]').textContent = matches.length
         ? `Showing ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, matches.length)} of ${matches.length} matching ${root.dataset.listLabel} (${rows.length} total).`
@@ -778,8 +811,6 @@ function setupStaffInterface() {
     root.querySelectorAll('[data-staff-tools]').forEach((tools) => { tools.hidden = false; });
     search.addEventListener('input', () => { page = 1; render(); });
     [status, sort].forEach((control) => control.addEventListener('change', () => { page = 1; render(); }));
-    previous.addEventListener('click', () => { page--; render(); });
-    next.addEventListener('click', () => { page++; render(); });
     root.querySelector('[data-staff-reset]').addEventListener('click', () => {
       search.value = ''; status.value = ''; sort.value = 'original'; page = 1; render(); search.focus();
     });

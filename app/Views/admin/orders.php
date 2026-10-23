@@ -19,9 +19,6 @@
  <button class="btn btn-secondary btn-sm" type="submit">Cancel &amp; restore stock <span class="sr-only">for <?= e(\App\Services\OrderReference::display($item)) ?></span></button>
  </form><?php endif; ?></td>
 </tr><?php endforeach; ?></tbody></table></div>
-<nav class="order-pagination" aria-label="Administrator order pages">
- <?php foreach(['Previous'=>$history['page']-1,'Next'=>$history['page']+1] as $label=>$page): if($page<1||$page>$history['pages'])continue; ?><a href="<?= e(url('/admin/orders?'.http_build_query(['q'=>$history['q'],'status'=>$history['status'],'page'=>$page]))) ?>"><?= e($label) ?></a><?php endforeach; ?>
- <span>Page <?= (int)$history['page'] ?> of <?= (int)$history['pages'] ?></span>
-</nav>
+<?= pagination_nav((int)$history['page'],(int)$history['pages'],static fn(int $n):string=>url('/admin/orders?'.http_build_query(['q'=>$history['q'],'status'=>$history['status'],'page'=>$n])),'Administrator order pages') ?>
 <?php endif; ?>
 <p class="muted small">Record actual updates only. Pending or processing COD orders can be cancelled when their original stock deduction is confirmed. Shipped, delivered and older unreconciled orders require separate review.</p>

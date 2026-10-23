@@ -102,3 +102,31 @@ function product_placeholder_url(string $categoryName): string
     return asset('images/placeholders/' . product_visual_key($categoryName) . '.svg');
 }
 
+/**
+ * Numbered pagination: Previous, 1 … 4 5 [6] 7 8 … 20, Next.
+ * $urlFor receives a page number and returns the (unescaped) URL for it.
+ */
+function pagination_nav(int $page, int $pages, callable $urlFor, string $label = 'Pages', int $window = 2): string
+{
+    $pages = max(1, $pages);
+    $page = max(1, min($page, $pages));
+    if ($pages === 1) return '';
+    $numbers = [1, $pages];
+    for ($i = $page - $window; $i <= $page + $window; $i++) {
+        if ($i >= 1 && $i <= $pages) $numbers[] = $i;
+    }
+    $numbers = array_values(array_unique($numbers));
+    sort($numbers);
+    $html = '<nav class="order-pagination page-numbers" aria-label="' . e($label) . '">';
+    if ($page > 1) $html .= '<a href="' . e($urlFor($page - 1)) . '" rel="prev">Previous</a>';
+    $last = 0;
+    foreach ($numbers as $n) {
+        if ($last && $n - $last > 1) $html .= '<span class="page-gap" aria-hidden="true">…</span>';
+        $html .= $n === $page
+            ? '<span class="page-current" aria-current="page">' . $n . '</span>'
+            : '<a href="' . e($urlFor($n)) . '" aria-label="Page ' . $n . '">' . $n . '</a>';
+        $last = $n;
+    }
+    if ($page < $pages) $html .= '<a href="' . e($urlFor($page + 1)) . '" rel="next">Next</a>';
+    return $html . '<span class="page-summary">Page ' . $page . ' of ' . $pages . '</span></nav>';
+}
