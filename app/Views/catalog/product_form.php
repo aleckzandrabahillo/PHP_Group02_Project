@@ -4,7 +4,7 @@
   <form class="form-stack" method="post" enctype="multipart/form-data" action="<?= e(url('/catalog/products')) ?>">
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="<?= $editId !== null ? 'update' : 'create' ?>">
-    <input type="hidden" name="MAX_FILE_SIZE" value="5242880">
+    <input type="hidden" name="MAX_FILE_SIZE" value="<?= \App\Services\ImageUploadPolicy::maxBytes() ?>">
     <?php if ($editId !== null): ?>
       <input type="hidden" name="id" value="<?= (int) $editId ?>">
       <input type="hidden" name="expected_stock" value="<?= e($form['expected_stock']) ?>">
@@ -65,8 +65,8 @@
       </label>
       <label class="field <?= isset($errors['image']) ? 'has-error' : '' ?>">
         <span>Product image <em>(optional)</em></span>
-        <input type="file" name="image" data-image-upload accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" aria-invalid="<?= isset($errors['image']) ? 'true' : 'false' ?>" aria-describedby="product-image-help product-image-error">
-        <small id="product-image-help" class="help">JPEG, PNG or WebP; up to 5 MB. Leave empty to keep the existing image.</small>
+        <input type="file" name="image" data-image-upload data-max-bytes="<?= \App\Services\ImageUploadPolicy::maxBytes() ?>" data-max-label="<?= e(\App\Services\ImageUploadPolicy::label()) ?>" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" aria-invalid="<?= isset($errors['image']) ? 'true' : 'false' ?>" aria-describedby="product-image-help product-image-error">
+        <small id="product-image-help" class="help">JPEG, PNG or WebP; up to <?= e(\App\Services\ImageUploadPolicy::label()) ?>. Leave empty to keep the existing image.</small>
         <small id="product-image-error" class="field-error"><?= e($errors['image'] ?? '') ?></small>
       </label>
     </div>

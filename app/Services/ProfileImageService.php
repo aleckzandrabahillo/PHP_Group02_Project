@@ -15,15 +15,15 @@ final class ProfileImageService
             throw new InvalidArgumentException('Choose a valid profile photograph.');
         }
         if (in_array($file['error'], [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
-            throw new InvalidArgumentException('Profile photographs must be 5 MB or smaller.');
+            throw new InvalidArgumentException('Profile photographs must be ' . ImageUploadPolicy::label() . ' or smaller.');
         }
         if ($file['error'] !== UPLOAD_ERR_OK || !is_string($file['tmp_name'] ?? null)
             || !is_string($file['name'] ?? null) || !is_uploaded_file($file['tmp_name'])) {
             throw new InvalidArgumentException('Choose the photograph again; the upload did not complete.');
         }
         $size = filesize($file['tmp_name']);
-        if ($size === false || $size < 1 || $size > ProductImageService::MAX_BYTES) {
-            throw new InvalidArgumentException('Profile photographs must be nonempty and 5 MB or smaller.');
+        if ($size === false || $size < 1 || $size > ImageUploadPolicy::maxBytes()) {
+            throw new InvalidArgumentException('Profile photographs must be nonempty and ' . ImageUploadPolicy::label() . ' or smaller.');
         }
         $extension = strtolower(pathinfo(str_replace('\\', '/', $file['name']), PATHINFO_EXTENSION));
         $types = ['jpg'=>'image/jpeg', 'jpeg'=>'image/jpeg', 'png'=>'image/png', 'webp'=>'image/webp'];
@@ -40,9 +40,7 @@ final class ProfileImageService
             throw new RuntimeException('Profile image storage is unavailable.');
         }
         $path = 'uploads/profile/' . bin2hex(random_bytes(16)) . '.' . ($extension === 'jpeg' ? 'jpg' : $extension);
-        if (!move_uploaded_file($file['tmp_name'], dirname(__DIR__, 2) . '/public/' . $path)) {
-            throw new RuntimeException('Profile image storage is unavailable.');
-        }
+        ImageUploadPolicy::store($file['tmp_name'], dirname(__DIR__, 2) . '/public/' . $path, $mime);
         return $path;
     }
 

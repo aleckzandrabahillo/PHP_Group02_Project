@@ -8,6 +8,12 @@ error_reporting(E_ALL);
 
 require dirname(__DIR__) . '/bootstrap.php';
 
+// PHP discards the entire multipart body above post_max_size; give a useful 413.
+if (($_SERVER['REQUEST_METHOD']??'')==='POST') {
+    $configured=ini_get('post_max_size');$unit=strtolower(substr($configured,-1));$maximum=(float)$configured*(['g'=>1073741824,'m'=>1048576,'k'=>1024][$unit]??1);
+    if($maximum>0&&(float)($_SERVER['CONTENT_LENGTH']??0)>$maximum){http_response_code(413);header('Content-Type: text/plain; charset=UTF-8');exit('This upload is too large. Choose an image of '.\App\Services\ImageUploadPolicy::label().' or smaller and try again.');}
+}
+
 use App\Controllers\AdminController;
 use App\Controllers\AuthController;
 use App\Controllers\CatalogController;
@@ -129,6 +135,10 @@ $router->get('/catalog/categories', [$catalog, 'categories']);
 $router->post('/catalog/categories', [$catalog, 'manageCategory']);
 $router->get('/catalog/inventory', [$catalog, 'inventory']);
 $router->post('/catalog/inventory', [$catalog, 'updateStock']);
+$router->post('/account/profile', fn() => (new \App\Controllers\StaffProfileController())->update());
+$router->post('/account/profile/image', fn() => (new \App\Controllers\StaffProfileController())->image());
+$router->get('/account/profile/verify-otp', fn() => (new \App\Controllers\StaffProfileController())->verify());
+$router->post('/account/profile/verify-otp', fn() => (new \App\Controllers\StaffProfileController())->verify());
 $router->get('/catalog/profile', fn() => $catalog->page('profile','Profile'));
 
 $router->get('/admin', [$admin, 'dashboard']);

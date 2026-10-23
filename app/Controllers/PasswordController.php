@@ -39,7 +39,7 @@ final class PasswordController
             Response::redirect('/account/password');
         }
         try {
-            (new PasswordService())->change((int)$user['id'],$values['current_password'],$values['password']);
+            $version=(new PasswordService())->change((int)$user['id'],$values['current_password'],$values['password']);
         } catch(DomainException $e) {
             Session::flash('error',$e->getMessage());
             Response::redirect('/account/password');
@@ -47,9 +47,12 @@ final class PasswordController
             Session::flash('error','The password change could not be saved. No partial change was committed.');
             Response::redirect('/account/password');
         }
-        Session::forgetAuth();
+        // Renew only this authenticated session. Every other session retains the old version.
         session_regenerate_id(true);
-        Session::flash('success','Password changed. Sign in again with your new password and your usual verification.');
-        Response::redirect('/login');
+        Session::put('auth_password_version',$version);
+        Session::put('last_activity',time());
+        foreach(['_csrf','profile_update_flow','staff_profile_update_flow','pending_flow','pending_totp'] as $key)Session::forget($key);
+        Session::flash('success','Your password has been changed. Other devices must sign in again.');
+        Response::redirect('/account/password');
     }
 }

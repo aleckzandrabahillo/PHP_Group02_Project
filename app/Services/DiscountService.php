@@ -60,7 +60,22 @@ final class DiscountService
         if($row['customer_limit']!==null&&(int)$usage['uses_customer']>=(int)$row['customer_limit'])throw new InvalidArgumentException('You have already used this discount the permitted number of times.');
         $amount=min($subtotal,$row['kind']==='percentage'?intdiv($subtotal*(int)$row['value_units'],10000):(int)$row['value_units']);
         if($amount<1)throw new InvalidArgumentException('This discount does not apply to this bag.');
-        return ['id'=>(int)$row['id'],'code'=>$row['code'],'revision'=>$row['revision'],'kind'=>$row['kind'],'value_units'=>(int)$row['value_units'],'amount_cents'=>$amount];
+        return ['id'=>(int)$row['id'],'code'=>$row['code'],'revision'=>$row['revision'],'kind'=>$row['kind'],'value_units'=>(int)$row['value_units'],'amount_cents'=>$amount,'minimum_cents'=>(int)$row['minimum_cents'],'expires_at'=>$row['expires_at'],'benefit'=>self::benefit($row),'summary'=>self::summary($row,$amount)];
+    }
+
+    public static function benefit(array $discount):string
+    {
+        return $discount['kind']==='percentage'
+            ? rtrim(rtrim(number_format((int)$discount['value_units']/100,2,'.',''),'0'),'.').'% off'
+            : '₱'.ShippingService::decimal((int)$discount['value_units']).' off';
+    }
+    public static function summary(array $discount,int $amount):string
+    {
+        $benefit=$discount['kind']==='percentage'?rtrim(rtrim(number_format((int)$discount['value_units']/100,2,'.',''),'0'),'.').'% off merchandise':'₱'.ShippingService::decimal((int)$discount['value_units']).' off merchandise';
+        $parts=[$benefit,'You save ₱'.ShippingService::decimal($amount)];
+        if((int)($discount['minimum_cents']??0)>0)$parts[]='Minimum spend ₱'.ShippingService::decimal((int)$discount['minimum_cents']);
+        if(!empty($discount['expires_at']))$parts[]='Valid until '.date('j M Y, g:i a',strtotime($discount['expires_at']));
+        return implode(' · ',$parts);
     }
 
     public function reserve(PDO $pdo,int $order,int $user,array $quote,bool $awaitingPayment): void

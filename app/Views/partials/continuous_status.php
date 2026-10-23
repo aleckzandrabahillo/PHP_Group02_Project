@@ -1,0 +1,1 @@
+<div class="collection-more" data-collection-more><p role="status" aria-live="polite" data-collection-status></p><a class="btn btn-secondary" data-load-more href="<?= e($moreUrl?:'#') ?>" <?= $moreUrl?'':'hidden' ?>>Load more</a></div>

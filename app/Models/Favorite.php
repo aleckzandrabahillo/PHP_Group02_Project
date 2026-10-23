@@ -41,6 +41,16 @@ final class Favorite
         return $stmt->fetchAll();
     }
 
+    public function pageForUser(int $userId,array $input=[]):array
+    {
+        $pdo=Database::connection();$q=is_string($input['q']??'')?mb_substr(trim($input['q']??''),0,100):'';
+        $sort=is_string($input['sort']??'')?($input['sort']??''):'';$orders=['saved'=>'f.created_at DESC,p.id DESC','name'=>'p.name ASC,p.id ASC','price_asc'=>'p.price ASC,p.id ASC','price_desc'=>'p.price DESC,p.id ASC'];if(!isset($orders[$sort]))$sort='saved';
+        $where=' FROM favorites f JOIN products p ON p.id=f.product_id JOIN categories c ON c.id=p.category_id WHERE f.user_id=:user AND p.status="active" AND c.status="active"';$params=['user'=>$userId];
+        if($q!==''){$where.=' AND (p.name LIKE :name OR p.sku LIKE :sku)';$literal='%'.strtr($q,['='=>'==','%'=>'=%','_'=>'=_']).'%';$where=str_replace('LIKE :name','LIKE :name ESCAPE \'=\'',$where);$where=str_replace('LIKE :sku','LIKE :sku ESCAPE \'=\'',$where);$params['name']=$literal;$params['sku']=$literal;}
+        $count=$pdo->prepare('SELECT COUNT(*)'.$where);$count->execute($params);$total=(int)$count->fetchColumn();$pages=max(1,(int)ceil($total/12));$raw=$input['page']??1;$page=(is_string($raw)||is_int($raw))?filter_var($raw,FILTER_VALIDATE_INT):false;$page=max(1,min($pages,$page===false?1:$page));
+        $stmt=$pdo->prepare('SELECT p.id,p.sku,p.name,p.description,p.price,p.stock_qty,p.image_path,p.routine_step,c.name AS category_name,f.created_at AS favorited_at'.$where.' ORDER BY '.$orders[$sort].' LIMIT 12 OFFSET '.(($page-1)*12));$stmt->execute($params);
+        return ['items'=>$stmt->fetchAll(),'total'=>$total,'page'=>$page,'pages'=>$pages,'q'=>$q,'sort'=>$sort];
+    }
     /**
      * Toggle a customer's favorite and return true when the product is saved.
      */

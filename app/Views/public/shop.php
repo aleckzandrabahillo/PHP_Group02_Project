@@ -20,12 +20,6 @@ $clearFilterUrl = url('/shop') . ($clearParams ? '?' . http_build_query($clearPa
     <p>Find the essentials for your everyday routine.</p>
   </section>
 
-  <nav class="category-tabs" aria-label="Browse product categories">
-    <a href="<?= e($categoryLinks['all']) ?>" <?= !$filters['categories'] ? 'aria-current="page"' : '' ?>>All care</a>
-    <?php foreach ($filterOptions['categories'] as $category): ?>
-      <a href="<?= e($categoryLinks[(int) $category['id']]) ?>" <?= count($filters['categories']) === 1 && in_array((int) $category['id'], $filters['categories'], true) ? 'aria-current="page"' : '' ?>><?= e($category['name']) ?></a>
-    <?php endforeach; ?>
-  </nav>
   <form class="shop-form" method="get" action="<?= e(url('/shop')) ?>" data-shop-form>
     <input type="hidden" name="sort" value="<?= e($sort) ?>">
     <?php if (($search ?? '') !== ''): ?><input type="hidden" name="q" value="<?= e($search) ?>"><?php endif; ?>
@@ -56,15 +50,6 @@ $clearFilterUrl = url('/shop') . ($clearParams ? '?' . http_build_query($clearPa
         </button>
       </div>
     </div>
-
-    <?php if (!empty($activeFilters)): ?>
-      <div class="active-filters" aria-label="Active search and filters">
-        <?php foreach ($activeFilters as $chip): ?>
-          <a class="active-filter-chip" href="<?= e($chip['url']) ?>" title="Remove <?= e($chip['label']) ?>"><?= e($chip['label']) ?> <span aria-hidden="true">×</span></a>
-        <?php endforeach; ?>
-        <a class="active-filter-chip" href="<?= e(url('/shop' . ($sort !== 'newest' ? '?sort=' . rawurlencode($sort) : ''))) ?>">Clear all</a>
-      </div>
-    <?php endif; ?>
 
     <div class="filter-backdrop" data-filter-backdrop hidden></div>
     <aside id="product-filter-drawer" class="filter-drawer" data-filter-drawer hidden aria-hidden="true">
@@ -167,7 +152,7 @@ $clearFilterUrl = url('/shop') . ($clearParams ? '?' . http_build_query($clearPa
   </form>
 
   <?php if (!empty($products)): ?>
-    <div class="product-grid catalog-grid">
+    <div class="product-grid catalog-grid" data-continuous-list="shop" data-stream-page="<?= (int)$catalogPage ?>" data-next-url="<?= e($pageLinks['Next']??'') ?>">
       <?php foreach ($products as $product): ?>
         <?php $showExcerpt = false; require dirname(__DIR__) . '/partials/product_card.php'; ?>
       <?php endforeach; ?>
@@ -179,8 +164,5 @@ $clearFilterUrl = url('/shop') . ($clearParams ? '?' . http_build_query($clearPa
       <a class="btn btn-secondary" href="<?= e(url('/shop')) ?>">View all products</a>
     </div>
   <?php endif; ?>
-  <?php if ($catalogPages > 1): ?><nav class="order-pagination" aria-label="Catalog pages">
-    <?php foreach ($pageLinks as $label=>$link): ?><a href="<?= e($link) ?>"><?= e($label) ?></a><?php endforeach; ?>
-    <span>Page <?= (int)$catalogPage ?> of <?= (int)$catalogPages ?></span>
-  </nav><?php endif; ?>
+  <?php $moreUrl=$pageLinks['Next']??'';require dirname(__DIR__).'/partials/continuous_status.php'; ?>
 </main>

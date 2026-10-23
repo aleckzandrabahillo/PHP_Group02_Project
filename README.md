@@ -64,11 +64,13 @@ The canonical [catalog manifest](database/demo_catalog.json) contains twenty fic
 
 - [Repeat-safe catalog import and disposable tests](docs/DEMO_CATALOG.md).
 - [Guarded image assignment and disposable tests](docs/DEMO_IMAGES.md).
-- [Five-megabyte image upload policy](docs/UPLOADS.md).
+- [Shared 2.5 MB image upload policy and PHP GD requirement](docs/UPLOADS.md).
 - Product-image review/provenance records remain alongside the approved assets in `public/assets/images/products/demo/`.
 - Inter is served locally, unmodified, under its [SIL Open Font License](public/assets/fonts/inter/LICENSE.txt); [source revision/checksum](public/assets/fonts/inter/SOURCE.txt).
 
 ## Verification and deployment
+
+For existing installations adopting the latest customer/staff refinements, back up and restore-test the database first. Review `scripts/migrate_delivery_locations.php` (nullable address province/area fields) and `scripts/migrate_staff_profiles.php` (nullable staff contact/photo fields), using each script's complete database identity guards and default dry-run before an authorized apply. Do not rerun the installer on existing data. These updates do not include private configuration, uploaded photos, accounts or database contents.
 
 For profile-based matching and saved routines, see [matching rules, evidence and the additive routine migration](docs/RECOMMENDATIONS.md). Existing installations need the guarded routine_contexts addition before deploying those routes. tests/product_matching.php covers the pure rules; tests/matching_integration.php requires a disposable database.
 

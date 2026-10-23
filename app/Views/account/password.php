@@ -1,6 +1,6 @@
 <?php $customerPassword = (auth_user()['role'] ?? '') === 'customer'; ?>
 <?php if ($customerPassword): ?><nav class="product-breadcrumb" aria-label="Breadcrumb"><a href="<?= e(url('/settings')) ?>">Account settings</a><span aria-hidden="true">/</span><span>Change password</span></nav><?php endif; ?>
-<section class="page-head"><div><?php if (!$customerPassword): ?><span class="eyebrow">ACCOUNT SECURITY</span><?php endif; ?><h1>Change password</h1><p>Confirm your current password. After saving, sign in again on each device with your usual verification.</p></div></section>
+<section class="page-head account-security-heading"><div><?php if (!$customerPassword): ?><span class="eyebrow">ACCOUNT SECURITY</span><?php endif; ?><h1>Change password</h1></div></section>
 <section class="panel security-panel">
   <form class="form-stack" method="post" action="<?= e(url('/account/password')) ?>" novalidate>
     <?= csrf_field() ?>
@@ -14,7 +14,7 @@
       <?php $passwordInputId='new-password';require dirname(__DIR__).'/partials/password_requirements.php'; ?>
     </label>
     <label class="field">Confirm new password<input type="password" name="password_confirmation" autocomplete="new-password" required></label>
-    <div><button class="btn btn-primary" type="submit">Change password and sign out</button></div>
+    <div><button class="btn btn-primary" type="submit">Save new password</button></div>
   </form>
   <p><a href="<?= e(url('/account/mfa')) ?>">Manage two-step verification</a></p>
 </section>

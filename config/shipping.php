@@ -3,6 +3,7 @@ declare(strict_types=1);
 // Area-based prices from Pasig, not measured road distance or courier quotations.
 return [
     'origin'=>'Pasig City, Metro Manila',
+    'free_delivery_threshold_cents'=>100000,
     'priority_surcharge_cents'=>6000,
     'tiers'=>['pasig'=>8000,'adjacent'=>9000,'metro_manila'=>10000,'nearby_luzon'=>12000,'other_luzon'=>15000,'visayas'=>18000,'mindanao'=>20000],
     'adjacent_cities'=>['mandaluyong','marikina','quezon','taguig','pateros','makati'],

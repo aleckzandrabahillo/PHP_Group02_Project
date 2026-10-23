@@ -1,6 +1,7 @@
 <?php
 $profile=$profile??[];$shippingQuote=null;
-try{$shippingQuote=\App\Services\ShippingService::quote($values['postal_code']??'',$values['shipping_method']??'standard',$values['city']??'',$values['region']??'');}catch(\InvalidArgumentException){}
+$eligibleSubtotal=(int)round((float)$cart['subtotal']*100)-(int)($discountPreview['amount_cents']??0);
+try{$shippingQuote=\App\Services\ShippingService::quote($values['postal_code']??'',$values['shipping_method']??'standard',$values['city']??'',$values['region']??'',$eligibleSubtotal);}catch(\InvalidArgumentException){}
 ?>
 <div class="checkout-page">
   <section class="checkout-details" aria-labelledby="checkout-title">
@@ -19,7 +20,7 @@ try{$shippingQuote=\App\Services\ShippingService::quote($values['postal_code']??
       <?php if($errors): ?><div class="checkout-errors" role="alert" tabindex="-1" data-error-summary><strong>Please review your order.</strong><ul>
         <?php foreach($errors as $field=>$error): ?><li><?php if(isset(\App\Core\DeliveryValidator::LIMITS[$field])||$field==='contact_no'): ?><a href="#checkout-<?= e($field) ?>"><?= e($error) ?></a><?php else: ?><?= e($error) ?><?php endif; ?></li><?php endforeach; ?>
       </ul></div><?php endif; ?>
-      <div class="checkout-section"><div class="checkout-section-heading"><h2>Delivery</h2></div>
+      <div class="checkout-section"><div class="checkout-section-heading"><h2>Delivery</h2><?php if($savedDelivery): ?><button type="button" class="text-link" data-use-default data-default-delivery="<?= e(json_encode(array_intersect_key($savedDelivery,array_flip(['country','first_name','last_name','address_line','barangay','postal_code','city','region','province','contact_no'])),JSON_THROW_ON_ERROR)) ?>">Use saved address</button><?php endif; ?></div>
         <div class="checkout-field-grid">
           <label class="checkout-field checkout-field--full"><span>Country / Region</span><select id="checkout-country" name="country" autocomplete="country" required><option value="PH" selected>Philippines</option></select>
             <?php if(isset($errors['country'])): ?><small class="field-error"><?= e($errors['country']) ?></small><?php endif; ?></label>
@@ -31,27 +32,24 @@ try{$shippingQuote=\App\Services\ShippingService::quote($values['postal_code']??
               <?php if(isset($errors[$field])): ?><small class="checkout-field-error" id="checkout-<?= e($field) ?>-error"><?= e($errors[$field]) ?></small><?php endif; ?>
             </label>
           <?php endforeach; ?>
-          <label class="checkout-field checkout-field--full"><span>Region</span><select id="checkout-region" name="region" autocomplete="address-level1" required aria-invalid="<?= isset($errors['region'])?'true':'false' ?>"><option value="">Select region</option>
-            <?php foreach(\App\Services\ShippingService::REGIONS as $code=>$name): ?><option value="<?= e($code) ?>" <?= ($values['region']??'')===$code?'selected':'' ?>><?= e($name) ?></option><?php endforeach; ?></select>
-            <?php if(isset($errors['region'])): ?><small class="checkout-field-error"><?= e($errors['region']) ?></small><?php endif; ?></label>
+          <?php $locationValues=$values;$locationPrefix='checkout';require dirname(__DIR__).'/partials/region_field.php'; ?>
           <label class="checkout-field checkout-field--full"><span>Phone</span><input id="checkout-contact_no" type="tel" name="contact_no" value="<?= e($values['contact_no']??'') ?>" maxlength="25" required autocomplete="tel" aria-invalid="<?= isset($errors['contact_no'])?'true':'false' ?>">
             <?php if(isset($errors['contact_no'])): ?><small class="checkout-field-error"><?= e($errors['contact_no']) ?></small><?php endif; ?></label>
         </div>
       </div>
       <fieldset class="checkout-section checkout-shipping-options" id="checkout-shipping_method"><legend>Shipping method</legend>
         <?php foreach(['standard'=>'Standard delivery','priority'=>'Priority delivery'] as $method=>$label): ?>
-          <label class="checkout-option"><span><input type="radio" name="shipping_method" value="<?= e($method) ?>" <?= ($values['shipping_method']??'standard')===$method?'checked':'' ?> required> <?= e($label) ?></span><strong data-shipping-price="<?= e($method) ?>"><?php if($shippingQuote): ?>₱<?= e(\App\Services\ShippingService::quote($values['postal_code'],$method,$values['city'],$values['region'])['fee']) ?><?php else: ?>—<?php endif; ?></strong></label>
+          <label class="checkout-option"><span><input type="radio" name="shipping_method" value="<?= e($method) ?>" <?= ($values['shipping_method']??'standard')===$method?'checked':'' ?> required> <?= e($label) ?></span><strong data-shipping-price="<?= e($method) ?>"><?php if($shippingQuote): ?>₱<?= e(\App\Services\ShippingService::decimal(\App\Services\ShippingService::quote($values['postal_code'],$method,$values['city'],$values['region'],$eligibleSubtotal)['calculated_cents'])) ?><?= !empty($shippingQuote['free_delivery'])?' · Free':'' ?><?php else: ?>—<?php endif; ?></strong></label>
         <?php endforeach; ?><p class="field-error" data-shipping-feedback role="status"><?= e($errors['shipping_method']??'') ?></p>
       </fieldset>
       <fieldset class="checkout-section checkout-payment-section"><legend>Payment</legend>
         <label class="checkout-option"><span><input type="radio" name="payment_method" value="cod" <?= ($values['payment_method']??'cod')==='cod'?'checked':'' ?> required> Cash on delivery</span></label>
         <?php if($mayaAvailable??false): ?>
-          <label class="checkout-option"><span><input type="radio" name="payment_method" aria-controls="card-payment-info" value="maya_sandbox" <?= ($values['payment_method']??'')==='maya_sandbox'?'checked':'' ?> required> Debit/Credit Card</span></label>
-          <div class="card-payment-expand" id="card-payment-info" data-card-information <?= ($values['payment_method']??'')==='maya_sandbox'?'data-expanded="true"':'data-expanded="false"' ?>><div><div class="card-payment-note"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M2 9h20M6 15h4"/></svg><p>You'll enter your card details on Maya's secure Sandbox checkout page after placing your order.</p></div></div></div>
+          <label class="checkout-option"><span><input type="radio" name="payment_method" value="maya_sandbox" <?= ($values['payment_method']??'')==='maya_sandbox'?'checked':'' ?> required> Debit/Credit Card </span></label>
         <?php endif; ?>
         <?php if(isset($errors['payment_method'])): ?><p class="field-error"><?= e($errors['payment_method']) ?></p><?php endif; ?>
       </fieldset>
-      <div class="checkout-inline-total"><span>Order total</span><strong data-inline-grand>₱<?= e(number_format((float)$cart['subtotal']+(float)($shippingQuote['fee']??0),2)) ?></strong></div>
+      <div class="checkout-inline-total"><span>Order total</span><strong data-inline-grand>₱<?= e(number_format(($eligibleSubtotal+($shippingQuote['cents']??0))/100,2)) ?></strong></div>
       <a class="btn btn-secondary checkout-return" href="<?= e(url('/cart')) ?>"><span aria-hidden="true">←</span> Return to your bag</a>
     </form>
     <nav class="checkout-policy-links" aria-label="Checkout policies"><a href="<?= e(url('/refund-policy')) ?>">Refund policy</a><a href="<?= e(url('/privacy')) ?>">Privacy policy</a><a href="<?= e(url('/terms')) ?>">Terms of service</a></nav>

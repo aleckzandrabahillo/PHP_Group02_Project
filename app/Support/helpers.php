@@ -34,7 +34,13 @@ function url(string $path = '/'): string
 
 function asset(string $path): string
 {
-    return url('/assets/' . ltrim($path, '/'));
+    $path=ltrim($path,'/');$url=url('/assets/'.$path);
+    // Updated CSS/JS must not leave an older interaction cached in an open browser.
+    if(preg_match('~^[A-Za-z0-9_/-]+\.(?:css|js)$~D',$path)){
+        $file=dirname(__DIR__,2).'/public/assets/'.$path;
+        if(is_file($file))$url.='?v='.substr(hash_file('sha256',$file),0,12);
+    }
+    return $url;
 }
 
 function csrf_field(): string

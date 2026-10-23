@@ -6,7 +6,7 @@ spl_autoload_register(static function(string $class)use($root):void{if(str_start
 $checks=[];
 $check=static function(string $name,bool $passed)use(&$checks):void{$checks[]=['test'=>$name,'status'=>$passed?'PASS':'FAIL'];};
 $reject=static function(string $name,callable $call)use($check):void{$failed=false;try{$call();}catch(\InvalidArgumentException|\RuntimeException){$failed=true;}$check($name,$failed);};
-$valid=['country'=>'PH','first_name'=>'Synthetic','last_name'=>'Recipient','address_line'=>'12 Test Street','barangay'=>'Test Barangay','postal_code'=>'1600','city'=>'Pasig','region'=>'NCR','shipping_method'=>'standard','contact_no'=>'09123456789','payment_method'=>'cod'];
+$valid=['country'=>'PH','first_name'=>'Synthetic','last_name'=>'Recipient','address_line'=>'12 Test Street','barangay'=>'Test Barangay','postal_code'=>'1600','city'=>'Pasig','region'=>'NCR','province'=>'Metro Manila','shipping_method'=>'standard','contact_no'=>'09123456789','payment_method'=>'cod'];
 $v=App\Core\CheckoutValidator::validate($valid);$check('Complete delivery validates with normalized mobile',!$v['errors']&&$v['values']['contact_no']==='+639123456789');
 foreach(App\Core\DeliveryValidator::LIMITS as $field=>$max){
  foreach(['',str_repeat('a',$max+1),['nested'],"bad\0value","\xff","\u{00A0}"] as $bad)$check('Reject malformed '.$field,isset(App\Core\DeliveryValidator::validate([...$valid,$field=>$bad])['errors'][$field]));
