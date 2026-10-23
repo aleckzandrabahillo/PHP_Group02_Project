@@ -23,14 +23,22 @@ try {
  $form=hairForm($client);$form['treatments']=[];hairRequest('/assessment',$client,$form);
  $profileBefore=(new App\Models\HairProfile())->forUser($uid);$entry=hairRequest('/assessment',$client);$retake=hairRequest('/assessment?edit=1',$client);
  verifyHair('Saved assessment offers results and retake',$entry['code']===200&&str_contains($entry['body'],'View my results')&&str_contains($entry['body'],'Retake assessment')&&!str_contains($entry['body'],'data-assessment-form'));
+ verifyHair('Saved profile has one clear heading and one primary result action',substr_count($entry['body'],'<h1')===1&&str_contains($entry['body'],'Your hair profile.')&&str_contains($entry['body'],'saved-profile-retake'));
+ verifyHair('Saved profile uses approved existing assessment image',str_contains($entry['body'],'images/editorial/assessment-lather.jpg')&&str_contains($entry['body'],'class="saved-profile-facts"'));
+ foreach(['hair_texture','scalp_type','hair_condition'] as $field)verifyHair('Saved profile displays recorded '.$field,str_contains($entry['body'],e(App\Core\HairProfileValidator::CHOICES[$field][$profileBefore[$field]])));
+ verifyHair('Saved entry does not repeat raw concern description',!str_contains($entry['body'],e($form['concern_text'])));
+ verifyHair('Absent treatments do not create empty detail panels',!str_contains($entry['body'],'class="saved-profile-details"'));
+ $hairProfile=$profileBefore;$choices=App\Core\HairProfileValidator::CHOICES;$choices['hair_texture'][$hairProfile['hair_texture']]='<img src=x onerror=alert(1)>';
+ ob_start();require dirname(__DIR__).'/app/Views/partials/saved_hair_profile.php';$encoded=ob_get_clean();verifyHair('Saved answer labels are HTML encoded',str_contains($encoded,'&lt;img src=x onerror=alert(1)&gt;')&&!str_contains($encoded,'<img src=x'));
+ $hairProfile['hair_texture']='unknown';ob_start();require dirname(__DIR__).'/app/Views/partials/saved_hair_profile.php';$unknown=ob_get_clean();verifyHair('Unknown historical answer is shown honestly',str_contains($unknown,'Not specified'));
  verifyHair('Retake displays all inputs without changing saved profile',str_contains($retake['body'],'data-assessment-form')&&(new App\Models\HairProfile())->forUser($uid)===$profileBefore);
- verifyHair('Assessment section menu is optional and helper paragraphs are removed',str_contains($retake['body'],'<details class="assessment-sections">')&&str_contains($retake['body'],'Jump to a section')&&!str_contains($retake['body'],'Think about your roots')&&!str_contains($retake['body'],'Optional. Select any'));
+ verifyHair('Assessment section menu is optional and helper paragraphs are removed',!str_contains($retake['body'],'Jump to a section')&&str_contains($retake['body'],'data-quiz-step')&&!str_contains($retake['body'],'Think about your roots')&&!str_contains($retake['body'],'Optional. Select any'));
  $matches=hairRequest('/recommendations',$client);verifyHair('Results show profile summary and expandable matching explanations',$matches['code']===200&&str_contains($matches['body'],'Your hair, at a glance')&&str_contains($matches['body'],'More about this match')&&str_contains($matches['body'],'Why it matches'));
  $shop=hairRequest('/shop?sort=price_desc&q=shampoo');verifyHair('Shop search consolidated but query and sort retained',!str_contains($shop['body'],'id="catalog-query"')&&str_contains($shop['body'],'name="q" value="shampoo"')&&str_contains($shop['body'],'data-catalog-sort="price_desc"'));
  $page=(new App\Models\Product())->catalogPage('',[],'price_asc',1);verifyHair('SQL pagination clamps and bounds results',count($page['items'])===12&&(new App\Models\Product())->catalogPage('',[],'price_asc',999)['page']===$page['pages']);
  $about=hairRequest('/about');verifyHair('Approved About portrait is used',$about['code']===200&&str_contains($about['body'],'images/editorial/about-portrait.jpg')&&!str_contains($about['body'],'images/products/demo/avela-ave-smp-002.webp'));
  $permanent=trim(str_repeat('Saved address ',30));$pdo->prepare('UPDATE customer_profiles SET delivery_address=? WHERE user_id=?')->execute([$permanent,$uid]);
- $input=['country'=>'PH','first_name'=>'Another','last_name'=>'recipient','contact_no'=>'+639123456789','address_line'=>'12 Test Street','barangay'=>'Test Barangay','postal_code'=>'1600','city'=>'Pasig','region'=>'NCR','shipping_method'=>'standard','payment_method'=>'cod'];
+ $input=['country'=>'PH','first_name'=>'Another','last_name'=>'recipient','contact_no'=>'+639123456789','address_line'=>'12 Test Street','barangay'=>'Test Barangay','postal_code'=>'1600','city'=>'Pasig','region'=>'NCR','province'=>'Metro Manila','shipping_method'=>'standard','payment_method'=>'cod'];
  $checked=App\Core\CheckoutValidator::validate($input,$users->profileFor($uid));verifyHair('Editable delivery is independent of permanent profile',!$checked['errors']&&$checked['values']['delivery_address']!==$permanent);
  verifyHair('Malformed address source rejected',isset(App\Core\CheckoutValidator::validate([...$input,'address_source'=>['saved']])['errors']['address_source']));
  verifyHair('Blank profile still permits a complete delivery form',!App\Core\CheckoutValidator::validate($input,[])['errors']);
@@ -61,13 +69,13 @@ try {
  verifyHair('Transport failure preserves order and requires review',$failure['status']==='failed'&&(new App\Models\Order())->owned($orderId,$uid)['status']==='delivered');
  verifyHair('Uncertain failure is not automatically retried',$queue->deliverNext(static function(){throw new RuntimeException('Must not send');},$orderId)===null);
  $jpg=file_get_contents(dirname(__DIR__).'/public/assets/images/editorial/about-portrait.jpg');
- foreach([3*1024*1024,5*1024*1024,5*1024*1024+1] as $size){$bytes=$jpg.str_repeat(' ',max(0,$size-strlen($jpg)));$old=$users->profileFor($uid)['profile_image'];$response=followupUpload($client,$bytes,'/profile/image','profile_image');$new=$users->profileFor($uid)['profile_image'];verifyHair('Profile upload size boundary '.$size,$response['code']===302&&($size<=5*1024*1024?$new!==$old:$new===$old));}
- verifyHair('Both image flows share 5 MB limit',App\Services\ProductImageService::MAX_BYTES===5*1024*1024);
- foreach([3*1024*1024,5*1024*1024,5*1024*1024+1] as $size){
+ foreach([2621439,2621440,2621441] as $size){$bytes=$jpg.str_repeat(' ',max(0,$size-strlen($jpg)));$old=$users->profileFor($uid)['profile_image'];$response=followupUpload($client,$bytes,'/profile/image','profile_image');$new=$users->profileFor($uid)['profile_image'];verifyHair('Profile upload size boundary '.$size,$response['code']===302&&($size<=2621440?$new!==$old:$new===$old));}
+ verifyHair('Both image flows share 2.5 MB limit',App\Services\ProductImageService::MAX_BYTES===2621440);
+ foreach([2621439,2621440,2621441] as $size){
   $sku='FOLLOW-UP-'.bin2hex(random_bytes(5));$bytes=$jpg.str_repeat(' ',max(0,$size-strlen($jpg)));
   $data=['action'=>'create','name'=>'Synthetic upload boundary','sku'=>$sku,'category_id'=>(string)$product['category_id'],'description'=>'Disposable image validation','price'=>'1.00','stock_qty'=>'1','status'=>'active','routine_step'=>''];
   $response=followupUpload($catalog,$bytes,'/catalog/products','image',$data);$query=$pdo->prepare('SELECT id,image_path FROM products WHERE sku=?');$query->execute([$sku]);$created=$query->fetch();
-  verifyHair('Product upload size boundary '.$size,$size<=5*1024*1024?(bool)$created&&!empty($created['image_path']):!$created);
+  verifyHair('Product upload size boundary '.$size,$size<=2621440?(bool)$created&&!empty($created['image_path']):!$created);
   if($created){$remove=hairRequest('/catalog/products',$catalog,['_token'=>$catalog['csrf'],'action'=>'delete','id'=>(string)$created['id']]);$query->execute([$sku]);verifyHair('Manager deletes unused image fixture without admin review',$query->fetch()===false&&!is_file(dirname(__DIR__).'/public/'.$created['image_path']));}
  }
  $badOrder=$pdo->prepare('SELECT COUNT(*) FROM orders WHERE id=?');$badOrder->execute([$orderId]);verifyHair('Failed delivery leaves exactly one real order',(int)$badOrder->fetchColumn()===1);

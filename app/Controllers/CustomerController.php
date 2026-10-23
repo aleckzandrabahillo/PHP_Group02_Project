@@ -60,9 +60,10 @@ final class CustomerController
     {
         $user = AuthGuard::roles(['customer']);
         $userId = (int) $user['id'];
+        $favoritePage=$this->favorites->pageForUser($userId,$_GET);
         View::render('customer/favorites', [
             'pageTitle' => 'Favorites',
-            'favoriteProducts' => $this->favorites->productsForUser($userId),
+            'favoriteProducts' => $favoritePage['items'],'favoritePage'=>$favoritePage,
             ...$this->commonData($userId),
         ]);
     }
@@ -98,7 +99,7 @@ final class CustomerController
     {
         header('Cache-Control: no-store, private');$user=AuthGuard::roles(['customer']);
         Csrf::enforce(is_string($_POST['_token']??null)?$_POST['_token']:null);
-        $values=[];foreach(['postal_code'=>4,'city'=>100,'region'=>16,'shipping_method'=>16,'discount_code'=>32] as $field=>$limit){
+        $values=[];foreach(['postal_code'=>4,'city'=>100,'region'=>80,'shipping_method'=>16,'discount_code'=>32] as $field=>$limit){
             $value=$_POST[$field]??'';if(!is_string($value)||!mb_check_encoding($value,'UTF-8')||mb_strlen($value)>$limit){Response::json(['ok'=>false,'error'=>'Check the delivery or discount fields.'],422);return;}$values[$field]=trim($value);
         }
         try{
@@ -109,6 +110,8 @@ final class CustomerController
             }
             try{$discount=(new \App\Services\DiscountService())->quote(\App\Core\Database::connection(),(int)$user['id'],$values['discount_code'],$subtotal);}
             catch(InvalidArgumentException $e){$error=$e->getMessage();$field='discount';}
+            $options=\App\Services\ShippingService::eligible($options,$subtotal-($discount['amount_cents']??0));
+            if($shipping)$shipping=$options[$values['shipping_method']];
             Response::json(['ok'=>$error==='','error'=>$error,'field'=>$field,'subtotal_cents'=>$subtotal,'shipping'=>$shipping,'options'=>$options,'discount'=>$discount,'total_cents'=>$subtotal-($discount['amount_cents']??0)+($shipping['cents']??0),'cart_signature'=>$cart['signature']],$error===''?200:422);
         }catch(\Throwable){Response::json(['ok'=>false,'error'=>'Your total could not be updated. Please try again.'],503);}
     }
@@ -203,7 +206,7 @@ final class CustomerController
         if (!$values) {
             $values=\App\Core\DeliveryValidator::prefill($profile);
             $saved=(new \App\Services\CustomerAddress())->find(\App\Core\Database::connection(),$userId);
-            if($saved)foreach(['country','first_name','last_name','address_line','barangay','postal_code','city','region','contact_no'] as $field)$values[$field]=$saved[$field];
+            if($saved)foreach(['country','first_name','last_name','address_line','barangay','postal_code','city','region','contact_no','province'] as $field)$values[$field]=$saved[$field]??'';
         }
         $intent = Session::get('checkout_intent');
         if (!is_array($intent) || ($intent['user_id'] ?? 0) !== $userId || ($intent['signature'] ?? '') !== $cart['signature']
@@ -216,7 +219,7 @@ final class CustomerController
             try{$discountPreview=(new \App\Services\DiscountService())->quote(\App\Core\Database::connection(),$userId,$values['discount_code'],(int)round((float)$cart['subtotal']*100));}
             catch(InvalidArgumentException $e){$errors['discount_code']=$e->getMessage();}
         }
-        View::render('customer/checkout', ['pageTitle' => 'Checkout', 'cart' => $cart, 'profile' => $profile, 'discountPreview'=>$discountPreview,
+        View::render('customer/checkout', ['pageTitle' => 'Checkout', 'cart' => $cart, 'profile' => $profile, 'discountPreview'=>$discountPreview,'savedDelivery'=>(new \App\Services\CustomerAddress())->find(\App\Core\Database::connection(),$userId),
             'values' => $values, 'errors' => $errors, 'checkoutKey' => $intent['key'],
             'mayaAvailable' => \App\Services\MayaSandboxConfig::available() && \App\Services\MayaMigration::installed(\App\Core\Database::connection())], 'checkout');
     }

@@ -48,7 +48,7 @@ final class RecommendationController
             $result = ['profile' => null, 'ranked' => [], 'routine' => ['items' => [], 'warnings' => []], 'fingerprint' => ''];
         }
         $options = (new \App\Models\Product())->filterOptions();
-        View::render('customer/recommendations', ['pageTitle' => 'Your Hair-Care Matches', 'result' => $result, 'error' => $error,
+        View::render('customer/recommendations', ['pageTitle' => 'Your Care Routine', 'result' => $result, 'error' => $error,
             'storeNav' => ['categories' => $options['categories'], 'concerns' => $options['concern']],
             'favoriteIds' => (new \App\Models\Favorite())->idsForUser($userId),
             'favoriteCount' => (new \App\Models\Favorite())->countForUser($userId),

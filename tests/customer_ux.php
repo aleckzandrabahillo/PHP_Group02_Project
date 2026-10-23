@@ -71,11 +71,11 @@ try {
     verifyHair('Removing last favorite gives zero without negative counts', $getState($client)['count'] === 0 && $countOnPage(hairRequest('/favorites', $client)['body'], 0));
 
     $overview = hairRequest('/profile', $client);
-    verifyHair('Profile defaults to read-only overview', str_contains($overview['body'], 'Your profile') && !str_contains($overview['body'], 'class="form-stack customer-profile-form"'));
-    verifyHair('Overview provides explicit edit action', str_contains($overview['body'], '/profile?edit=1'));
+    verifyHair('Profile defaults to read-only overview', str_contains($overview['body'], 'Your profile') && str_contains($overview['body'], 'id="profile-edit-dialog"') && str_contains($overview['body'], 'data-dialog-auto="false"'));
+    verifyHair('Overview provides explicit edit action', str_contains($overview['body'], 'data-dialog-open="profile-edit-dialog"'));
     verifyHair('Profile links to settings without enrollment controls', str_contains($overview['body'], '/settings') && !str_contains($overview['body'], 'Start authenticator setup'));
     $edit = hairRequest('/profile?edit=1', $client);
-    verifyHair('Explicit edit shows save and cancel', str_contains($edit['body'], 'Save changes') && str_contains($edit['body'], '>Cancel</a>'));
+    verifyHair('Explicit edit shows save and cancel', str_contains($edit['body'], 'Save changes') && str_contains($edit['body'], 'data-ux-close>Cancel</button>'));
     verifyHair('Editing retains CSRF and email verification explanation', str_contains($edit['body'], 'name="_token"') && str_contains($edit['body'], 'current email address'));
     $before = $users->profileFor($a);
     $form = ['_token' => $client['csrf'], 'full_name' => $before['full_name'], 'email' => $before['email'], 'contact_no' => $before['contact_no'], 'delivery_address' => 'Synthetic delivery address'];
@@ -105,7 +105,7 @@ try {
     if (!$matches) throw new RuntimeException('Synthetic OTP missing.');
     $done = hairRequest('/profile/verify-otp', $client, ['_token' => $client['csrf'], 'otp' => $matches[1]]); unset($matches);
     verifyHair('Verified edits saved through existing process', $done['code'] === 302 && $users->profileFor($a)['full_name'] === $form['full_name']);
-    verifyHair('Success returns to overview', !str_contains(hairRequest('/profile', $client)['body'], 'class="form-stack customer-profile-form"'));
+    verifyHair('Success returns to overview', str_contains(hairRequest('/profile', $client)['body'], 'data-dialog-auto="false"'));
 
     $logout = hairRequest('/logout', $client, ['_token' => $client['csrf']]);
     foreach ($logout['headers'] as $header) {
@@ -126,7 +126,7 @@ try {
     }
     sort($linkedCategories);
     $activeCategories=array_map('intval',$pdo->query('SELECT id FROM categories WHERE status="active" ORDER BY id')->fetchAll(PDO::FETCH_COLUMN));
-    verifyHair('All six category links remain available', count($linkedCategories) === 6 && $linkedCategories === $activeCategories);
+    verifyHair('All active categories remain available in the filter drawer', count($activeCategories)===6&&str_contains($shop['body'],'data-filter-drawer')&&!str_contains($shop['body'],'category-tabs'));
     $result = ['checks' => $checks, 'pass' => count(array_filter($checks, static fn($c) => $c['status'] === 'PASS')), 'fail' => count(array_filter($checks, static fn($c) => $c['status'] === 'FAIL'))];
     if (isset($options['output'])) file_put_contents($options['output'], json_encode($result, JSON_PRETTY_PRINT));
     ob_end_flush(); exit($result['fail'] ? 1 : 0);

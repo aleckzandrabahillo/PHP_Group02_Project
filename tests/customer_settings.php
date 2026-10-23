@@ -43,7 +43,7 @@ try {
     verifyHair('Existing MFA URL remains compatible', hairRequest('/account/mfa', $client)['code'] === 200);
     verifyHair('Existing MFA mutation still rejects invalid CSRF', hairRequest('/account/mfa', $client, ['action' => 'begin', '_token' => 'invalid'])['code'] === 419);
     $profile = hairRequest('/profile', $client)['body'];
-    verifyHair('Profile remains details and editing', str_contains($profile, 'Account details') && str_contains($profile, '/profile?edit=1') && !str_contains($profile, 'Start authenticator setup'));
+    verifyHair('Profile remains details and editing', str_contains($profile, 'Account details') && str_contains($profile, 'data-dialog-open="profile-edit-dialog"') && !str_contains($profile, 'Start authenticator setup'));
     $entry = hairRequest('/assessment', $client)['body'];
     verifyHair('Saved profile offers results and retake without clearing data', str_contains($entry,'View my results') && str_contains($entry,'Retake assessment') && !str_contains($entry,'data-assessment-form'));
     $assessment = hairRequest('/assessment?edit=1', $client)['body'];

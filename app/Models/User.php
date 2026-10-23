@@ -144,7 +144,10 @@ final class User
     public function profileFor(int $id): array
     {
         $pdo = Database::connection();
-        $stmt = $pdo->prepare('SELECT u.id, u.email, u.username, u.role, u.status, u.created_at, COALESCE(cp.full_name, sp.full_name, u.username) AS full_name, cp.contact_no, cp.delivery_address, cp.profile_image FROM users u LEFT JOIN customer_profiles cp ON cp.user_id = u.id LEFT JOIN staff_profiles sp ON sp.user_id = u.id WHERE u.id = :id LIMIT 1');
+        $staff=\App\Services\StaffProfileMigration::installed($pdo);
+        $contact=$staff?'COALESCE(cp.contact_no,sp.contact_no) AS contact_no':'cp.contact_no';
+        $image=$staff?'COALESCE(cp.profile_image,sp.profile_image) AS profile_image':'cp.profile_image';
+        $stmt = $pdo->prepare('SELECT u.id, u.email, u.username, u.role, u.status, u.created_at, COALESCE(cp.full_name, sp.full_name, u.username) AS full_name, '.$contact.', cp.delivery_address, '.$image.' FROM users u LEFT JOIN customer_profiles cp ON cp.user_id = u.id LEFT JOIN staff_profiles sp ON sp.user_id = u.id WHERE u.id = :id LIMIT 1');
         $stmt->execute(['id' => $id]);
         return $stmt->fetch() ?: [];
     }

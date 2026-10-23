@@ -11,7 +11,7 @@ try{
  ini_set('session.save_path',$sessions);$checks=[];$users=new User();$addresses=new CustomerAddress();$prefix='acc_'.bin2hex(random_bytes(5));$ids=[];
  foreach(['a','b'] as $suffix){$name=$prefix.$suffix;$id=$users->createCustomer(['username'=>$name,'email'=>$name.'@example.invalid','full_name'=>'Synthetic Account Customer','contact_no'=>'+639123456789','password_hash'=>password_hash(bin2hex(random_bytes(24)),PASSWORD_DEFAULT)]);$users->activate($id);$ids[]=$id;}
  [$a,$b]=$ids;$client=hairClient($a);$other=hairClient($b);$admin=hairClient((int)$users->findByIdentifier('image_admin')['id']);$catalog=hairClient((int)$users->findByIdentifier('image_catalog_manager')['id']);
- $input=['country'=>'PH','first_name'=>'Synthetic','last_name'=>'Customer','address_line'=>'1 Test Street','barangay'=>'San Antonio','postal_code'=>'1600','city'=>'Pasig','region'=>'NCR','contact_no'=>'09123456789'];
+ $input=['country'=>'PH','first_name'=>'Synthetic','last_name'=>'Customer','address_line'=>'1 Test Street','barangay'=>'San Antonio','postal_code'=>'1600','city'=>'Pasig','region'=>'NCR','province'=>'Metro Manila','contact_no'=>'09123456789'];
  verifyHair('Additive account migration repeat has zero additions',(new AccountExperienceMigration())->run($pdo,false)['pending_additions']===0);
  verifyHair('New customer has no structured address',$addresses->find($pdo,$a)===null);
  verifyHair('Profile provides accessible native dialog and empty address',str_contains(hairRequest('/profile',$client)['body'],'No address added')&&str_contains(hairRequest('/profile',$client)['body'],'<dialog'));
@@ -67,7 +67,7 @@ try{
  verifyHair('Catalog manager denied admin analytics',hairRequest('/admin',$catalog)['code']===403);
  verifyHair('Customer denied staff analytics',hairRequest('/catalog',$client)['code']===403&&hairRequest('/admin',$client)['code']===403);
  $cart->add($a,$product,1);$prefilled=hairRequest('/checkout',$client)['body'];
- verifyHair('Checkout prefills saved structured address fields',str_contains($prefilled,'name="address_line" value="Later Address"')&&str_contains($prefilled,'name="postal_code" value="1600"')&&str_contains($prefilled,'name="city" value="Pasig"')&&str_contains($prefilled,'value="NCR" selected'));
+ verifyHair('Checkout prefills saved structured address fields',str_contains($prefilled,'name="address_line" value="Later Address"')&&str_contains($prefilled,'name="postal_code" value="1600"')&&str_contains($prefilled,'name="city" value="Pasig"')&&str_contains($prefilled,'value="Metro Manila" selected'));
  $mailOrder=null;(new App\Services\OrderEmailQueue($pdo))->deliverNext(function($mail,$items)use(&$mailOrder){$mailOrder=$mail;},$order);
  verifyHair('Queued receipt carries same public reference',$mailOrder!==null&&OrderReference::display($mailOrder)===$reference);
  $pdo->beginTransaction();$duplicateRejected=false;try{$pdo->prepare('UPDATE orders SET public_reference=? WHERE id=(SELECT chosen.id FROM (SELECT id FROM orders WHERE id<>? LIMIT 1) chosen)')->execute([$reference,$order]);}catch(PDOException $failure){$duplicateRejected=($failure->errorInfo[1]??0)===1062;}finally{$pdo->rollBack();}

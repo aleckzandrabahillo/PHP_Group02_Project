@@ -34,6 +34,8 @@ final class DeliveryMigration
                 'address_line'=>'varchar(200)','barangay'=>'varchar(100)','postal_code'=>'char(4)','city'=>'varchar(100)',
                 'region'=>'varchar(16)','shipping_method'=>"enum('standard','priority')",'shipping_fee'=>'decimal(10,2)'];
             $fields=$pdo->query('SHOW COLUMNS FROM order_delivery_details')->fetchAll();
+   foreach($fields as $extension)if($extension['Field']==='province'&&(strtolower($extension['Type'])!=='varchar(80)'||$extension['Null']!=='YES'))throw new DomainException('Unexpected province extension.');
+   $fields=array_values(array_filter($fields,fn($column)=>$column['Field']!=='province'));
             if(array_column($fields,'Field')!==array_keys($expected))throw new DomainException('Unexpected delivery table fields.');
             foreach($fields as $field){$name=$field['Field'];$type=strtolower($field['Type']);
                 if($field['Null']!=='NO'||($name==='order_id'?(!str_starts_with($type,'bigint')||!str_contains($type,'unsigned')||$field['Key']!=='PRI'):$type!==$expected[$name]))throw new DomainException('Unexpected delivery field definition.');}

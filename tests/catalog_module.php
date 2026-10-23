@@ -196,7 +196,7 @@ try {
     $pdo->prepare('INSERT INTO carts(user_id,status) VALUES (?,"active")')->execute([$customer]);$cart=(int)$pdo->lastInsertId();
     $pdo->prepare('INSERT INTO cart_items(cart_id,product_id,quantity) VALUES (?,?,1)')->execute([$cart,$rid]);
     $checkout=new App\Services\CheckoutService();$quote=$checkout->quote($customer);
-    $order=$checkout->place($customer,['country'=>'PH','first_name'=>'Synthetic','last_name'=>'Recipient','address_line'=>'1 Test Street','barangay'=>'Test','postal_code'=>'1600','city'=>'Pasig','region'=>'NCR','contact_no'=>'09123456789','shipping_method'=>'standard','payment_method'=>'cod'],bin2hex(random_bytes(32)),$quote['signature']);$orders[]=$order;
+    $order=$checkout->place($customer,['country'=>'PH','first_name'=>'Synthetic','last_name'=>'Recipient','address_line'=>'1 Test Street','barangay'=>'Test','postal_code'=>'1600','city'=>'Pasig','region'=>'NCR','province'=>'Metro Manila','contact_no'=>'09123456789','shipping_method'=>'standard','payment_method'=>'cod'],bin2hex(random_bytes(32)),$quote['signature']);$orders[]=$order;
     $itemsBefore=$pdo->query('SELECT * FROM order_items WHERE order_id='.$order)->fetchAll();
     $r=$post(['action'=>'delete','id'=>(string)$rid],$staff);
     verifyHair('Ordered product deletion preserves references',$r['code']===422&&$itemsBefore===$pdo->query('SELECT * FROM order_items WHERE order_id='.$order)->fetchAll());
@@ -214,10 +214,10 @@ try {
     verifyHair('Concurrent review/delete never erases a saved review',$race[0]==='applied'?($race[1]==='rejected'&&$reviewCount===1&&$model->managementFind($raceId)!==null):($race[1]==='applied'&&$reviewCount===0&&$model->managementFind($raceId)===null));
 
     $png=file_get_contents(dirname(__DIR__).'/public/assets/images/avela-logo.png');
-    verifyHair('Both form and server advertise five megabytes',App\Services\ProductImageService::MAX_BYTES===5242880&&str_contains(hairRequest('/catalog/products?form=add',$staff)['body'],'name="MAX_FILE_SIZE" value="5242880"')&&str_contains(file_get_contents(dirname(__DIR__).'/public/assets/js/app.js'),'file.size > 5 * 1024 * 1024'));
-    foreach([3*1024*1024,5*1024*1024,5*1024*1024+1] as $size){
+    verifyHair('Both form and server advertise 2.5 megabytes',App\Services\ProductImageService::MAX_BYTES===2621440&&str_contains(hairRequest('/catalog/products?form=add',$staff)['body'],'name="MAX_FILE_SIZE" value="2621440"')&&str_contains(file_get_contents(dirname(__DIR__).'/public/assets/js/app.js'),'Number(input.dataset.maxBytes || 2621440)'));
+    foreach([2621439,2621440,2621441] as $size){
         $data=$form();$bytes=$png.str_repeat(' ',max(0,$size-strlen($png)));$r=catalogUpload($staff,['_token'=>$staff['csrf'],...$data],'product.png',$bytes);$row=$lookup($data['sku']);
-        verifyHair('Actual multipart upload boundary '.$size,$size<=5*1024*1024?$r['code']===302&&$row&&is_file(dirname(__DIR__).'/public/'.$row['image_path']):$r['code']===422&&!$row);
+        verifyHair('Actual multipart upload boundary '.$size,$size<=2621440?$r['code']===302&&$row&&is_file(dirname(__DIR__).'/public/'.$row['image_path']):$r['code']===422&&!$row);
         if($row){$path=$row['image_path'];$deleted=$post(['action'=>'delete','id'=>(string)$row['id']],$staff);clearstatcache(true,dirname(__DIR__).'/public/'.$path);verifyHair('Unused uploaded fixture deleted and file retired',$deleted['code']===302&&$model->managementFind((int)$row['id'])===null&&!is_file(dirname(__DIR__).'/public/'.$path));}
     }
     foreach(['fake.jpg'=>['not an image'],'mismatch.jpg'=>[$png],'payload.php'=>[$png],'empty.png'=>[''],'vector.svg'=>['<svg xmlns="http://www.w3.org/2000/svg"></svg>']] as $name=>[$bytes]){

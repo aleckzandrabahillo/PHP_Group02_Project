@@ -62,6 +62,7 @@
   }
   function setDetails(details,open) {
     const summary=details.querySelector(':scope > summary'); if(!summary)return Promise.resolve();
+    if(open&&details.matches('.staff-sidebar details')){for(const sibling of details.closest('nav').querySelectorAll(':scope > details'))if(sibling!==details&&(sibling.open||detailJobs.get(sibling)?.open))setDetails(sibling,false);}
     const overlay=details.matches('.checkout-account-menu,.header-popover,.mobile-nav-menu,.account-menu,.assessment-sections,[data-sort-menu]');
     const body=summary.nextElementSibling; if(!body){details.open=open;return Promise.resolve();}
     const current=detailJobs.get(details);
@@ -111,8 +112,10 @@
     document.body.style.overflow=oldOverflow;dialog.remove();confirmation=null;
     if(opener?.isConnected)opener.focus({preventScroll:true});return result;
   }
-  function setup() {
-    document.querySelectorAll('details').forEach(details=>{
+  const mountedDetails=new WeakSet();
+  function mountDetails(root=document){
+    root.querySelectorAll('details').forEach(details=>{
+      if(mountedDetails.has(details))return;mountedDetails.add(details);
       const summary=details.querySelector(':scope > summary');if(!summary)return;
       summary.addEventListener('click',event=>{event.preventDefault();const job=detailJobs.get(details);setDetails(details,!(job?job.open:details.open));});
       if(details.matches('.checkout-account-menu,.header-popover,.mobile-nav-menu,.account-menu,.assessment-sections,[data-sort-menu]')){
@@ -121,6 +124,9 @@
         details.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>setDetails(details,false)));
       }
     });
+  }
+  function setup(){
+    mountDetails();document.addEventListener('avela:content',event=>{const root=event.detail?.root||document;mountDetails(root);reveal(root.querySelector('h1'),'fast');});
     const approved=new WeakSet();
     document.addEventListener('submit',async event=>{
       const form=event.target;if(!(form instanceof HTMLFormElement)||!form.matches('[data-confirm]'))return;
