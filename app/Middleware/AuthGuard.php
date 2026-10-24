@@ -14,6 +14,19 @@ final class AuthGuard
         if (self::currentUser()) Response::redirect(self::dashboardPath());
     }
 
+    public static function sessionStatus(bool $activity = false): never
+    {
+        header('Cache-Control: no-store, private');
+        $user=self::currentUser();
+        if(!$user)Response::json(['authenticated'=>false,'redirect'=>url('/login')],401);
+        if($activity){
+            \App\Core\Csrf::enforce(is_string($_POST['_token']??null)?$_POST['_token']:null);
+            Session::put('last_activity',time());
+        }
+        $timeout=\App\Services\SecurityPolicy::values()['session_timeout_minutes']*60;
+        Response::json(['authenticated'=>true,'expires_at'=>(int)Session::get('last_activity',time())+$timeout]);
+    }
+
     public static function auth(): array
     {
         $user = self::currentUser();
@@ -24,6 +37,12 @@ final class AuthGuard
                 Session::flash('warning', 'Please sign in to continue.');
             }
             Response::redirect('/login');
+        }
+        $current = (new User())->findById((int)$user['id']);
+        $path = parse_url(current_relative_uri(), PHP_URL_PATH);
+        if ($current && \App\Services\PasswordService::expired($current) && !in_array($path,['/account/password','/logout'],true)) {
+            Session::flash('warning','Your password has expired under the configured policy. Change it to continue.');
+            Response::redirect('/account/password');
         }
         return $user;
     }
@@ -37,6 +56,7 @@ final class AuthGuard
         $version = $user ? \App\Services\MfaService::sessionVersion((int) $user['id']) : null;
         // A changed role must pass its normal login/MFA path before gaining access.
         if (!User::canAuthenticate($user) || ($cached['role'] ?? '') !== $user['role']
+            || (($user['password_version'] ?? '') !== '' && !hash_equals($user['password_version'], (string)Session::get('auth_password_version','')))
             || ($version !== null && (!is_string(Session::get('auth_mfa_version')) || !hash_equals($version, Session::get('auth_mfa_version'))))) {
             Session::forgetAuth();
             session_regenerate_id(true);

@@ -1,24 +1,13 @@
-<section class="page-head"><div><span class="eyebrow">MY ORDERS</span><h1>My orders</h1></div></section>
-<?php if (!$history['items']): ?>
-<?php
-$emptyTitle = 'No orders yet';
-$emptyMessage = 'Your orders will appear here after your first purchase.';
-$emptyActionLabel = 'Browse products';
-$emptyActionUrl = url('/shop');
-require dirname(__DIR__) . '/partials/empty_state.php';
-?>
-<?php else: ?>
-  <div class="order-table-wrap"><table>
-    <thead><tr><th>Order</th><th>Placed</th><th>Status</th><th>Total</th><th>Details</th></tr></thead>
-    <tbody><?php foreach ($history['items'] as $item): ?><tr>
-      <td>#<?= (int) $item['id'] ?></td><td><?= e($item['created_at']) ?></td>
-      <td><?= e(ucfirst($item['status'])) ?></td><td>₱<?= e(number_format((float) $item['total'], 2)) ?></td>
-      <td><a href="<?= e(url('/orders/view?id=' . (int) $item['id'])) ?>">View order #<?= (int) $item['id'] ?></a></td>
-    </tr><?php endforeach; ?></tbody>
-  </table></div>
-  <nav class="order-pagination" aria-label="Order history pages">
-    <?php if ($history['page'] > 1): ?><a href="<?= e(url('/orders?page=' . ($history['page'] - 1))) ?>">Previous</a><?php endif; ?>
-    <span>Page <?= (int) $history['page'] ?> of <?= (int) $history['pages'] ?></span>
-    <?php if ($history['page'] < $history['pages']): ?><a href="<?= e(url('/orders?page=' . ($history['page'] + 1))) ?>">Next</a><?php endif; ?>
-  </nav>
+<?php $statusLabels=['pending'=>'Order received','processing'=>'Preparing','shipped'=>'Dispatched','delivered'=>'Delivered','cancelled'=>'Cancelled']; ?>
+<section class="page-head"><div><h1>My orders</h1></div></section>
+<form class="collection-filters" method="get" action="<?= e(url('/orders')) ?>" data-auto-collection="orders" role="search"><label class="field"><span>Search orders</span><input type="search" name="q" maxlength="60" value="<?= e($history['q']) ?>" placeholder="Order number or product name"></label><label class="field"><span>Status</span><select name="status"><option value="">All orders</option><?php foreach($statusLabels as $value=>$label): ?><option value="<?= e($value) ?>" <?= $history['status']===$value?'selected':'' ?>><?= e($label) ?></option><?php endforeach; ?></select></label><noscript><button class="btn btn-secondary" type="submit">Search</button></noscript></form>
+<div data-collection-view="orders"><p class="muted small" data-order-result-count><?= (int)$history['total'] ?> matching <?= (int)$history['total']===1?'order':'orders' ?></p>
+<?php if(!$history['items']): $emptyTitle='No orders to show';$emptyMessage=$history['status']!==''||$history['q']!==''?'Try another order number or status.':'Your orders will appear here after your first purchase.';$emptyActionLabel='Browse products';$emptyActionUrl=url('/shop');require dirname(__DIR__).'/partials/empty_state.php'; else: ?>
+<div class="order-history-list" data-continuous-list="orders" data-stream-page="<?= (int)$history['page'] ?>" data-next-url="<?= e($history['page']<$history['pages']?url('/orders?'.http_build_query(['q'=>$history['q'],'status'=>$history['status'],'page'=>$history['page']+1])):'') ?>"><?php foreach($history['items'] as $item): ?><article data-stream-key="order-<?= (int)$item['id'] ?>" class="order-history-card" aria-labelledby="order-title-<?= (int)$item['id'] ?>"><div class="order-card-heading"><div><h2 id="order-title-<?= (int)$item['id'] ?>"><?= e(\App\Services\OrderReference::display($item)) ?></h2><p><?= e(date('j F Y',strtotime($item['created_at']))) ?></p></div><span class="order-status-badge"><?= e($statusLabels[$item['status']]??ucfirst($item['status'])) ?></span></div>
+<div class="order-card-products"><?php foreach(array_slice($item['items'],0,3) as $product): $image=product_image_url($product['image_path']??null); ?><img src="<?= e($image??product_placeholder_url('')) ?>" alt="<?= e($product['product_name_snapshot']) ?>" width="60" height="60" loading="lazy"><?php endforeach; ?><span><?= (int)$item['item_count'] ?> <?= (int)$item['item_count']===1?'item':'items' ?><br><?= e($item['items'][0]['product_name_snapshot']??'Order details') ?><?= count($item['items'])>1?' + more':'' ?></span></div>
+<div class="order-card-meta"><?= $item['payment_method']==='cod'?'Cash on delivery':($item['maya_state']!==null?'Debit/Credit Card':'Payment on arrangement') ?> · <?= e(\App\Services\OrderPaymentStatus::label($item)) ?></div>
+<div class="order-card-footer"><div class="order-card-total"><small>Order total</small><strong>₱<?= e(number_format((float)$item['total'],2)) ?></strong></div><a class="btn btn-secondary btn-sm" href="<?= e(url('/orders/view?'.http_build_query(!empty($item['public_reference'])?['reference'=>$item['public_reference']]:['id'=>(int)$item['id']]))) ?>">View order <span aria-hidden="true">→</span></a></div></article><?php endforeach; ?></div>
+<?php $moreUrl=$history['page']<$history['pages']?url('/orders?'.http_build_query(['q'=>$history['q'],'status'=>$history['status'],'page'=>$history['page']+1])):'';require dirname(__DIR__).'/partials/continuous_status.php'; ?>
 <?php endif; ?>
+
+</div>

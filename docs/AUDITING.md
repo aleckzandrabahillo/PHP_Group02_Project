@@ -1,0 +1,15 @@
+# Authentication and transaction records
+
+Only a currently eligible Administrator can read `/admin/auth-logs` or `/admin/audit-logs`. Views load actual database records with account search, event/action, authentication result, date range, allowlisted sorting and 20-row pagination. Filters use prepared parameters; literal LIKE wildcards are escaped. Malformed filters receive an actionable 422 response. Ordering includes IDs for deterministic page boundaries. Times are displayed in `APP_TIMEZONE`; PHP/database connections use the same timezone. Restricted pages are not cached.
+
+Authentication records include successful/failed password, OTP/authenticator, activation, recovery and logout events. Provider messages, credentials, codes and raw concern descriptions are not displayed. Required authentication-history failure prevents silent sign-in/verification success. Logout still clears the session if history is unavailable, recording only a generic local diagnostic.
+
+Business audits record registration, private staff creation, account locks/unlocks, password/MFA/security changes, catalog/categories/images/inventory, assessment/routines, orders, cart items, favorites, profile fields and profile photographs. Existing history is preserved. New profile events identify changed field names, never the submitted contact/address values. System/private-console creation records have no falsely attributed authenticated actor. No retrospective history is fabricated.
+
+New business events use `AuditService::record` inside the same PDO transaction as the mutation. Profile email proof, account/profile changes and audit commit together; failure preserves the proof for retry. Failed photograph persistence removes the new generated upload; old generated files are removed only after a committed replacement, within the profile directory. Legacy external asset paths are preserved. Cart, Checkout and guarded dataset/image actors now include the persistent-lock flag in transactional eligibility reads.
+
+No schema migration is introduced by this checkpoint; the prior security, lock, activation and password migrations remain prerequisites. This source does not merge or replace a teammate branch.
+
+`tests/audit_security.php` uses the existing disposable database/port/data-directory/session/scratch/HTTP guards. It checks real business writes, forced audit rollback, multipart photograph cleanup, OTP retry, auth-history failure, RBAC, search/filter/sort/pagination, encoded output and persisted-lock mutation denial. Test-generated records are synthetic evidence in a disposable database, not sample production history. Existing security/MFA/password/Checkout/customer suites remain separate regressions.
+
+Logs are security-sensitive. Keep private filesystem logs outside public access and Git; restrict database access and backups. Retention/export/deletion schedules need owner review rather than automatic cleanup of course evidence. Large hosted datasets may require reviewed query/index/retention tuning; no universal monitoring or penetration-test coverage is claimed.

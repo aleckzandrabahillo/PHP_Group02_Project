@@ -7,10 +7,10 @@ $assessmentUrl = $currentRole === 'customer' ? url('/assessment') : url('/regist
   <section class="about-hero" aria-labelledby="about-title">
     <div class="about-hero-copy">
       <span class="eyebrow">ABOUT AVELA</span>
-      <h1 id="about-title">Hair care shopping, with a little more direction.</h1>
-      <p>Avela is a hair care e-commerce system designed to make everyday product discovery clearer. Browse by category, compare product details, save favorites and place a demonstration Cash on Delivery order.</p>
+      <h1 id="about-title">Thoughtful care.<br>Individual hair.</h1>
+      <p>Find hair care with a little more clarity. Explore products, understand why they might suit you, and build a routine that feels like yours.</p>
     </div>
-    <figure class="about-product-photo"><img src="<?= e(asset('images/products/demo/avela-ave-smp-002.webp')) ?>" alt="Approved Avela Everyday Fresh Shampoo demonstration packaging" width="1200" height="1500" loading="eager" decoding="async"></figure>
+    <figure class="about-product-photo"><img src="<?= e(asset('images/editorial/about-portrait.jpg')) ?>" alt="Black-and-white portrait with long hair moving across the face" width="2080" height="3241" loading="eager" decoding="async"></figure>
   </section>
 
   <section class="about-section about-principles" aria-labelledby="about-how-title">
@@ -22,12 +22,12 @@ $assessmentUrl = $currentRole === 'customer' ? url('/assessment') : url('/regist
       <article>
         <span>01</span>
         <h3>Browse</h3>
-        <p>Explore hair care products by category and the details already stored in the catalog.</p>
+        <p>Explore products by category, hair texture and the concerns that matter to you.</p>
       </article>
       <article>
         <span>02</span>
         <h3>Compare</h3>
-        <p>Check descriptions, prices, availability and catalog suitability tags, then save favorites to revisit.</p>
+        <p>Compare descriptions, prices and availability. Save favorites to come back to when you are ready.</p>
       </article>
       <article>
         <span>03</span>
@@ -42,7 +42,7 @@ $assessmentUrl = $currentRole === 'customer' ? url('/assessment') : url('/regist
       <span class="eyebrow">THE IDEA</span>
       <h2 id="about-purpose-title">A more personal shortlist, with clear reasons.</h2>
     </div>
-    <div><img class="about-texture" src="<?= e(asset('images/editorial/about-texture.jpg')) ?>" alt="An editorial cream-texture study, not an Avela formulation" width="1200" height="1277" loading="lazy" decoding="async"><p>Structured hair profiles, lightweight text interpretation and explainable rules help organize a personal shortlist. The current fictional catalog uses reviewed demonstration metadata; it does not establish ingredient benefits, medical advice or product effectiveness.</p></div>
+    <div><img class="about-texture" src="<?= e(asset('images/editorial/about-texture.jpg')) ?>" alt="An editorial cream-texture study, not an Avela formulation" width="1200" height="1277" loading="lazy" decoding="async"><p>Start with your hair texture, scalp and lengths. Your answers shape a shortlist with clear reasons for each match. Choose what fits your day, and revisit your routine whenever you need to.</p></div>
   </section>
 
   <section class="about-cta">

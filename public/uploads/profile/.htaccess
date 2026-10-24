@@ -1,0 +1,8 @@
+# Generated raster photographs only. Confirm these directives on the deployed Apache host.
+Options -Indexes -ExecCGI
+<FilesMatch "^[a-f0-9]{32}\.(jpg|png|webp)$">
+    SetHandler default-handler
+</FilesMatch>
+<FilesMatch "^(?![a-f0-9]{32}\.(jpg|png|webp)$)">
+    Require all denied
+</FilesMatch>

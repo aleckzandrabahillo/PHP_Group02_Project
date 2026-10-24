@@ -43,15 +43,46 @@ final class PublicController
         ], 'public');
     }
 
+    public function privacy(): void
+    {
+        $options = $this->products->filterOptions();
+        View::render('public/privacy', [
+            'pageTitle'=>'Privacy & cookies', 'privacyEmail'=>\App\Services\PrivacyContact::configured(),
+            'storeNav'=>$this->storeNavigation($options), ...$this->customerContext(),
+        ], 'public');
+    }
+
+    public function policy(string $kind): void
+    {
+        $titles=['refund'=>'Refund policy','terms'=>'Terms of service'];
+        if(!isset($titles[$kind]))throw new \InvalidArgumentException('Unknown policy.');
+        View::render('public/policy',['pageTitle'=>$titles[$kind],'policyKind'=>$kind,
+            'privacyEmail'=>\App\Services\PrivacyContact::configured(),
+            'storeNav'=>$this->storeNavigation($this->products->filterOptions()),...$this->customerContext()],'public');
+    }
+
     public function shop(): void
     {
         $options = $this->products->filterOptions();
-        $search = substr(trim((string) ($_GET['q'] ?? '')), 0, 100);
+        $search = substr(trim(is_string($_GET['q'] ?? null) ? $_GET['q'] : ''), 0, 100);
         $filters = $this->normalizeFilters($_GET, $options);
-        $sort = $this->normalizeSort((string) ($_GET['sort'] ?? 'newest'));
-        $products = $this->products->catalog($search, $filters, $sort);
+        $sort = $this->normalizeSort(is_string($_GET['sort'] ?? null) ? $_GET['sort'] : 'newest');
+        $rawPage = $_GET['page'] ?? '1';
+        $page = is_string($rawPage) && preg_match('/^[0-9]{1,8}$/D', $rawPage) ? (int)$rawPage : 1;
+        $catalog = $this->products->catalogPage($search, $filters, $sort, $page);
+        $products = $catalog['items'];
+        $pageLinks = [];
+        foreach (['Previous'=>$catalog['page']-1,'Next'=>$catalog['page']+1] as $label=>$number) {
+            if ($number >= 1 && $number <= $catalog['pages']) $pageLinks[$label] = $this->shopUrl([...$this->queryParams($search,$filters,$sort),'page'=>$number]);
+        }
         $activeFilters = $this->activeFilterChips($search, $filters, $options, $sort);
         $sortLinks = $this->sortLinks($search, $filters, $sort);
+        $categoryParams = $this->queryParams($search, $filters, $sort);
+        unset($categoryParams['category']);
+        $categoryLinks = ['all' => $this->shopUrl($categoryParams)];
+        foreach ($options['categories'] as $category) {
+            $categoryLinks[(int) $category['id']] = $this->shopUrl([...$categoryParams, 'category' => [(int) $category['id']]]);
+        }
 
         View::render('public/shop', [
             'pageTitle' => 'Shop',
@@ -62,9 +93,12 @@ final class PublicController
             'search' => $search,
             'sort' => $sort,
             'sortLinks' => $sortLinks,
+            'categoryLinks' => $categoryLinks,
+            'shopQuery' => $this->queryParams('', $filters, $sort),
             'activeFilters' => $activeFilters,
             'filterCount' => $this->filterCount($filters),
-            'resultCount' => count($products),
+            'resultCount' => $catalog['total'],
+            'catalogPage' => $catalog['page'], 'catalogPages' => $catalog['pages'], 'pageLinks' => $pageLinks,
             'storeNav' => $this->storeNavigation($options),
             ...$this->customerContext(),
         ], 'public');
@@ -115,9 +149,12 @@ final class PublicController
 
     public function searchSuggestions(): void
     {
-        $query = substr(trim((string) ($_GET['q'] ?? '')), 0, 100);
+        $query = substr(trim(is_string($_GET['q'] ?? null) ? $_GET['q'] : ''), 0, 100);
+        $allResultsUrl = isset($_GET['sort'])
+            ? $this->shopUrl($this->queryParams($query, $this->normalizeFilters($_GET, $this->products->filterOptions()), $this->normalizeSort(is_string($_GET['sort']) ? $_GET['sort'] : 'newest')))
+            : url('/search?q=' . rawurlencode($query));
         if (strlen($query) < 2) {
-            Response::json(['ok' => true, 'query' => $query, 'products' => [], 'discover' => [], 'pages' => [], 'allResultsUrl' => url('/search?q=' . rawurlencode($query))]);
+            Response::json(['ok' => true, 'query' => $query, 'products' => [], 'discover' => [], 'pages' => [], 'allResultsUrl' => $allResultsUrl]);
         }
 
         $data = $this->searchResults($query, 6);
@@ -138,7 +175,7 @@ final class PublicController
             'products' => $products,
             'discover' => $data['discoveryResults'],
             'pages' => $data['pageResults'],
-            'allResultsUrl' => url('/search?q=' . rawurlencode($query)),
+            'allResultsUrl' => $allResultsUrl,
         ]);
     }
 
@@ -196,13 +233,11 @@ final class PublicController
             return ['favoriteIds' => [], 'favoriteCount' => 0, 'cartCount' => 0];
         }
 
+        header('Cache-Control: no-store, private');
         $userId = (int) $current['id'];
         return [
-            // Favorites temporarily disabled until the favorites table is created.
-            'favoriteIds' => [],
-            'favoriteCount' => 0,
-
-            // Cart can continue working normally.
+            'favoriteIds' => $this->favorites->idsForUser($userId),
+            'favoriteCount' => $this->favorites->countForUser($userId),
             'cartCount' => $this->cart->countForUser($userId),
             ];
     }

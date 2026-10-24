@@ -82,6 +82,23 @@ final class Product
      */
     public function catalog(string $search = '', array $filters = [], string $sort = 'newest'): array
     {
+        [$sql,$params]=$this->catalogQuery($search,$filters);
+        $stmt=Database::connection()->prepare($sql.' ORDER BY '.$this->sortSql($sort));
+        $stmt->execute($params);return $stmt->fetchAll();
+    }
+
+    public function catalogPage(string $search, array $filters, string $sort, int $page = 1): array
+    {
+        [$sql,$params]=$this->catalogQuery($search,$filters);$pdo=Database::connection();
+        $count=$pdo->prepare('SELECT COUNT(*) FROM ('.$sql.') matched');$count->execute($params);$total=(int)$count->fetchColumn();
+        $pages=max(1,(int)ceil($total/12));$page=max(1,min($pages,$page));
+        $stmt=$pdo->prepare($sql.' ORDER BY '.$this->sortSql($sort).' LIMIT 12 OFFSET '.(($page-1)*12));
+        $stmt->execute($params);
+        return ['items'=>$stmt->fetchAll(),'total'=>$total,'page'=>$page,'pages'=>$pages];
+    }
+
+    private function catalogQuery(string $search, array $filters): array
+    {
         $sql = 'SELECT p.id, p.sku, p.name, p.description, p.price, p.stock_qty, p.image_path, p.routine_step,
                        c.name AS category_name
                 FROM products p
@@ -155,10 +172,7 @@ final class Product
             $params['max_price'] = $maxPrice;
         }
 
-        $sql .= ' ORDER BY ' . $this->sortSql($sort);
-        $stmt = Database::connection()->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll();
+        return [$sql,$params];
     }
 
     public function searchProducts(string $query, int $limit = 6): array
@@ -370,6 +384,7 @@ final class Product
     public function saveProduct(?int $id, array $data, ?string $newImage, int $actorId): array
     {
         return Database::transaction(function (PDO $pdo) use ($id, $data, $newImage, $actorId): array {
+            $this->catalogActor($pdo, $actorId);
             // Same category-first lock order as Category Management, retaining existing inactive links.
             $category = $pdo->prepare('SELECT status FROM categories WHERE id=:id FOR UPDATE');
             $category->execute(['id' => $data['category_id']]);
@@ -381,6 +396,9 @@ final class Product
             if ($current !== null && (int) $current['stock_qty'] !== (int) $data['expected_stock']) {
                 throw new InvalidArgumentException('Stock changed while this form was open. Reload the Edit form before saving.');
             }
+            $stockChanging = $current !== null && (int) $current['stock_qty'] !== (int) $data['stock_qty'];
+            $reason = \App\Core\ProductValidator::stockReason($data['stock_reason'] ?? null);
+            if ($stockChanging && $reason === null) throw new InvalidArgumentException('Enter a reason for the stock adjustment.');
             $tagIds = array_values(array_unique(array_map('intval', $data['tag_ids'])));
             if ($tagIds) {
                 $checkTags = $pdo->prepare('SELECT id FROM tags WHERE id IN (' . implode(',', array_fill(0, count($tagIds), '?')) . ') FOR UPDATE');
@@ -407,6 +425,10 @@ final class Product
             foreach ($tagIds as $tagId) $insertTag->execute(['product' => $productId, 'tag' => $tagId]);
             $this->auditProduct($pdo, $actorId, $id === null ? 'product.create' : 'product.update', $productId,
                 'Catalog / Product Management; stock ' . (int) ($current['stock_qty'] ?? 0) . ' to ' . (int) $data['stock_qty']);
+            if ($stockChanging) {
+                $this->auditProduct($pdo, $actorId, 'inventory.set', $productId,
+                    'Catalog / Inventory; stock ' . (int) $current['stock_qty'] . ' to ' . (int) $data['stock_qty'] . '; reason: ' . $reason);
+            }
             return ['id' => $productId, 'old_image' => $current['image_path'] ?? null, 'image_path' => $params['image']];
         });
     }
@@ -414,6 +436,7 @@ final class Product
     public function removeProduct(int $id, int $actorId, bool $archive): ?string
     {
         return Database::transaction(function (PDO $pdo) use ($id, $actorId, $archive): ?string {
+            $this->catalogActor($pdo, $actorId);
             $product = $this->lockProduct($pdo, $id);
             if ($archive) {
                 $sql = 'UPDATE products SET status="inactive" WHERE id=:id';
@@ -435,18 +458,54 @@ final class Product
         });
     }
 
-    public function changeStock(int $id, int $quantity, bool $add, ?int $expected, int $actorId): void
+    public function changeStock(int $id, int $quantity, bool $add, ?int $expected, int $actorId, string $reason): void
     {
         if ($quantity < ($add ? 1 : 0) || $quantity > self::MAX_STOCK) throw new InvalidArgumentException('Choose a valid stock quantity.');
-        Database::transaction(function (PDO $pdo) use ($id, $quantity, $add, $expected, $actorId): void {
+        $reason = \App\Core\ProductValidator::stockReason($reason);
+        if ($reason === null) throw new InvalidArgumentException('Enter a single-line reason of 1–200 characters.');
+        Database::transaction(function (PDO $pdo) use ($id, $quantity, $add, $expected, $actorId, $reason): void {
+            $this->catalogActor($pdo, $actorId);
             $product = $this->lockProduct($pdo, $id);
             $before = (int) $product['stock_qty'];
             if (!$add && $expected !== $before) throw new InvalidArgumentException('Stock changed while this form was open. Reload the stock form before setting a quantity.');
             $after = $add ? $before + $quantity : $quantity;
             if ($after > self::MAX_STOCK) throw new InvalidArgumentException('Restock would exceed the maximum stock quantity.');
             $pdo->prepare('UPDATE products SET stock_qty=:stock WHERE id=:id')->execute(['stock' => $after, 'id' => $id]);
-            $this->auditProduct($pdo, $actorId, $add ? 'inventory.restock' : 'inventory.set', $id, 'Catalog / Inventory; stock ' . $before . ' to ' . $after);
+            $this->auditProduct($pdo, $actorId, $add ? 'inventory.restock' : 'inventory.set', $id, 'Catalog / Inventory; stock ' . $before . ' to ' . $after.'; reason: '.$reason);
         });
+    }
+
+    public function reactivateProduct(int $id, int $actorId): void
+    {
+        Database::transaction(function (PDO $pdo) use ($id, $actorId): void {
+            $this->catalogActor($pdo, $actorId);
+            $product = $this->lockProduct($pdo, $id);
+            if ($product['status'] === 'active') return;
+            $pdo->prepare('UPDATE products SET status="active" WHERE id=?')->execute([$id]);
+            $this->auditProduct($pdo, $actorId, 'product.reactivate', $id, 'Catalog / Product Management');
+        });
+    }
+
+    public function recentCatalogActivity(int $limit = 8): array
+    {
+        // Operational catalog summaries only. Do not expose authentication, account or order audits.
+        $q = Database::connection()->prepare('SELECT a.id,a.action,a.target_type,a.target_id,a.created_at,COALESCE(u.username,"Former staff") actor_name
+            FROM audit_logs a LEFT JOIN users u ON u.id=a.actor_id
+            WHERE ((a.target_type="product" AND a.action IN ("product.create","product.update","product.archive","product.reactivate","product.delete","inventory.set","inventory.restock"))
+            OR (a.target_type="category" AND a.action IN ("category.create","category.update","category.archive","category.delete")))
+            AND (u.role IN ("admin","catalog_manager") OR a.actor_id IS NULL) ORDER BY a.id DESC LIMIT '.max(1,min(20,$limit)));
+        $q->execute();
+        return $q->fetchAll();
+    }
+
+    private function catalogActor(PDO $pdo, int $id): void
+    {
+        $q = $pdo->prepare('SELECT id,role,status,locked_until,lock_requires_admin FROM users WHERE id=? FOR UPDATE');
+        $q->execute([$id]);
+        $actor = $q->fetch();
+        if (!User::canAuthenticate($actor ?: null) || !in_array($actor['role'], ['catalog_manager', 'admin'], true)) {
+            throw new InvalidArgumentException('An active catalog staff account is required.');
+        }
     }
 
     public function imageIsReferenced(string $path): bool

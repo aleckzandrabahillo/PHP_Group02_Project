@@ -6,10 +6,13 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(190) NOT NULL UNIQUE,
   username VARCHAR(40) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
+  password_changed_at DATETIME NULL DEFAULT NULL,
+  password_version CHAR(64) NOT NULL DEFAULT '',
   role ENUM('customer','catalog_manager','admin') NOT NULL DEFAULT 'customer',
   status ENUM('pending','active','inactive') NOT NULL DEFAULT 'pending',
   failed_attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
   locked_until DATETIME NULL,
+  lock_requires_admin TINYINT UNSIGNED NOT NULL DEFAULT 0,
   mfa_enabled TINYINT(1) NOT NULL DEFAULT 0,
   activated_at DATETIME NULL,
   last_login_at DATETIME NULL,
@@ -33,6 +36,8 @@ CREATE TABLE IF NOT EXISTS customer_profiles (
 CREATE TABLE IF NOT EXISTS staff_profiles (
   user_id BIGINT UNSIGNED PRIMARY KEY,
   full_name VARCHAR(120) NOT NULL,
+  contact_no VARCHAR(25) NULL DEFAULT NULL,
+  profile_image VARCHAR(255) NULL DEFAULT NULL,
   created_at DATETIME NOT NULL,
   updated_at DATETIME NOT NULL,
   CONSTRAINT fk_staff_profile_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -161,6 +166,7 @@ CREATE TABLE IF NOT EXISTS orders (
   recipient_name_snapshot VARCHAR(120) NULL,
   contact_email_snapshot VARCHAR(190) NULL,
   contact_no_snapshot VARCHAR(25) NULL,
+  public_reference VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NULL DEFAULT NULL,
   checkout_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL,
   payment_method ENUM('cod','manual') NOT NULL DEFAULT 'cod',
   subtotal DECIMAL(10,2) NOT NULL,
@@ -170,6 +176,7 @@ CREATE TABLE IF NOT EXISTS orders (
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
   UNIQUE KEY uq_orders_checkout_key (checkout_key),
+  UNIQUE KEY uq_orders_public_reference (public_reference),
   INDEX idx_orders_user_status_date (user_id, status, created_at),
   INDEX idx_orders_status_date (status, created_at)
 ) ENGINE=InnoDB;
@@ -184,6 +191,31 @@ CREATE TABLE IF NOT EXISTS order_items (
   CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
   CONSTRAINT fk_order_items_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
   CONSTRAINT chk_order_item_qty CHECK (quantity > 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS order_status_events (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  order_id BIGINT UNSIGNED NOT NULL,
+  actor_id BIGINT UNSIGNED NULL,
+  from_status ENUM('pending','processing','shipped','delivered','cancelled') NULL,
+  to_status ENUM('pending','processing','shipped','delivered','cancelled') NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_order_events_order (order_id,id),
+  CONSTRAINT fk_order_events_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  CONSTRAINT fk_order_events_actor FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS order_email_outbox (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  order_id BIGINT UNSIGNED NOT NULL,
+  status ENUM('pending','sending','sent','failed') NOT NULL DEFAULT 'pending',
+  attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  last_error VARCHAR(40) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  sent_at DATETIME NULL,
+  UNIQUE KEY uq_order_email_order (order_id),
+  INDEX idx_order_email_status (status,id),
+  CONSTRAINT fk_order_email_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS routines (
@@ -330,3 +362,42 @@ CREATE TABLE IF NOT EXISTS user_authenticators (
   credential_version CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   CONSTRAINT fk_authenticator_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS security_rate_limits (
+  bucket_hash CHAR(64) NOT NULL PRIMARY KEY,
+  attempts SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  reset_at DATETIME NOT NULL,
+  INDEX idx_security_rate_reset (reset_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS activation_tokens (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    token_digest CHAR(64) NOT NULL UNIQUE,
+    expires_at DATETIME NOT NULL,
+    used_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_activation_user(user_id),
+    CONSTRAINT fk_activation_user FOREIGN KEY(user_id) REFERENCES users(id)
+) ENGINE=InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS order_delivery_details (         order_id BIGINT UNSIGNED PRIMARY KEY,         country ENUM('PH') NOT NULL,         first_name VARCHAR(60) NOT NULL,         last_name VARCHAR(60) NOT NULL,         address_line VARCHAR(200) NOT NULL,         barangay VARCHAR(100) NOT NULL,         postal_code CHAR(4) NOT NULL,         city VARCHAR(100) NOT NULL,         region VARCHAR(16) NOT NULL,         shipping_method ENUM('standard','priority') NOT NULL,         shipping_fee DECIMAL(10,2) NOT NULL,         CONSTRAINT fk_delivery_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS customer_delivery_addresses (
+  user_id BIGINT UNSIGNED NOT NULL,
+  country CHAR(2) NOT NULL,
+  first_name VARCHAR(60) NOT NULL,
+  last_name VARCHAR(60) NOT NULL,
+  address_line VARCHAR(200) NOT NULL,
+  barangay VARCHAR(100) NOT NULL,
+  postal_code CHAR(4) NOT NULL,
+  city VARCHAR(100) NOT NULL,
+  region VARCHAR(16) NOT NULL,
+  contact_no VARCHAR(25) NOT NULL,
+  revision CHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  PRIMARY KEY (user_id),
+  CONSTRAINT fk_delivery_address_owner FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

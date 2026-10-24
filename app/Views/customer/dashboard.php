@@ -23,7 +23,7 @@
   <a class="action-card" href="<?= e(url('/assessment')) ?>">
     <span>Hair Profile</span>
     <h3>Your hair profile</h3>
-    <p>Save your texture, scalp and length characteristics. Describe concerns in English or Taglish.</p>
+    <p>Save your hair characteristics and concerns to explore your matches.</p>
   </a>
 
   <a class="action-card" href="<?= e(url('/routine')) ?>">

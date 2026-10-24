@@ -699,9 +699,8 @@ body.overlay-scroll-locked {position:fixed;left:0;right:0;top:var(--scroll-lock-
 .sort-menu[open] .toolbar-text-control svg {transform:rotate(180deg)}
 .sort-menu-panel {
   position:absolute;right:0;top:calc(100% + 10px);z-index:35;width:220px;padding:8px;background:#fff;border:1px solid #95857E;
-  box-shadow:0 14px 34px rgba(50,31,39,.09);opacity:0;transform:translateY(-5px);animation:sortMenuIn var(--motion-fast) var(--ease-standard) forwards;
+  box-shadow:0 14px 34px rgba(50,31,39,.09);opacity:1;
 }
-@keyframes sortMenuIn {to{opacity:1;transform:translateY(0)}}
 .sort-option {display:flex;align-items:center;gap:9px;padding:9px 10px;color:#4f4348;font-size:12px;transition:background-color var(--motion-fast) var(--ease-standard),color var(--motion-fast) var(--ease-standard)}
 .sort-option:hover {background:#fff7f9;color:var(--berry)}
 .sort-radio {width:11px;height:11px;border:1px solid #6f6368;border-radius:50%;position:relative;flex:0 0 auto}
@@ -980,10 +979,7 @@ body.overlay-scroll-locked {position:fixed;left:0;right:0;top:var(--scroll-lock-
   .about-cta-actions {width:100%}
   .about-hero-copy h1 {font-size:41px}
 }
-@media (prefers-reduced-motion:reduce) {
-  *,*::before,*::after {scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
-  .product-card:hover .product-image,.concern-card:hover .concern-card-arrow,.shop-mega-menu a:hover {transform:none}
-}
+/* Shared interaction timing is defined in motion.css. */
 
 /* Checkout forms and customer order records reuse the existing store palette. */
 .checkout-page {margin-top:0}
@@ -1196,3 +1192,29 @@ html {scroll-padding-top:calc(var(--header-height) + 20px)}
 .saved-routine-item form {margin-top:16px}
 @media(max-width:1000px){.matching-grid {grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.matching-grid,.routine-preview-list {grid-template-columns:minmax(0,1fr)}.matching-routine {padding:20px}.saved-routine-item {padding:20px}}
+
+.password-requirements {margin-top:12px;padding:14px 16px;background:var(--greige,var(--mist));font-size:12px;line-height:1.7}
+.password-requirements[hidden] {display:none}
+.password-requirements p {margin:0 0 6px;font-weight:600}
+.password-requirements ul {padding:0;margin:0;list-style:none;display:grid;gap:4px}
+.password-requirements li::before {content:'○';display:inline-block;width:20px}
+.password-requirements li.is-met {font-weight:600;color:var(--espresso,var(--ink))}
+.password-requirements li.is-met::before {content:'✓'}
+.admin-account-actions {display:flex;flex-wrap:wrap;gap:8px}
+.admin-account-action {display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.admin-account-action select {max-width:180px}
+.admin-accounts-table table {min-width:640px}
+.admin-staff-table table {min-width:860px}
+.admin-accounts-table td:first-child {min-width:160px}
+.admin-accounts-table {contain:layout paint}
+.admin-accounts-table:focus-visible {outline:2px solid var(--focus);outline-offset:3px}
+.admin-order-table {contain:layout paint}
+.admin-order-table table {min-width:800px}
+.admin-order-table td:last-child {min-width:230px}
+.admin-order-table td form+form {margin-top:8px}
+.admin-order-table:focus-visible {outline:2px solid var(--focus);outline-offset:3px}
+.admin-order-contact {overflow-wrap:anywhere}
+.catalog-activity-table {overflow-x:auto;contain:layout paint;margin-top:16px}
+.catalog-activity-table table {width:100%;min-width:520px;border-collapse:collapse;font-size:13px}
+.catalog-activity-table th,.catalog-activity-table td {padding:12px;text-align:left;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.catalog-activity-table:focus-visible {outline:2px solid var(--focus);outline-offset:3px}

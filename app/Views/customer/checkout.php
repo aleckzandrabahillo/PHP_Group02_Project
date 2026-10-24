@@ -1,101 +1,58 @@
 <?php
-$profile = $profile ?? [];
-$cart = $cart ?? ['items' => [], 'subtotal' => 0.0, 'item_count' => 0];
+$profile=$profile??[];$shippingQuote=null;
+$eligibleSubtotal=(int)round((float)$cart['subtotal']*100)-(int)($discountPreview['amount_cents']??0);
+try{$shippingQuote=\App\Services\ShippingService::quote($values['postal_code']??'',$values['shipping_method']??'standard',$values['city']??'',$values['region']??'',$eligibleSubtotal);}catch(\InvalidArgumentException){}
 ?>
-<form class="checkout-page" method="post" action="<?= e(url('/checkout')) ?>">
-  <?= csrf_field() ?>
-  <input type="hidden" name="checkout_key" value="<?= e($checkoutKey) ?>">
+<div class="checkout-page">
   <section class="checkout-details" aria-labelledby="checkout-title">
     <div class="checkout-section checkout-contact-section">
-      <span class="eyebrow">CHECKOUT</span>
-      <h1 id="checkout-title">Contact and delivery.</h1>
-      <?php if ($errors): ?><div class="checkout-errors" role="alert" tabindex="-1" data-error-summary><strong>Please review your order.</strong>
-        <ul><?php foreach ($errors as $key => $error): ?><li><?php if (in_array($key, ['full_name', 'contact_no', 'delivery_address'], true)): ?><a href="#checkout-<?= e($key) ?>"><?= e($error) ?></a><?php else: ?><?= e($error) ?><?php endif; ?></li><?php endforeach; ?></ul>
-      </div><?php endif; ?>
 
-      <div class="checkout-section-heading">
-        <h2>Contact</h2>
-      </div>
-      <div class="checkout-field-grid checkout-field-grid--single">
-        <label class="checkout-field">
-          <span>Account email</span>
-          <input type="email" value="<?= e($profile['email'] ?? '') ?>" readonly aria-readonly="true" autocomplete="email">
-        </label>
-        <label class="checkout-field">
-          <span>Mobile number</span>
-          <input id="checkout-contact_no" type="tel" name="contact_no" value="<?= e($values['contact_no']) ?>" maxlength="25" required autocomplete="tel" aria-invalid="<?= isset($errors['contact_no']) ? 'true' : 'false' ?>" <?= isset($errors['contact_no']) ? 'aria-describedby="checkout-contact-error"' : '' ?>>
-          <?php if (isset($errors['contact_no'])): ?><small class="checkout-field-error" id="checkout-contact-error"><?= e($errors['contact_no']) ?></small><?php endif; ?>
-        </label>
-      </div>
-      <p class="muted small">Used for delivery contact. Phone numbers are not verified.</p>
-    </div>
-
-    <div class="checkout-section">
-      <div class="checkout-section-heading">
-        <h2>Delivery</h2>
-      </div>
-      <div class="checkout-field-grid">
-        <label class="checkout-field checkout-field--full">
-          <span>Country / Region</span>
-          <input type="text" value="Philippines" readonly aria-readonly="true">
-        </label>
-        <label class="checkout-field checkout-field--full">
-          <span>Recipient full name</span>
-          <input id="checkout-full_name" type="text" name="full_name" value="<?= e($values['full_name']) ?>" maxlength="120" required autocomplete="name" aria-invalid="<?= isset($errors['full_name']) ? 'true' : 'false' ?>" <?= isset($errors['full_name']) ? 'aria-describedby="checkout-name-error"' : '' ?>>
-          <?php if (isset($errors['full_name'])): ?><small class="checkout-field-error" id="checkout-name-error"><?= e($errors['full_name']) ?></small><?php endif; ?>
-        </label>
-        <label class="checkout-field checkout-field--full">
-          <span>Complete delivery address</span>
-          <textarea id="checkout-delivery_address" name="delivery_address" rows="4" maxlength="500" required autocomplete="street-address" aria-describedby="delivery-help<?= isset($errors['delivery_address']) ? ' checkout-address-error' : '' ?>" aria-invalid="<?= isset($errors['delivery_address']) ? 'true' : 'false' ?>"><?= e($values['delivery_address']) ?></textarea>
-          <?php if (isset($errors['delivery_address'])): ?><small class="checkout-field-error" id="checkout-address-error"><?= e($errors['delivery_address']) ?></small><?php endif; ?>
-        </label>
-        <p id="delivery-help" class="checkout-field--full muted small">Include house/building, street, barangay, city, province and postal code. This order's delivery details do not change your profile.</p>
+      <div class="checkout-account"><div class="checkout-account-email"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg><p><?= e($profile['email']??'') ?></p></div>
+        <details class="checkout-account-menu"><summary aria-label="Account options"><span aria-hidden="true">⋮</span></summary>
+          <div><form method="post" action="<?= e(url('/logout')) ?>"><?= csrf_field() ?><button type="submit">Sign out</button></form></div>
+        </details>
       </div>
     </div>
-
-    <div class="checkout-section">
-      <div class="checkout-section-heading"><h2>Shipping method</h2></div>
-      <div class="checkout-pending-panel">Demonstration delivery: no shipping charge is added. No courier booking is performed.</div>
-    </div>
-
-    <div class="checkout-section checkout-payment-section">
-      <div class="checkout-section-heading"><h2>Payment</h2></div>
-      <label class="checkout-payment-choice"><input type="radio" name="payment_method" value="cod" checked required> Cash on delivery (demonstration)</label>
-      <p class="muted small">No online payment is collected. Do not enter card or bank details.</p>
-      <a class="back-link" href="<?= e(url('/cart')) ?>">Return to your bag</a>
-    </div>
+    <h1 id="checkout-title">Contact and delivery.</h1>
+    <form id="checkout-form" method="post" action="<?= e(url('/checkout')) ?>" data-checkout-ready="<?= $cart['checkout_ready']?'true':'false' ?>" data-pricing-url="<?= e(url('/checkout/pricing')) ?>" data-checkout-delivery data-shipping-url="<?= e(url('/checkout/shipping')) ?>">
+      <?= csrf_field() ?><input type="hidden" name="checkout_key" value="<?= e($checkoutKey) ?>">
+      <input type="hidden" name="discount_code" value="<?= e($discountPreview['code']??'') ?>"><input type="hidden" name="discount_revision" value="<?= e($discountPreview['revision']??'') ?>">
+      <?php if($errors): ?><div class="checkout-errors" role="alert" tabindex="-1" data-error-summary><strong>Please review your order.</strong><ul>
+        <?php foreach($errors as $field=>$error): ?><li><?php if(isset(\App\Core\DeliveryValidator::LIMITS[$field])||$field==='contact_no'): ?><a href="#checkout-<?= e($field) ?>"><?= e($error) ?></a><?php else: ?><?= e($error) ?><?php endif; ?></li><?php endforeach; ?>
+      </ul></div><?php endif; ?>
+      <div class="checkout-section"><div class="checkout-section-heading"><h2>Delivery</h2><?php if($savedDelivery): ?><button type="button" class="text-link" data-use-default data-default-delivery="<?= e(json_encode(array_intersect_key($savedDelivery,array_flip(['country','first_name','last_name','address_line','barangay','postal_code','city','region','province','contact_no'])),JSON_THROW_ON_ERROR)) ?>">Use saved address</button><?php endif; ?></div>
+        <div class="checkout-field-grid">
+          <label class="checkout-field checkout-field--full"><span>Country / Region</span><select id="checkout-country" name="country" autocomplete="country" required><option value="PH" selected>Philippines</option></select>
+            <?php if(isset($errors['country'])): ?><small class="field-error"><?= e($errors['country']) ?></small><?php endif; ?></label>
+          <?php foreach(['first_name'=>['First name','given-name',60],'last_name'=>['Last name','family-name',60],
+              'address_line'=>['Address','address-line1',200],'barangay'=>['Barangay','address-line2',100],
+              'postal_code'=>['Postal code','postal-code',4],'city'=>['City / Municipality','address-level2',100]] as $field=>[$label,$autocomplete,$maximum]): ?>
+            <label class="checkout-field <?= in_array($field,['address_line','barangay'],true)?'checkout-field--full':'' ?>"><span><?= e($label) ?></span>
+              <input id="checkout-<?= e($field) ?>" name="<?= e($field) ?>" value="<?= e($values[$field]??'') ?>" autocomplete="<?= e($autocomplete) ?>" maxlength="<?= $maximum ?>" required <?= $field==='postal_code'?'inputmode="numeric" pattern="[1-9][0-9]{3}"':'' ?> aria-invalid="<?= isset($errors[$field])?'true':'false' ?>" <?= isset($errors[$field])?'aria-describedby="checkout-'.e($field).'-error"':'' ?>>
+              <?php if(isset($errors[$field])): ?><small class="checkout-field-error" id="checkout-<?= e($field) ?>-error"><?= e($errors[$field]) ?></small><?php endif; ?>
+            </label>
+          <?php endforeach; ?>
+          <?php $locationValues=$values;$locationPrefix='checkout';require dirname(__DIR__).'/partials/region_field.php'; ?>
+          <label class="checkout-field checkout-field--full"><span>Phone</span><input id="checkout-contact_no" type="tel" name="contact_no" value="<?= e($values['contact_no']??'') ?>" maxlength="25" required autocomplete="tel" aria-invalid="<?= isset($errors['contact_no'])?'true':'false' ?>">
+            <?php if(isset($errors['contact_no'])): ?><small class="checkout-field-error"><?= e($errors['contact_no']) ?></small><?php endif; ?></label>
+        </div>
+      </div>
+      <fieldset class="checkout-section checkout-shipping-options" id="checkout-shipping_method"><legend>Shipping method</legend>
+        <?php foreach(['standard'=>'Standard delivery','priority'=>'Priority delivery'] as $method=>$label): ?>
+          <label class="checkout-option"><span><input type="radio" name="shipping_method" value="<?= e($method) ?>" <?= ($values['shipping_method']??'standard')===$method?'checked':'' ?> required> <?= e($label) ?></span><strong data-shipping-price="<?= e($method) ?>"><?php if($shippingQuote): ?>₱<?= e(\App\Services\ShippingService::decimal(\App\Services\ShippingService::quote($values['postal_code'],$method,$values['city'],$values['region'],$eligibleSubtotal)['calculated_cents'])) ?><?= !empty($shippingQuote['free_delivery'])?' · Free':'' ?><?php else: ?>—<?php endif; ?></strong></label>
+        <?php endforeach; ?><p class="field-error" data-shipping-feedback role="status"><?= e($errors['shipping_method']??'') ?></p>
+      </fieldset>
+      <fieldset class="checkout-section checkout-payment-section"><legend>Payment</legend>
+        <label class="checkout-option"><span><input type="radio" name="payment_method" value="cod" <?= ($values['payment_method']??'cod')==='cod'?'checked':'' ?> required> Cash on delivery</span></label>
+        <?php if($mayaAvailable??false): ?>
+          <label class="checkout-option"><span><input type="radio" name="payment_method" value="maya_sandbox" <?= ($values['payment_method']??'')==='maya_sandbox'?'checked':'' ?> required> Debit/Credit Card </span></label>
+        <?php endif; ?>
+        <?php if(isset($errors['payment_method'])): ?><p class="field-error"><?= e($errors['payment_method']) ?></p><?php endif; ?>
+      </fieldset>
+      <div class="checkout-inline-total"><span>Order total</span><strong data-inline-grand>₱<?= e(number_format(($eligibleSubtotal+($shippingQuote['cents']??0))/100,2)) ?></strong></div>
+      <a class="btn btn-secondary checkout-return" href="<?= e(url('/cart')) ?>"><span aria-hidden="true">←</span> Return to your bag</a>
+    </form>
+    <nav class="checkout-policy-links" aria-label="Checkout policies"><a href="<?= e(url('/refund-policy')) ?>">Refund policy</a><a href="<?= e(url('/privacy')) ?>">Privacy policy</a><a href="<?= e(url('/terms')) ?>">Terms of service</a></nav>
   </section>
-
-  <aside class="checkout-summary" aria-label="Order summary">
-    <div class="checkout-summary-items">
-      <?php foreach ($cart['items'] as $item): ?>
-        <?php $checkoutImage = product_image_url($item['image_path'] ?? null); ?>
-        <article class="checkout-summary-item">
-          <div class="checkout-summary-art">
-            <?php if ($checkoutImage !== null): ?>
-              <img src="<?= e($checkoutImage) ?>" alt="<?= e($item['name']) ?>">
-            <?php else: ?>
-              <?php $visualCategory = $item['category_name'] ?? ''; $placeholderLarge = false; require dirname(__DIR__) . '/partials/product_placeholder.php'; ?>
-            <?php endif; ?>
-            <span class="checkout-item-quantity"><?= (int) $item['quantity'] ?></span>
-          </div>
-          <div class="checkout-summary-copy">
-            <strong><?= e($item['name']) ?></strong>
-            <span><?= e($item['category_name']) ?></span>
-            <span><?= (int) $item['quantity'] ?> × ₱<?= e(number_format((float) $item['price'], 2)) ?></span>
-            <?php if (!$item['is_available']): ?><span>Review quantity or availability in your bag.</span><?php endif; ?>
-          </div>
-          <strong class="checkout-summary-price">₱<?= e(number_format((float) $item['line_total'], 2)) ?></strong>
-        </article>
-      <?php endforeach; ?>
-    </div>
-
-    <div class="checkout-summary-totals">
-      <div><span>Subtotal</span><strong>₱<?= e(number_format((float) $cart['subtotal'], 2)) ?></strong></div>
-      <div><span>Shipping (demonstration)</span><strong>₱0.00</strong></div>
-      <div class="checkout-summary-grand"><span>Total</span><strong><small>PHP</small> ₱<?= e(number_format((float) $cart['subtotal'], 2)) ?></strong></div>
-      <button class="btn btn-primary" type="submit" <?= !$cart['checkout_ready'] ? 'disabled' : '' ?>>Place order — cash on delivery</button>
-      <p class="muted small">Stock and prices are checked again when you place the order.</p>
-    </div>
-  </aside>
-</form>
+  <?php require dirname(__DIR__).'/partials/checkout_summary.php'; ?>
+</div>

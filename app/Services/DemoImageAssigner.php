@@ -76,7 +76,7 @@ final class DemoImageAssigner
                 $report[]=['sku'=>$sku,'id'=>(int)$p['id'],'path'=>$image['path'],'state'=>$pending?'planned':'unchanged'];
             }
             // Match catalog write order: products first, then current actor eligibility.
-            $q=$this->pdo->prepare('SELECT id,role,status,locked_until FROM users WHERE username=?'.($apply?' FOR UPDATE':''));
+            $q=$this->pdo->prepare('SELECT id,role,status,locked_until,lock_requires_admin FROM users WHERE username=?'.($apply?' FOR UPDATE':''));
             $q->execute([$actor]); $user=$q->fetch()?:null;
             if (!User::canAuthenticate($user) || !in_array($user['role'],['admin','catalog_manager'],true))
                 throw new DomainException('Actor must be an active, unlocked Administrator or Catalog Manager.');
@@ -145,7 +145,7 @@ final class DemoImageAssigner
             || str_replace('\\','/',(string)realpath($file))!==$file)
             throw new DomainException('Missing or unsafe image asset for '.$image['sku'].'.');
         $size=filesize($file);
-        if ($size===false || $size<20 || $size>ProductImageService::MAX_BYTES)
+        if ($size===false || $size<20 || $size>5*1024*1024)
             throw new DomainException('Image asset size is invalid for '.$image['sku'].'.');
         $bytes=@file_get_contents($file);
         if ($bytes===false || strlen($bytes)!==$size || !hash_equals($image['sha256'],hash('sha256',$bytes)))

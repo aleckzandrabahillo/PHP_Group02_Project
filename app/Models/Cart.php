@@ -116,6 +116,7 @@ final class Cart
                 );
             }
             $stmt->execute(['cart_id' => $cartId, 'product_id' => $productId, 'quantity' => $newQuantity]);
+            \App\Services\AuditService::record($pdo,$userId,'cart.item_added','product',$productId,['quantity_added'=>$quantity,'resulting_quantity'=>$newQuantity]);
             return $newQuantity;
         });
     }
@@ -151,6 +152,7 @@ final class Cart
                     throw new InvalidArgumentException('That item is no longer in your bag.');
                 }
             }
+            \App\Services\AuditService::record($pdo,$userId,'cart.quantity_updated','product',$productId,['quantity'=>$quantity]);
         });
     }
 
@@ -163,6 +165,7 @@ final class Cart
 
             $stmt = $pdo->prepare('DELETE FROM cart_items WHERE cart_id = :cart_id AND product_id = :product_id');
             $stmt->execute(['cart_id' => $cartId, 'product_id' => $productId]);
+            if($stmt->rowCount()>0)\App\Services\AuditService::record($pdo,$userId,'cart.item_removed','product',$productId);
         });
     }
 
@@ -192,7 +195,7 @@ final class Cart
     private function lockCustomer(PDO $pdo, int $userId): void
     {
         // Shared with checkout: one customer's bag mutations cannot cross conversion.
-        $stmt = $pdo->prepare('SELECT role,status,locked_until FROM users WHERE id=? FOR UPDATE');
+        $stmt = $pdo->prepare('SELECT role,status,locked_until,lock_requires_admin FROM users WHERE id=? FOR UPDATE');
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
         if (!User::canAuthenticate($user ?: null) || $user['role'] !== 'customer') {

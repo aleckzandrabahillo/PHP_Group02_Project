@@ -124,15 +124,15 @@ function closeFilterDrawer({restoreFocus = true, immediate = false} = {}) {
     }
   };
 
-  if (immediate) finalize();
-  else filterCloseTimer = window.setTimeout(finalize, 220);
+  if (immediate || window.AvelaMotion?.reduced()) finalize();
+  else filterCloseTimer = window.setTimeout(finalize, (window.AvelaMotion?.duration('base')??220)+40);
 }
 
 const headerSurfaceReasons = new Set();
 
 function closeHeaderDetails() {
   document.querySelectorAll('.account-menu[open], .mobile-nav-menu[open]').forEach((details) => {
-    details.removeAttribute('open');
+    if(window.AvelaMotion)window.AvelaMotion.setDetails(details,false);else details.removeAttribute('open');
   });
 }
 
@@ -303,8 +303,8 @@ function closeGlobalSearch({restoreFocus = true, immediate = false} = {}) {
     }
   };
 
-  if (immediate) finalize();
-  else searchCloseTimer = window.setTimeout(finalize, 220);
+  if (immediate || (window.AvelaMotion?.reduced()??window.matchMedia('(prefers-reduced-motion: reduce)').matches)) finalize();
+  else searchCloseTimer = window.setTimeout(finalize,(window.AvelaMotion?.duration('base')??220)+40);
 }
 
 function appendHighlightedText(target, text, query) {
@@ -415,7 +415,17 @@ async function loadSearchSuggestions(input) {
   searchAbortController = new AbortController();
 
   try {
-    const response = await fetch(`${endpoint}?q=${encodeURIComponent(query)}`, {
+    const searchUrl = new URL(endpoint, window.location.href);
+    searchUrl.searchParams.set('q', query);
+    if (drawer.dataset.catalogSort) searchUrl.searchParams.set('sort', drawer.dataset.catalogSort);
+    if (drawer.dataset.catalogFilters) {
+      const filters = JSON.parse(drawer.dataset.catalogFilters);
+      Object.entries(filters).forEach(([key, value]) => {
+        if (Array.isArray(value)) value.forEach((item) => searchUrl.searchParams.append(`${key}[]`, item));
+        else searchUrl.searchParams.set(key, value);
+      });
+    }
+    const response = await fetch(searchUrl, {
       headers: {'Accept': 'application/json'},
       credentials: 'same-origin',
       signal: searchAbortController.signal,
@@ -429,48 +439,89 @@ async function loadSearchSuggestions(input) {
   }
 }
 
+let favoriteFeedbackTimer;
+function announceFavorite(message, persistent = false) {
+  if (window.AvelaToast) { window.AvelaToast(message, persistent ? 'error' : 'success'); return; }
+  const feedback = document.querySelector('[data-favorite-feedback]');
+  if (!feedback) return;
+  feedback.hidden = false;
+  feedback.textContent = message;
+  window.clearTimeout(favoriteFeedbackTimer);
+  if (!persistent) favoriteFeedbackTimer = window.setTimeout(() => { feedback.hidden = true; }, 5500);
+}
+
 function syncFavoriteUi(productId, favorite, count) {
   document.querySelectorAll(`[data-favorite-form][data-product-id="${CSS.escape(String(productId))}"] .favorite-button`).forEach((button) => {
     button.classList.toggle('is-favorite', favorite);
-    button.setAttribute('aria-pressed', favorite ? 'true' : 'false');
+    button.setAttribute('aria-pressed', String(favorite));
     const label = favorite ? 'Remove from favorites' : 'Add to favorites';
     button.setAttribute('aria-label', label);
     button.setAttribute('title', label);
   });
-
   document.querySelectorAll('[data-favorite-count]').forEach((badge) => {
     badge.textContent = String(count);
     badge.hidden = count < 1;
   });
+  document.querySelectorAll('[data-favorite-link]').forEach((link) => {
+    link.setAttribute('aria-label', `Favorites, ${count} saved product${count === 1 ? '' : 's'}`);
+  });
 }
 
+async function refreshFavoriteState() {
+  const endpoint = document.querySelector('[data-favorite-state-url]')?.dataset.favoriteStateUrl;
+  if (!endpoint) return;
+  const controller = new AbortController();
+  const deadline = window.setTimeout(() => controller.abort(), 5000);
+  let response, data;
+  try {
+    response = await fetch(endpoint, {headers: {'Accept': 'application/json'}, credentials: 'same-origin', cache: 'no-store', signal: controller.signal});
+    data = await response.json();
+  } finally { window.clearTimeout(deadline); }
+  if (!response.ok || !data.ok || !Array.isArray(data.ids) || !Number.isSafeInteger(data.count) || data.count < 0) throw new Error('Favorite state unavailable');
+  const ids = new Set(data.ids.map(String));
+  document.querySelectorAll('[data-favorite-form]').forEach((form) => syncFavoriteUi(form.dataset.productId, ids.has(form.dataset.productId), data.count));
+  // Pages without product buttons still need their header count reconciled.
+  syncFavoriteUi('', false, data.count);
+}
+
+let favoritePending = false;
 async function submitFavorite(form) {
+  if (favoritePending) return;
   const button = form.querySelector('.favorite-button');
   if (!(button instanceof HTMLButtonElement)) return;
-  button.disabled = true;
-
+  favoritePending = true;
+  const buttons = [...document.querySelectorAll('[data-favorite-form] button')];
+  const priorDisabled = buttons.map((item) => item.disabled);
+  buttons.forEach((item) => { item.disabled = true; });
+  form.setAttribute('aria-busy', 'true');
+  const controller = new AbortController();
+  const deadline = window.setTimeout(() => controller.abort(), 10000);
   try {
     const response = await fetch(form.action, {
-      method: 'POST',
-      body: new FormData(form),
-      headers: {'Accept': 'application/json'},
-      credentials: 'same-origin',
+      method: 'POST', body: new FormData(form), headers: {'Accept': 'application/json'},
+      credentials: 'same-origin', signal: controller.signal,
     });
     const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.message || 'Favorite update failed');
-
-    const productId = form.dataset.productId || '';
-    syncFavoriteUi(productId, Boolean(data.favorite), Number(data.count || 0));
-
+    if (!response.ok || !data.ok || typeof data.favorite !== 'boolean' || !Number.isSafeInteger(data.count) || data.count < 0) throw new Error('Favorite update failed');
+    syncFavoriteUi(form.dataset.productId || '', data.favorite, data.count);
+    announceFavorite(`${data.message} ${data.count} saved product${data.count === 1 ? '' : 's'}.`);
     if (!data.favorite && window.location.pathname.endsWith('/favorites')) {
       const card = form.closest('.product-card');
+      const nextFocus = card?.nextElementSibling?.querySelector('a') || card?.previousElementSibling?.querySelector('a') || document.querySelector('[data-favorite-link]');
       card?.remove();
+      const resultCount=document.querySelector('[data-favorite-result-count]');if(resultCount){const remaining=Math.max(0,Number(resultCount.dataset.matchingTotal)-1);resultCount.dataset.matchingTotal=String(remaining);resultCount.textContent=document.querySelectorAll('.favorite-grid .product-card').length+' shown · '+remaining+' matching favorites';}
+      nextFocus?.focus();
       if (!document.querySelector('.favorite-grid .product-card')) window.location.reload();
     }
   } catch (_) {
-    form.submit();
+    // A lost response may follow a committed toggle. Read state; never repeat the POST.
+    try { await refreshFavoriteState(); } catch (_) {}
+    announceFavorite('We could not confirm that update. Check the heart state or refresh before trying again.', true);
   } finally {
-    button.disabled = false;
+    window.clearTimeout(deadline);
+    buttons.forEach((item, index) => { item.disabled = priorDisabled[index]; });
+    form.removeAttribute('aria-busy');
+    favoritePending = false;
   }
 }
 
@@ -639,10 +690,11 @@ function activateProductTab(button) {
   root.querySelectorAll('[data-product-panel]').forEach((panel) => {
     const active = panel.dataset.productPanel === key;
     panel.classList.toggle('active', active);
-    panel.hidden = !active;
+    panel.hidden = !active; if(active)window.AvelaMotion?.reveal(panel);
   });
 }
 
+let staffMotionTimer=null;
 function setStaffNavigation(requestedOpen, restoreFocus = true) {
   const sidebar = document.querySelector('.staff-sidebar');
   const toggle = document.querySelector('.sidebar-toggle');
@@ -655,7 +707,9 @@ function setStaffNavigation(requestedOpen, restoreFocus = true) {
   sidebar.classList.toggle('open', open);
   sidebar.inert = mobile && !open;
   workspace.inert = open;
-  backdrop.hidden = !open;
+  clearTimeout(staffMotionTimer);
+  if(open){backdrop.hidden=false;requestAnimationFrame(()=>{if(sidebar.classList.contains('open'))backdrop.classList.add('is-open');});}
+  else{backdrop.classList.remove('is-open');const finish=()=>{if(!sidebar.classList.contains('open'))backdrop.hidden=true;};if(!mobile||window.AvelaMotion?.reduced())finish();else staffMotionTimer=setTimeout(finish,(window.AvelaMotion?.duration('base')??220)+40);}
   toggle.setAttribute('aria-expanded', String(open));
   if (mobile && !open) sidebar.setAttribute('aria-hidden', 'true');
   else sidebar.removeAttribute('aria-hidden');
@@ -677,7 +731,8 @@ function setStaffNavigation(requestedOpen, restoreFocus = true) {
 }
 
 function setupStaffInterface() {
-  if (document.querySelector('.staff-sidebar')) {
+  if (document.querySelector('.staff-sidebar')&&!document.querySelector('.staff-sidebar').dataset.avelaInitialized) {
+    document.querySelector('.staff-sidebar').dataset.avelaInitialized='true';
     document.body.classList.add('staff-enhanced');
     setStaffNavigation(false, false);
     const sidebar = document.querySelector('.staff-sidebar');
@@ -689,6 +744,7 @@ function setupStaffInterface() {
     window.matchMedia('(max-width:1000px)').addEventListener('change', () => setStaffNavigation(false));
   }
   document.querySelectorAll('[data-staff-list]').forEach((root) => {
+    if(root.dataset.avelaInitialized)return;root.dataset.avelaInitialized='true';
     const rows = [...root.querySelectorAll('[data-staff-row]')];
     if (!rows.length) return;
     const search = root.querySelector('[data-staff-search]');
@@ -700,6 +756,31 @@ function setupStaffInterface() {
     const normalize = (value) => value.normalize('NFKC').toLocaleLowerCase();
     const pageSize = 10;
     let page = 1;
+    // Previous/Next remain stable DOM controls, so repeated Enter/Space keeps working.
+    const numbers = root.querySelector('[data-staff-numbers]');
+    const renderNumbers = (pages) => {
+      if (!numbers) return;
+      const focused = numbers.contains(document.activeElement) ? Number(document.activeElement.dataset.staffGoto) : null;
+      const fragment = document.createDocumentFragment();
+      if (pages > 1) {
+        const shown = [...new Set([1, pages, ...[-2,-1,0,1,2].map(offset => page + offset)])].filter(n => n >= 1 && n <= pages).sort((a,b) => a-b);
+        let last = 0;
+        shown.forEach(n => {
+          if (last && n-last > 1) { const gap=document.createElement('span'); gap.className='page-gap'; gap.textContent='…'; gap.setAttribute('aria-hidden','true'); fragment.append(gap); }
+          const button=document.createElement('button'); button.type='button'; button.className='btn btn-secondary btn-sm'; button.dataset.staffGoto=String(n); button.textContent=String(n); button.setAttribute('aria-label',`Page ${n}`);
+          if (n === page) button.setAttribute('aria-current','page');
+          fragment.append(button); last=n;
+        });
+      }
+      numbers.replaceChildren(fragment);
+      if (focused !== null) (numbers.querySelector(`[data-staff-goto="${page}"]`) || next || previous).focus({preventScroll:true});
+    };
+    numbers?.addEventListener('click', event => {
+      const button=event.target.closest('[data-staff-goto]');
+      if (!button || !numbers.contains(button)) return;
+      const requested=Number(button.dataset.staffGoto); if (!Number.isInteger(requested) || requested < 1 || requested === page) return;
+      page=requested; render();
+    });
     const render = () => {
       const query = normalize(search.value.trim());
       const matches = rows.filter((row) => normalize(row.dataset.listSearch).includes(query)
@@ -714,8 +795,11 @@ function setupStaffInterface() {
       const visible = new Set(matches.slice((page - 1) * pageSize, page * pageSize));
       rows.forEach((row) => { row.hidden = !visible.has(row); });
       matches.forEach((row) => row.parentElement.appendChild(row));
+      const focusedEdge = document.activeElement === previous || document.activeElement === next ? document.activeElement : null;
       previous.disabled = page === 1;
       next.disabled = page === pages;
+      renderNumbers(pages);
+      if (focusedEdge?.disabled) (numbers?.querySelector('[aria-current="page"]') || search).focus({preventScroll:true});
       root.querySelector('[data-staff-page]').textContent = `Page ${page} of ${pages}`;
       root.querySelector('[data-staff-count]').textContent = matches.length
         ? `Showing ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, matches.length)} of ${matches.length} matching ${root.dataset.listLabel} (${rows.length} total).`
@@ -728,7 +812,7 @@ function setupStaffInterface() {
     previous.addEventListener('click', () => { page--; render(); });
     next.addEventListener('click', () => { page++; render(); });
     root.querySelector('[data-staff-reset]').addEventListener('click', () => {
-      search.value = ''; status.value = ''; sort.value = 'original'; page = 1; render(); search.focus();
+      search.value = ''; status.value = ''; sort.value = 'original'; page = 1; render(); status.dispatchEvent(new Event('change',{bubbles:true})); sort.dispatchEvent(new Event('change',{bubbles:true})); search.focus();
     });
     render();
   });
@@ -769,7 +853,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const field = document.getElementById(link.getAttribute('href').slice(1));
       if (!(field instanceof HTMLElement)) return;
       event.preventDefault();
-      field.focus();
+      const focusTarget = field.matches('input,select,textarea,button,[tabindex]')
+        ? field : field.querySelector('input,select,textarea,button,[tabindex]');
+      if (focusTarget instanceof HTMLElement) focusTarget.focus();
     });
   });
 });
@@ -841,10 +927,13 @@ document.addEventListener('keydown', (event) => {
     if (filterOpen) { closeFilterDrawer(); return; }
     closeMegaMenu(true);
     document.querySelectorAll('.mobile-nav-menu[open], .account-menu[open]').forEach((menu) => {
-      menu.removeAttribute('open');
+      window.AvelaMotion?window.AvelaMotion.setDetails(menu,false):menu.removeAttribute('open');
       menu.querySelector('summary')?.focus();
     });
-    document.querySelectorAll('[data-sort-menu][open]').forEach((menu) => menu.removeAttribute('open'));
+    document.querySelectorAll('[data-sort-menu][open]').forEach((menu) => {
+      window.AvelaMotion?window.AvelaMotion.setDetails(menu,false):menu.removeAttribute('open');
+      menu.querySelector('summary')?.focus();
+    });
     return;
   }
 
@@ -874,11 +963,11 @@ document.addEventListener('click', async (event) => {
   if (!target) return;
 
   document.querySelectorAll('.account-menu[open]').forEach((menu) => {
-    if (!menu.contains(target)) menu.removeAttribute('open');
+    if (!menu.contains(target)) window.AvelaMotion?window.AvelaMotion.setDetails(menu,false):menu.removeAttribute('open');
   });
 
   document.querySelectorAll('[data-sort-menu][open]').forEach((menu) => {
-    if (!menu.contains(target)) menu.removeAttribute('open');
+    if (!menu.contains(target)) window.AvelaMotion?window.AvelaMotion.setDetails(menu,false):menu.removeAttribute('open');
   });
 
   const quantityMinus = target.closest('[data-quantity-minus]');
@@ -961,20 +1050,95 @@ function syncStoreHeader() {
   const header = document.querySelector('[data-site-header][data-header-overlay="true"]');
   if (!(header instanceof HTMLElement)) return;
 
-  const transitionDistance = 24;
-  const progress = Math.min(1, Math.max(0, window.scrollY / transitionDistance));
-
-  header.style.setProperty('--header-bg-alpha', (0.96 * progress).toFixed(3));
-  header.style.setProperty('--header-border-alpha', (0.82 * progress).toFixed(3));
-  header.style.setProperty('--header-shadow-alpha', (0.06 * progress).toFixed(3));
-  header.style.setProperty('--header-blur', `${(16 * progress).toFixed(1)}px`);
-  header.classList.toggle('is-scrolled', progress > 0.02);
-  header.classList.toggle('is-solid', progress >= 0.98);
+  const progress = Math.min(1, Math.max(0, (window.scrollY - 8) / 144));
+  header.style.setProperty('--header-opacity', String(progress));
+  const solid = progress >= 0.65;
+  header.classList.toggle('is-scrolled', solid);
+  header.classList.toggle('is-solid', solid);
 }
 
-window.addEventListener('scroll', syncStoreHeader, {passive: true});
+let headerFrame = 0;
+window.addEventListener('scroll', () => {
+  if (headerFrame) return;
+  headerFrame = window.requestAnimationFrame(() => { headerFrame = 0; syncStoreHeader(); });
+}, {passive: true});
 window.addEventListener('resize', syncStoreHeader);
 document.addEventListener('DOMContentLoaded', syncStoreHeader);
 
-const hairErrorSummary = document.querySelector('[data-error-summary]');
-if (hairErrorSummary) hairErrorSummary.focus();
+document.querySelectorAll('.assessment-jump-links a').forEach((link) => {
+  link.addEventListener('click', (event) => {
+    const section = document.getElementById(link.hash.slice(1));
+    if (!(section instanceof HTMLElement)) return;
+    event.preventDefault();
+    window.history.replaceState(null, '', link.hash);
+    const menu = link.closest('.assessment-sections');
+    if (menu instanceof HTMLDetailsElement) {if(window.AvelaMotion)window.AvelaMotion.setDetails(menu,false);else menu.open=false;}
+    section.scrollIntoView({block:'start',behavior:window.AvelaMotion?.reduced()?'auto':'smooth'});
+    section?.querySelector('h2')?.focus({preventScroll: true});
+  });
+});
+
+document.querySelectorAll('[data-assessment-form]').forEach((form) => {
+  const button = form.querySelector('button[type="submit"]');
+  if (!(button instanceof HTMLButtonElement)) return;
+  const label = button.innerHTML;
+  form.addEventListener('submit', () => {
+    button.disabled = true;
+    button.textContent = 'Finding your matches…';
+    form.setAttribute('aria-busy', 'true');
+  });
+  window.addEventListener('pageshow', () => {
+    button.disabled = false;
+    button.innerHTML = label;
+    form.removeAttribute('aria-busy');
+  });
+});
+
+
+function mountImageUploads(root=document){
+root.querySelectorAll('[data-image-upload]').forEach((input) => {
+  // Profile photos already have one shared toast handler for every role.
+  if(input.matches('[data-photo-input]'))return;
+  if(input.dataset.avelaUploadReady)return;input.dataset.avelaUploadReady='true';
+  const feedback = document.createElement('small');
+  feedback.className = 'field-error';
+  feedback.setAttribute('role', 'alert');
+  input.insertAdjacentElement('afterend', feedback);
+  input.addEventListener('change', () => {
+    const file = input.files?.[0];
+    const message = file && (file.size === 0 || file.size > Number(input.dataset.maxBytes || 2621440))
+      ? 'Choose a nonempty image of ' + (input.dataset.maxLabel || '2.5 MB') + ' or smaller.' : '';
+    input.setCustomValidity(message);
+    feedback.textContent = message;
+    input.setAttribute('aria-invalid', message ? 'true' : 'false');
+  });
+});
+}
+mountImageUploads();
+document.addEventListener('avela:content',event=>{setupStaffInterface();syncAllPasswordToggles();mountImageUploads(event.detail?.root||document);});
+const addressChoices = document.querySelectorAll('[data-address-source]');
+const deliveryField = document.querySelector('[data-delivery-address]');
+if (addressChoices.length && deliveryField) {
+  const syncAddress = () => {
+    const saved = document.querySelector('[data-address-source]:checked')?.value === 'saved';
+    deliveryField.hidden = saved;
+    const input = deliveryField.querySelector('textarea');
+    input.disabled = saved;
+    input.required = !saved;
+  };
+  addressChoices.forEach((input) => input.addEventListener('change', syncAddress));
+  syncAddress();
+}
+
+// Shared overlay notifications are managed by experience.js.
+window.addEventListener('pageshow', (event) => {
+  if (!event.persisted) return;
+  document.querySelectorAll('[data-flash-transient]').forEach((notice) => notice.remove());
+  refreshFavoriteState().catch(() => announceFavorite('Refresh this page to check your saved products.'));
+});
+
+const unsavedBaselines=new WeakMap(),submittedDrafts=new WeakSet();
+function mountUnsavedForms(root=document){root.querySelectorAll('[data-unsaved-form]').forEach(form=>{if(!unsavedBaselines.has(form))unsavedBaselines.set(form,new URLSearchParams(new FormData(form)).toString());});}
+mountUnsavedForms();document.addEventListener('avela:content',event=>mountUnsavedForms(event.detail?.root||document));
+document.addEventListener('submit',event=>{if(event.target.matches('[data-unsaved-form]'))submittedDrafts.add(event.target);});
+window.addEventListener('beforeunload',event=>{for(const form of document.querySelectorAll('[data-unsaved-form]')){if(submittedDrafts.has(form)||!form.getClientRects().length)continue;if(new URLSearchParams(new FormData(form)).toString()!==unsavedBaselines.get(form)){event.preventDefault();event.returnValue='';break;}}});

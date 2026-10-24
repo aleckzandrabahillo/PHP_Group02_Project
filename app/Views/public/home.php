@@ -18,10 +18,6 @@ $profileLink = $homeRole === 'customer' ? url('/assessment') : ($homeRole === nu
   </section>
   <section class="editorial-section" id="featured" aria-labelledby="home-shop-title">
     <div class="editorial-section-heading"><h2 id="home-shop-title">Shop Avela.</h2><span>Care for your everyday.</span></div>
-    <nav class="category-tabs" aria-label="Browse product categories">
-      <a href="<?= e(url('/shop')) ?>">All care</a>
-      <?php foreach (($categories ?? []) as $category): ?><a href="<?= e(url('/shop?category[]=' . (int) $category['id'])) ?>"><?= e($category['name']) ?></a><?php endforeach; ?>
-    </nav>
     <?php if (!empty($featuredProducts)): ?>
       <div class="product-grid">
         <?php foreach ($featuredProducts as $product): ?>
@@ -29,7 +25,7 @@ $profileLink = $homeRole === 'customer' ? url('/assessment') : ($homeRole === nu
         <?php endforeach; ?>
       </div>
     <?php else: ?><div class="empty-store-state"><p>New additions to the catalog will appear here.</p></div><?php endif; ?>
-    <div class="editorial-collection-footer"><span>Selected from our demonstration collection.</span><a class="editorial-text-link" href="<?= e(url('/shop')) ?>">View all care <span aria-hidden="true">→</span></a></div>
+    <div class="editorial-collection-footer"><a class="editorial-text-link" href="<?= e(url('/shop')) ?>">View all care <span aria-hidden="true">→</span></a></div>
   </section>
   <section class="editorial-concerns" aria-labelledby="home-concern-title">
     <figure><img src="<?= e(asset('images/editorial/hair-editorial.jpg')) ?>" alt="A close-up study of flowing brunette hair" width="1200" height="1800" loading="lazy" decoding="async"><figcaption>THE TEXTURE OF YOU.</figcaption></figure>
@@ -47,10 +43,10 @@ $profileLink = $homeRole === 'customer' ? url('/assessment') : ($homeRole === nu
   <section class="editorial-section editorial-approach" aria-labelledby="home-approach-title">
     <div><h2 id="home-approach-title">A little about you.<br>A clearer kind of care.</h2><p>Your texture, scalp and concerns. Build a shortlist with explanations you can understand.</p><a class="editorial-text-link" href="<?= e($profileLink) ?>">Explore your care <span aria-hidden="true">→</span></a></div>
     <div class="editorial-approach-details">
-      <article><h3>A profile, not a guess.</h3><p>Choose your hair details and add an optional description in English or Taglish.</p></article>
+      <article><h3>A profile, not a guess.</h3><p>Choose your hair details and add an optional description.</p></article>
       <article><h3>Know why it matches.</h3><p>Simple language rules and catalog suitability tags give each supported match a clear reason.</p></article>
       <article><h3>Keep it together.</h3><p>Save your routine, review current prices and availability, and add only what you need to your bag.</p></article>
-      <p class="editorial-disclosure">Avela is a student demonstration store. Matching uses fictional catalog specifications, not verified formulation benefits or medical advice.</p>
+      <p class="editorial-disclosure">Explore care based on your hair profile and listed product attributes. Matches are not medical advice.</p>
     </div>
   </section>
 </main>

@@ -4,10 +4,18 @@ namespace App\Core;
 
 final class CheckoutValidator
 {
-    public static function validate(array $input): array
+    public static function validate(array $input, ?array $profile = null): array
     {
+        $delivery = DeliveryValidator::validate($input);
+        $input = [...$input, ...$delivery['values']];
         $values = ['full_name' => '', 'contact_no' => '', 'delivery_address' => '', 'payment_method' => 'cod'];
-        $errors = [];
+        $errors = $delivery['errors'];
+        $source = $input['address_source'] ?? 'different';
+        if (!is_string($source) || !in_array($source, ['saved', 'different'], true)) {
+            $errors['address_source'] = 'Choose your saved address or a different delivery address.';
+            $source = 'different';
+        }
+        // Structured delivery fields stay editable; no checkout input updates the permanent profile.
         foreach ($values as $field => $default) {
             $value = $input[$field] ?? '';
             if (!is_string($value) || !mb_check_encoding($value, 'UTF-8')) {
@@ -36,7 +44,15 @@ final class CheckoutValidator
                 $values['contact_no'] = $phone;
             }
         }
-        if ($values['payment_method'] !== 'cod') $errors['payment_method'] = 'Choose the available cash-on-delivery option.';
+        if ($values['payment_method'] !== 'cod' && !($values['payment_method'] === 'maya_sandbox' && \App\Services\MayaSandboxConfig::available())) {
+            $errors['payment_method'] = 'Choose an available payment option.';
+        }
+        foreach(['discount_code'=>32,'discount_revision'=>32] as $field=>$limit){
+            $raw=$input[$field]??'';
+            if(!is_string($raw)||strlen($raw)>$limit||!mb_check_encoding($raw,'UTF-8')){$errors[$field]='Enter a valid discount value.';$raw='';}
+            $values[$field]=trim($raw);
+        }
+        $values = [...$values, ...$delivery['values'], 'address_source'=>$source];
         return ['values' => $values, 'errors' => $errors];
     }
 }

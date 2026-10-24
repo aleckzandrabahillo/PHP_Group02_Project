@@ -32,6 +32,11 @@ final class AuthController
     {
         AuthGuard::guest();
         Csrf::enforce($_POST['_token'] ?? null);
+        if (!\App\Services\RequestThrottle::allow('login', (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'), 30, 60)) {
+            http_response_code(429);
+            header('Retry-After: 60');
+            exit('Too many sign-in requests. Wait a minute before trying again.');
+        }
         $errors = Validator::login($_POST);
        $recaptchaResponse = (string) ($_POST['g-recaptcha-response'] ?? '');
 
@@ -43,7 +48,12 @@ final class AuthController
             Session::put('errors', $errors);
             Response::redirect('/login');
         }
-        $result = $this->auth->attempt((string) $_POST['identifier'], (string) $_POST['password']);
+        try {
+            $result = $this->auth->attempt((string) $_POST['identifier'], (string) $_POST['password']);
+        } catch (\App\Services\MailDeliveryException $e) {
+            Session::flash('error', $e->getMessage());
+            Response::redirect('/login');
+        }
         if (!$result['ok']) {
             Session::keepOld($_POST);
             Session::put('errors', [
@@ -53,15 +63,17 @@ final class AuthController
             Session::flash('error', $result['message']);
             Response::redirect('/login');
         }
-        if (($result['next'] ?? '') === 'otp') Response::redirect('/verify-otp');
+        if (in_array($result['next']??'', ['otp','activation_link'],true)) Response::redirect('/verify-otp');
         if (($result['next'] ?? '') === 'totp') Response::redirect('/verify-authenticator');
-        Response::redirect(AuthGuard::dashboardPath());
+        Session::forget('activation_setup_offer');
+        Response::redirect(($_POST['setup_authenticator']??'')==='1'&&(auth_user()['role']??'')==='customer'?'/account/mfa':AuthGuard::dashboardPath());
     }
 
     public function registerForm(): void
     {
         AuthGuard::guest();
-        View::render('auth/register', ['pageTitle' => 'Create account', 'recaptchaSiteKey' => env('RECAPTCHA_SITE_KEY', ''), ],'auth');
+        View::render('auth/register', ['pageTitle' => 'Create account', 'recaptchaSiteKey' => env('RECAPTCHA_SITE_KEY', ''),
+            'passwordPolicy' => \App\Services\SecurityPolicy::values()], 'auth');
     }
 
     public function register(): void
@@ -80,13 +92,23 @@ final class AuthController
             Session::put('errors', $errors);
             Response::redirect('/register');
         }
-        $result = $this->auth->register($_POST);
+        try {
+            $result = $this->auth->register($_POST);
+        } catch (\App\Services\MailDeliveryException $e) {
+            Session::keepOld($_POST);
+            Session::flash('error', $e->getMessage() . ' Your registration was not saved.');
+            Response::redirect('/register');
+        } catch (\PDOException) {
+            Session::keepOld($_POST);
+            Session::flash('error', 'Registration could not be completed. If you already registered, try signing in.');
+            Response::redirect('/register');
+        }
         if (!$result['ok']) {
             Session::keepOld($_POST);
             Session::put('errors', [$result['field'] => $result['message']]);
             Response::redirect('/register');
         }
-        Session::flash('success', 'Account created. Enter the activation code we sent to your email.');
+        Session::flash('success', 'Account created. Enter the code sent to your email. We will then send your activation link.');
         Response::redirect('/verify-otp');
     }
 
@@ -98,8 +120,12 @@ final class AuthController
         if (!is_array($flow)) Response::redirect('/login');
         $email = (string) ($flow['email'] ?? '');
         $masked = $this->maskEmail($email);
+        if(($flow['purpose']??'')==='activation_link'){
+            View::render('auth/activation-sent',['pageTitle'=>'Activate your account','maskedEmail'=>$masked,
+                'expired'=>($flow['expires_at']??0)<time()],'auth');return;
+        }
         View::render('auth/verify-otp', [
-            'pageTitle' => $flow['purpose'] === 'activation' ? 'Activate account' : 'Verify sign in',
+            'pageTitle' => $flow['purpose'] === 'activation' ? 'Verify your email' : 'Verify sign in',
             'maskedEmail' => $masked,
             'purpose' => $flow['purpose'],
         ], 'auth');
@@ -114,10 +140,14 @@ final class AuthController
             Session::put('errors', ['otp' => 'Enter the 6-digit code.']);
             Response::redirect('/verify-otp');
         }
-        $result = $this->auth->verifyPendingOtp($code);
+        try{$result = $this->auth->verifyPendingOtp($code);}
+        catch(\App\Services\MailDeliveryException $e){Session::put('errors',['otp'=>$e->getMessage().' Enter your code again to retry.']);Response::redirect('/verify-otp');}
         if (!$result['ok']) {
             Session::put('errors', ['otp' => $result['message']]);
             Response::redirect('/verify-otp');
+        }
+        if(($result['next']??'')==='activation_link'){
+            Session::flash('success',$result['message']);Response::redirect('/verify-otp');
         }
         if (($result['next'] ?? '') === 'login') {
             Session::flash('success', $result['message']);
@@ -131,7 +161,11 @@ final class AuthController
     {
         AuthGuard::guest();
         Csrf::enforce($_POST['_token'] ?? null);
-        $result = $this->auth->resendPendingOtp();
+        try {
+            $result = $this->auth->resendPendingOtp();
+        } catch (\App\Services\MailDeliveryException $e) {
+            $result = ['ok'=>false, 'message'=>$e->getMessage()];
+        }
         Session::flash($result['ok'] ? 'success' : 'warning', $result['message']);
         Response::redirect('/verify-otp');
     }

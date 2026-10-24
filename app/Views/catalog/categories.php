@@ -1,10 +1,9 @@
 <section class="page-head">
   <div>
-    <span class="eyebrow">CATALOG</span>
     <h1>Categories</h1>
     <p>Organize products by their main hair-care category.</p>
   </div>
-  <a class="btn btn-primary" href="<?= e(url('/catalog/categories?form=add#category-form')) ?>">Add Category</a>
+  <a class="btn btn-primary" href="<?= e(url('/catalog/categories?form=add#category-form')) ?>"><?= staff_icon('plus') ?>Add category</a>
 </section>
 
 <?php if ($errors): ?>
@@ -52,12 +51,12 @@
 
 <div class="table-card category-table" data-staff-list data-list-label="categories">
   <?php $staffListLabel='categories'; $staffStatusOptions=['active'=>'Active','inactive'=>'Archived']; $staffFilterLabel='statuses'; $staffSearchHint='Search name or description'; $staffQuantityLabel='Fewest linked products'; require dirname(__DIR__) . '/partials/staff_list_tools.php'; ?>
-  <p class="muted small">Archive categories to keep their product links. Only unused categories can be permanently deleted. Edit an archived category to reactivate it.</p>
+  <details class="staff-help"><summary>Archiving and linked products</summary><p>Archive categories to keep their product links. Only unused categories can be permanently deleted. Edit an archived category to reactivate it.</p></details>
   <div class="data-table" role="table" aria-label="Categories" tabindex="0">
     <div class="data-row header" role="row">
       <span role="columnheader">Category</span>
       <span role="columnheader">Description</span>
-      <span role="columnheader">Products</span>
+      <span role="columnheader" class="num">Products</span>
       <span role="columnheader">Status</span>
       <span role="columnheader">Actions</span>
     </div>
@@ -66,8 +65,8 @@
       <div class="data-row" role="row" data-staff-row data-list-search="<?= e($category['name'] . ' ' . ($category['description'] ?? '')) ?>" data-list-name="<?= e($category['name']) ?>" data-list-status="<?= e($category['status']) ?>" data-list-quantity="<?= (int) $category['product_count'] ?>">
         <span role="cell"><?= e($category['name']) ?></span>
         <span role="cell"><?= e($category['description']) ?></span>
-        <span role="cell"><?= (int) $category['product_count'] ?></span>
-        <span role="cell"><?= e(ucfirst($category['status'])) ?></span>
+        <span role="cell" class="num"><?= (int) $category['product_count'] ?></span>
+        <span role="cell"><?= staff_status($category['status']==='active'?'Active':'Archived') ?></span>
         <div class="category-actions" role="cell">
           <a class="btn btn-secondary btn-sm" href="<?= e(url('/catalog/categories?edit=' . (int) $category['id'] . '#category-form')) ?>">Edit</a>
           <?php if ($category['status'] === 'active'): ?>
@@ -79,7 +78,7 @@
             </form>
           <?php endif; ?>
           <?php if ((int) $category['product_count'] === 0): ?>
-            <form method="post" action="<?= e(url('/catalog/categories')) ?>">
+            <form method="post" action="<?= e(url('/catalog/categories')) ?>" data-confirm="Permanently delete this unused category? This cannot be undone.">
               <?= csrf_field() ?>
               <input type="hidden" name="action" value="delete">
               <input type="hidden" name="id" value="<?= (int) $category['id'] ?>">

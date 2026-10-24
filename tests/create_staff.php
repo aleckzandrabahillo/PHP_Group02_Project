@@ -79,6 +79,14 @@ try {
             $unchanged = true;
             foreach ($rows as $row) if (($after[(int)($row['id'] ?? $row['user_id'])] ?? '') !== hash('sha256',json_encode($row))) $unchanged=false;
             verify('Existing '.$table.' rows preserved',$unchanged);
+        } elseif ($table==='audit_logs') {
+            $after=$pdo->query('SELECT * FROM audit_logs')->fetchAll();$existing=array_column($after,null,'id');$preserved=true;
+            foreach($rows as $row)if(($existing[$row['id']]??null)!==$row)$preserved=false;
+            verify('Existing audit rows preserved',$preserved);
+            $oldIds=array_column($rows,'id');$added=array_values(array_filter($after,static fn($row)=>!in_array($row['id'],$oldIds,true)));
+            $expected=array_map(static fn($u)=>(int)$u['id'],$accounts);$targets=[];$valid=true;
+            foreach($added as $row){$details=json_decode($row['details'],true);$targets[]=(int)$row['target_id'];if($row['actor_id']!==null||$row['action']!=='staff.created'||$row['target_type']!=='user'||($details['channel']??'')!=='private_staff_setup'||str_contains($row['details'],$password))$valid=false;}
+            sort($expected);sort($targets);verify('Only two secret-free CLI staff audit records added',$valid&&count($added)===2&&$targets===$expected);
         } else {
             verify($table.' untouched',$rows===$pdo->query('SELECT * FROM `'.$table.'`')->fetchAll());
         }

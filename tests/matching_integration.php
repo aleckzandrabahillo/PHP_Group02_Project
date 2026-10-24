@@ -64,7 +64,17 @@ try {
     $preview=$service->forUser($a);$scores=array_column($preview['ranked'],'score','sku');
     verifyHair('Profile-first live recommendations exist',count($preview['ranked'])>0&&count($preview['routine']['items'])>0);
     verifyHair('Scalp-incompatible shampoo absent',!isset($scores['AVE-SMP-001'])&&isset($scores['AVE-SMP-002']));
-    verifyHair('Rendered reasons and demo disclosure',str_contains(hairRequest('/recommendations',$client)['body'],'Why it matches')&&str_contains(hairRequest('/recommendations',$client)['body'],'fictional product specifications'));
+    $matchesPage=hairRequest('/recommendations',$client)['body'];
+    verifyHair('Rendered reasons and accurate matching limits',str_contains($matchesPage,'Why it matches')&&str_contains($matchesPage,'listed product attributes')&&str_contains($matchesPage,'not a guarantee of results')&&str_contains($matchesPage,'Ingredient benefits and treatment compatibility are not independently verified'));
+    verifyHair('Results show products beside a compact progressive profile',str_contains($matchesPage,'class="match-workspace"')&&str_contains($matchesPage,'data-match-profile')&&str_contains($matchesPage,'class="match-profile-glance"'));
+    verifyHair('Routine preview uses actual prices and linked photographs',str_contains($matchesPage,'class="match-routine-photo"')&&str_contains($matchesPage,'class="match-step-price"')&&str_contains($matchesPage,'₱'.number_format((float)$preview['routine']['items'][0]['product']['price'],2)));
+    verifyHair('Routine guide and product matches have distinct navigation',str_contains($matchesPage,'Your care routine.')&&str_contains($matchesPage,'href="#product-matches-title"')&&str_contains($matchesPage,'id="product-matches-title">Your product matches.'));
+    verifyHair('Care sequence explains timing and personal handling',str_contains($matchesPage,'data-care-step="cleanse"')&&str_contains($matchesPage,'data-care-step="condition"')&&str_contains($matchesPage,'data-care-step="dry"')&&str_contains($matchesPage,'You recorded oily roots:')&&str_contains($matchesPage,'For your hair'));
+    verifyHair('Both timing phases and native keyboard disclosures are rendered',str_contains($matchesPage,'data-care-tab="wash"')&&str_contains($matchesPage,'data-care-tab="between"')&&str_contains($matchesPage,'<details open><summary><svg class="care-icon"'));
+    verifyHair('Routine save retains exact current fingerprint',str_contains($matchesPage,'name="plan_fingerprint" value="'.$preview['fingerprint'].'"')&&str_contains($matchesPage,'class="match-save-actions"'));
+    verifyHair('Each available match has one explicit bag action',substr_count($matchesPage,'data-quick-add')===count(array_filter($preview['ranked'],static fn($product)=>$product['available']))&&!str_contains($matchesPage,'class="product-quick-add"'));
+    verifyHair('One edit action replaces duplicate assessment links',substr_count($matchesPage,'>Edit assessment</a>')===1&&!str_contains($matchesPage,'>Edit hair profile</a>'));
+    verifyHair('Profile reasoning and disclosure survive the new layout',str_contains($matchesPage,'From your description')&&str_contains($matchesPage,'Your selected answers take priority.')&&!str_contains($matchesPage,e($input['concern_text'])));
     $before=routineStateHash($pdo);
     verifyHair('Invalid CSRF rejected without writes',hairRequest('/routine',$client,['_token'=>'bad','plan_fingerprint'=>$preview['fingerprint']])['code']===419&&routineStateHash($pdo)===$before);
     verifyHair('Array CSRF rejected safely',hairRequest('/routine',$client,['_token'=>['bad']])['code']===419);
@@ -96,6 +106,8 @@ try {
     verifyHair('Valid routine save redirects',hairRequest('/routine',$client,$post)['code']===303);
     $saved=(new App\Models\Routine())->stateForUser($a);$id=(int)$saved['routine']['id'];
     verifyHair('Routine items and explanations persisted',count($saved['items'])===count($preview['routine']['items'])&&!$saved['stale']&&count(array_filter($saved['items'],fn($i)=>!$i['explanation']))===0);
+    $savedPage=hairRequest('/routine',$client)['body'];
+    verifyHair('Saved routine includes the same step guide and saved products',str_contains($savedPage,'aria-label="Saved care guide"')&&str_contains($savedPage,'data-care-step="condition"')&&str_contains($savedPage,'Products in your routine'));
     verifyHair('Submitted owner IDs ignored',!$pdo->query('SELECT 1 FROM routines WHERE user_id='.$b)->fetchColumn());
     $before=routineStateHash($pdo);
     verifyHair('Repeated POST is idempotent',hairRequest('/routine',$client,$post)['code']===303&&routineStateHash($pdo)===$before);
@@ -128,6 +140,7 @@ try {
     $profiles->save($a,$changed,[],App\Models\HairProfile::version($current));
     verifyHair('Profile change marks saved routine stale',(new App\Models\Routine())->stateForUser($a)['stale']);
     verifyHair('Stale routine displays warning',str_contains(hairRequest('/routine',$client)['body'],'changed since this routine was saved'));
+    verifyHair('Stale routine does not reframe old products as a fresh care plan',!str_contains(hairRequest('/routine',$client)['body'],'aria-label="Saved care guide"'));
     verifyHair('All twenty product fields preserved',$demoBefore===$pdo->query('SELECT * FROM products ORDER BY id')->fetchAll());
     foreach(['/shop','/product?id=1','/cart','/orders','/assessment'] as $path)verifyHair('Existing route regression '.$path,hairRequest($path,$client)['code']===200);
     $failed=count(array_filter($checks,fn($r)=>$r['status']==='FAIL'));

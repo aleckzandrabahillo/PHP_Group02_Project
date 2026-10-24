@@ -14,13 +14,13 @@ final class Csrf
         return $token;
     }
 
-    public static function validate(?string $token): bool
+    public static function validate(mixed $token): bool
     {
         $stored = Session::get('_csrf');
         return is_string($stored) && is_string($token) && hash_equals($stored, $token);
     }
 
-    public static function enforce(?string $token): void
+    public static function enforce(mixed $token): void
     {
         if (!self::validate($token)) {
             http_response_code(419);

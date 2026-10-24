@@ -25,14 +25,23 @@ final class MfaController
         header('Referrer-Policy: no-referrer');
     }
 
+    public function customerSettings(): void
+    {
+        AuthGuard::roles(['customer']);
+        $this->settings();
+    }
+
     public function settings(): void
     {
         $user=AuthGuard::auth();$this->privatePage();
         $factor=$this->mfa->factor((int)$user['id']);
         View::render('account/mfa',[
-            'pageTitle'=>'Authenticator','enabledAt'=>$factor['enabled_at']??null,
+            'pageTitle'=>'2-step verification','enabledAt'=>$factor['enabled_at']??null,
             'remaining'=>$factor?count(json_decode($factor['recovery_hashes_json'],true)):0,
             'configured'=>(new MfaCipher())->configured(),'setupSecret'=>$this->mfa->setupSecret((int)$user['id']),
+            'setupUri'=>$this->mfa->setupUri((int)$user['id']),
+            'setupExpiresAt'=>(int)(Session::get('mfa_setup_flow')['expires_at']??0),
+            'setupStep'=>(int)(Session::get('mfa_setup_flow')['step']??1),
         ]);
     }
 
@@ -45,23 +54,25 @@ final class MfaController
         try {
             switch($_POST['action']??'') {
                 case 'begin':
-                    $this->mfa->beginEnrollment($id,$this->input('password',256));
-                    Session::flash('success','Enter the email verification code and a code from your authenticator to finish setup.');break;
+                    $flow=$this->mfa->beginEnrollment($id,$this->input('password',256));
+                    Session::put('mfa_setup_flow',[...$flow,'step'=>1]);break;
                 case 'confirm':
+                    $flow=Session::get('mfa_setup_flow');
+                    if(is_array($flow))Session::put('mfa_setup_flow',[...$flow,'step'=>2]);
                     $this->mfa->confirmEnrollment($id,$this->input('email_code',6),$this->input('authenticator_code',6));
                     Response::redirect('/account/mfa/recovery');
                 case 'cancel':
-                    Session::forget('mfa_setup_flow');Session::flash('success','Authenticator setup canceled.');break;
+                    Session::forget('mfa_setup_flow');Session::flash('success','2-step verification setup canceled.');break;
                 case 'disable':
                     $this->mfa->disable($id,$this->input('password',256),$this->input('authenticator_code',64));
-                    $this->auth->logout();Session::flash('success','Authenticator removed. Email MFA remains enabled. Please sign in again.');
+                    $this->auth->logout();Session::flash('success',($user['role']==='customer'?'2-step verification turned off. Please sign in again.':'2-step verification turned off. Email verification is still required. Please sign in again.'));
                     Response::redirect('/login');
-                default: throw new DomainException('Choose a valid authenticator action.');
+                default: throw new DomainException('Choose a valid 2-step verification action.');
             }
         } catch(DomainException $e) {
             Session::flash('error',$e->getMessage());
         } catch(Throwable) {
-            Session::flash('error','Authenticator setup could not be completed. Contact an administrator if the problem continues.');
+            Session::flash('error','2-step verification could not be set up. Please contact Avela if the problem continues.');
         }
         Response::redirect('/account/mfa');
     }
@@ -79,7 +90,7 @@ final class MfaController
         if(!is_array($flow)||($flow['expires_at']??0)<time()) {
             Session::forget('pending_totp');Session::flash('warning','Your sign-in challenge expired. Sign in again.');Response::redirect('/login');
         }
-        View::render('auth/verify-authenticator',['pageTitle'=>'Verify authenticator'],'auth');
+        View::render('auth/verify-authenticator',['pageTitle'=>'2-step verification'],'auth');
     }
 
     public function verify(): void
@@ -92,7 +103,7 @@ final class MfaController
             Session::flash('error',$result['message']);
             if(!empty($result['expired']))Response::redirect('/login');
         } catch(Throwable) {
-            Session::flash('error','Authenticator verification is unavailable. Contact an administrator if this continues.');
+            Session::flash('error','2-step verification is unavailable. Please contact Avela if this continues.');
         }
         Response::redirect('/verify-authenticator');
     }

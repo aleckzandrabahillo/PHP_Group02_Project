@@ -18,6 +18,9 @@ public/uploads/*
 !public/uploads/products/
 public/uploads/products/*
 !public/uploads/products/.htaccess
+!public/uploads/profile/
+public/uploads/profile/*
+!public/uploads/profile/.htaccess
 
 .vscode/
 .DS_Store
@@ -25,3 +28,8 @@ Thumbs.db
 
 __pycache__/
 *.py[cod]
+
+# Local design tooling and generated review artifacts
+.agents/
+skills-lock.json
+.taste-skill/

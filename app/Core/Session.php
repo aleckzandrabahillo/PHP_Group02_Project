@@ -28,7 +28,7 @@ final class Session
                 session_regenerate_id(true);
                 self::put('_auth_expired_notice', true);
                 self::flash('warning', 'Your session expired because it was inactive. Please sign in again.');
-            } else {
+            } elseif (!in_array(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), ['/account/session','/account/session/activity'], true)) {
                 $_SESSION['last_activity'] = time();
             }
         }
@@ -80,8 +80,8 @@ final class Session
     public static function forgetAuth(): void
     {
         unset(
-            $_SESSION['auth_user'], $_SESSION['last_activity'],
-            $_SESSION['pending_flow'], $_SESSION['profile_update_flow'],
+            $_SESSION['auth_user'], $_SESSION['last_activity'], $_SESSION['auth_password_version'],
+            $_SESSION['pending_flow'], $_SESSION['profile_update_flow'], $_SESSION['staff_profile_update_flow'],
             $_SESSION['_old'], $_SESSION['errors'], $_SESSION['checkout_intent'], $_SESSION['_csrf'],
             $_SESSION['pending_totp'], $_SESSION['mfa_setup_flow'], $_SESSION['mfa_recovery_codes'], $_SESSION['auth_mfa_version']
         );

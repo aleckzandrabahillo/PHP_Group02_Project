@@ -4,12 +4,12 @@
   <form class="form-stack" method="post" enctype="multipart/form-data" action="<?= e(url('/catalog/products')) ?>">
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="<?= $editId !== null ? 'update' : 'create' ?>">
-    <input type="hidden" name="MAX_FILE_SIZE" value="2097152">
+    <input type="hidden" name="MAX_FILE_SIZE" value="<?= \App\Services\ImageUploadPolicy::maxBytes() ?>">
     <?php if ($editId !== null): ?>
       <input type="hidden" name="id" value="<?= (int) $editId ?>">
       <input type="hidden" name="expected_stock" value="<?= e($form['expected_stock']) ?>">
     <?php endif; ?>
-    <div class="field-grid two">
+    <div class="field-grid two staff-product-fields">
       <?php foreach (['name' => ['Product name', 160], 'sku' => ['SKU', 50]] as $key => [$label, $limit]): ?>
         <label class="field <?= isset($errors[$key]) ? 'has-error' : '' ?>">
           <span><?= e($label) ?></span>
@@ -38,6 +38,12 @@
         <input type="number" name="stock_qty" value="<?= e($form['stock_qty']) ?>" min="0" max="4294967295" step="1" required aria-invalid="<?= isset($errors['stock_qty']) || isset($errors['expected_stock']) ? 'true' : 'false' ?>" aria-describedby="product-stock-error">
         <small id="product-stock-error" class="field-error"><?= e($errors['stock_qty'] ?? $errors['expected_stock'] ?? '') ?></small>
       </label>
+      <?php if($editId!==null): ?><label class="field <?= isset($errors['stock_reason'])?'has-error':'' ?>">
+        <span>Stock adjustment reason</span>
+        <input name="stock_reason" maxlength="200" value="<?= e($form['stock_reason']) ?>" aria-invalid="<?= isset($errors['stock_reason'])?'true':'false' ?>" aria-describedby="product-stock-reason-help product-stock-reason-error">
+        <small id="product-stock-reason-help" class="help">Required when changing this product's stock quantity.</small>
+        <small id="product-stock-reason-error" class="field-error"><?= e($errors['stock_reason']??'') ?></small>
+      </label><?php endif; ?>
       <label class="field <?= isset($errors['status']) ? 'has-error' : '' ?>">
         <span>Status</span>
         <select name="status" required aria-invalid="<?= isset($errors['status']) ? 'true' : 'false' ?>" aria-describedby="product-status-error">
@@ -59,8 +65,8 @@
       </label>
       <label class="field <?= isset($errors['image']) ? 'has-error' : '' ?>">
         <span>Product image <em>(optional)</em></span>
-        <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" aria-invalid="<?= isset($errors['image']) ? 'true' : 'false' ?>" aria-describedby="product-image-help product-image-error">
-        <small id="product-image-help" class="help">JPEG, PNG or WebP; up to 2 MB. Leave empty to keep the existing image.</small>
+        <input type="file" name="image" data-image-upload data-max-bytes="<?= \App\Services\ImageUploadPolicy::maxBytes() ?>" data-max-label="<?= e(\App\Services\ImageUploadPolicy::label()) ?>" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" aria-invalid="<?= isset($errors['image']) ? 'true' : 'false' ?>" aria-describedby="product-image-help product-image-error">
+        <small id="product-image-help" class="help">JPEG, PNG or WebP; up to <?= e(\App\Services\ImageUploadPolicy::label()) ?>. Leave empty to keep the existing image.</small>
         <small id="product-image-error" class="field-error"><?= e($errors['image'] ?? '') ?></small>
       </label>
     </div>
@@ -88,9 +94,9 @@
       <?php if (!$tags): ?><p class="muted">No suitability tags are currently available.</p><?php endif; ?>
       <small id="product-tags-error" class="field-error"><?= e($errors['tag_ids'] ?? '') ?></small>
     </fieldset>
-    <p class="muted small">Inactive products and products in inactive categories are hidden from the public store. Zero-stock active products remain visible as out of stock.</p>
+    <details class="staff-help"><summary>How availability works</summary><p>Inactive products and products in inactive categories are hidden from the public store. Zero-stock active products remain visible as out of stock.</p></details>
     <div class="catalog-actions">
-      <button class="btn btn-primary" type="submit"><?= $editId !== null ? 'Save Changes' : 'Create Product' ?></button>
+      <button class="btn btn-primary" type="submit"><?= $editId !== null ? 'Save changes' : 'Create product' ?></button>
       <a class="btn btn-secondary" href="<?= e(url('/catalog/products')) ?>">Cancel</a>
     </div>
   </form>

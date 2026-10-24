@@ -1,33 +1,10 @@
 <?php
-$_productCard = isset($productCard) && is_array($productCard) ? $productCard : $product;
-$productUrl = url('/product?id=' . (int) $_productCard['id']);
-$showExcerpt = (bool) ($showExcerpt ?? false);
-$imageUrl = product_image_url($_productCard['image_path'] ?? null);
+$_productCard=isset($productCard)&&is_array($productCard)?$productCard:$product;
+$productUrl=url('/product?id='.(int)$_productCard['id']);$imageUrl=product_image_url($_productCard['image_path']??null);$showExcerpt=(bool)($showExcerpt??false);
+$quickAvailable=(int)$_productCard['stock_qty']>0&&($_productCard['status']??'active')==='active'&&($_productCard['category_status']??'active')==='active';
 ?>
-<article class="product-card">
-  <a class="product-card-main" href="<?= e($productUrl) ?>" aria-label="View <?= e($_productCard['name']) ?>">
-    <span class="product-art">
-      <?php if ($imageUrl !== null): ?>
-        <img class="product-image" src="<?= e($imageUrl) ?>" alt="<?= e($_productCard['name']) ?>" width="1200" height="1500" loading="lazy" decoding="async">
-      <?php else: ?>
-        <?php $visualCategory = $_productCard['category_name'] ?? ''; $placeholderLarge = false; require __DIR__ . '/product_placeholder.php'; ?>
-      <?php endif; ?>
-    </span>
-    <span class="product-card-body">
-      <small><?= e($_productCard['category_name']) ?></small>
-      <span class="product-card-title"><?= e($_productCard['name']) ?></span>
-      <?php if ($showExcerpt): ?>
-        <span class="product-excerpt"><?= e(strlen((string) $_productCard['description']) > 92 ? substr((string) $_productCard['description'], 0, 89) . '…' : (string) $_productCard['description']) ?></span>
-      <?php endif; ?>
-      <span class="product-card-footer">
-        <strong>₱<?= e(number_format((float) $_productCard['price'], 2)) ?></strong>
-        <span class="stock-label <?= (int) $_productCard['stock_qty'] > 0 ? 'in-stock' : 'out-stock' ?>"><?= (int) $_productCard['stock_qty'] > 0 ? 'In stock' : 'Out of stock' ?></span>
-      </span>
-      <span class="product-card-cta">View product <span aria-hidden="true">↗</span></span>
-    </span>
-  </a>
-  <div class="product-card-favorite">
-    <?php $favoriteProductId = (int) $_productCard['id']; $favoriteProductName = (string) $_productCard['name']; require __DIR__ . '/favorite_button.php'; unset($favoriteProductName); ?>
-  </div>
-</article>
-<?php unset($_productCard, $productUrl, $imageUrl, $favoriteProductId); ?>
+<article class="product-card" data-stream-key="product-<?= (int)$_productCard['id'] ?>"><div class="product-card-media"><a class="product-card-image" href="<?= e($productUrl) ?>" aria-label="View <?= e($_productCard['name']) ?>"><span class="product-art"><?php if($imageUrl!==null): ?><img class="product-image" src="<?= e($imageUrl) ?>" alt="<?= e($_productCard['name']) ?>" width="1200" height="1500" loading="lazy" decoding="async"><?php else: $visualCategory=$_productCard['category_name']??'';$placeholderLarge=false;require __DIR__.'/product_placeholder.php'; endif; ?></span></a>
+<div class="product-card-favorite"><?php $favoriteProductId=(int)$_productCard['id'];$favoriteProductName=(string)$_productCard['name'];require __DIR__.'/favorite_button.php';unset($favoriteProductName); ?></div>
+<?php if($showQuickAdd??true): ?><?php if((auth_user()['role']??null)==='customer'): ?><form class="product-quick-add" method="post" action="<?= e(url('/cart/add')) ?>" data-quick-add><?= csrf_field() ?><input type="hidden" name="product_id" value="<?= (int)$_productCard['id'] ?>"><input type="hidden" name="quantity" value="1"><input type="hidden" name="return_to" value="<?= e(parse_url(current_relative_uri(),PHP_URL_PATH)?:'/shop') ?>"><button type="submit" aria-label="Add <?= e($_productCard['name']) ?> to bag" <?= $quickAvailable?'':'disabled' ?>><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 8.5h11l1 11h-13l1-11Z"/><path d="M9 9V6.5a3 3 0 0 1 6 0V9"/></svg></button></form><?php elseif((auth_user()['role']??null)===null&&$quickAvailable): ?><div class="product-quick-add"><a href="<?= e(url('/login')) ?>" aria-label="Sign in to add <?= e($_productCard['name']) ?> to bag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 8.5h11l1 11h-13l1-11Z"/><path d="M9 9V6.5a3 3 0 0 1 6 0V9"/></svg></a></div><?php endif; ?><?php endif; ?></div>
+<a class="product-card-main" href="<?= e($productUrl) ?>"><span class="product-card-body"><small><?= e($_productCard['category_name']) ?></small><span class="product-card-title"><?= e($_productCard['name']) ?></span><?php if($showExcerpt): ?><span class="product-excerpt"><?= e(mb_strimwidth((string)($_productCard['description']??''),0,92,'…')) ?></span><?php endif; ?><span class="product-card-footer"><strong>₱<?= e(number_format((float)$_productCard['price'],2)) ?></strong><span class="stock-label <?= $quickAvailable?'in-stock':'out-stock' ?>"><?= $quickAvailable?'In stock':'Out of stock' ?></span></span></span></a></article>
+<?php unset($_productCard,$productUrl,$imageUrl,$favoriteProductId,$quickAvailable); ?>

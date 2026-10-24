@@ -7,27 +7,30 @@ $reviewSummary = $reviewSummary ?? ['count' => 0, 'average' => 0.0];
 ?>
 <main id="main-content" tabindex="-1" class="store-page product-page">
   <div class="product-primary-area">
-    <a class="back-link" href="<?= e(url('/shop')) ?>">Back to shop</a>
+    <nav class="product-breadcrumb" aria-label="Breadcrumb">
+      <a href="<?= e(url('/shop')) ?>">Shop</a><span aria-hidden="true">/</span>
+      <span><?= e($product['category_name']) ?></span>
+    </nav>
 
     <section class="product-detail-shell">
       <div class="product-detail-art">
         <?php if ($imageUrl !== null): ?>
-          <img class="product-detail-image" src="<?= e($imageUrl) ?>" alt="<?= e($product['name']) ?>">
+          <img class="product-detail-image" src="<?= e($imageUrl) ?>" alt="<?= e($product['name']) ?>" width="1200" height="1500" decoding="async" fetchpriority="high">
         <?php else: ?>
           <?php $visualCategory = $product['category_name'] ?? ''; $placeholderLarge = true; require dirname(__DIR__) . '/partials/product_placeholder.php'; ?>
         <?php endif; ?>
       </div>
 
       <div class="product-detail-copy">
-        <span class="eyebrow"><?= e(strtoupper((string) $product['category_name'])) ?></span>
+
         <h1><?= e($product['name']) ?></h1>
-        <p class="sku">SKU <?= e($product['sku']) ?></p>
         <strong class="product-price">₱<?= e(number_format((float) $product['price'], 2)) ?></strong>
         <?php if (trim((string) $product['description']) !== ''): ?>
           <p class="product-summary"><?= e((string) $product['description']) ?></p>
         <?php endif; ?>
 
         <div class="detail-meta">
+          <span>SKU <strong><?= e($product['sku']) ?></strong></span>
           <span>Routine step <strong><?= e($product['routine_step'] ? ucfirst((string) $product['routine_step']) : 'General care') ?></strong></span>
           <span>Availability <strong><?= $inStock ? 'In stock' : 'Out of stock' ?></strong></span>
         </div>
@@ -116,7 +119,7 @@ $reviewSummary = $reviewSummary ?? ['count' => 0, 'average' => 0.0];
 
     <div class="product-tab-panel" id="product-panel-recommendations" role="tabpanel" aria-labelledby="product-tab-recommendations" data-product-panel="recommendations" hidden>
       <div class="product-tab-content">
-        <span class="eyebrow">RECOMMENDED FOR YOU</span>
+        <span class="eyebrow">RELATED CARE</span>
         <?php if (!empty($recommendations)): ?>
           <div class="product-grid recommendation-grid">
             <?php foreach ($recommendations as $recommendation): ?>

@@ -91,7 +91,7 @@ try {
     $migration->run($pdo, true);
     check('Migration apply and repeat preserve records', $migration->run($pdo, true)['applied'] === 0 && digest($pdo, $preserve) === $before);
     $pdo->exec('UPDATE security_settings SET setting_value="5" WHERE setting_key="max_login_attempts"');
-    check('Legacy five-attempt setting bounded to three', App\Services\SecurityPolicy::values()['max_login_attempts'] === 3);
+    check('Administrator five-attempt setting is preserved', App\Services\SecurityPolicy::values()['max_login_attempts'] === 5);
     $prefix = 'security_' . bin2hex(random_bytes(4)); $accounts = [];
     foreach (['customer', 'catalog_manager', 'admin'] as $role) {
         $account = ['username' => $prefix . '_' . $role, 'email' => $prefix . '_' . $role . '@example.invalid', 'password' => 'Q1!' . bin2hex(random_bytes(18)), 'role' => $role];
@@ -104,6 +104,24 @@ try {
         $accounts[$role] = $account + ['id' => $id];
     }
     $customer = $accounts['customer']; $admin = $accounts['admin']; $manager = $accounts['catalog_manager'];
+    $management->savePolicy($admin['id'], ['max_login_attempts'=>3,'lockout_minutes'=>15,'session_timeout_minutes'=>30,'password_min_length'=>12]);
+    foreach ([1, 2, 5, 10, 255] as $threshold) {
+        $management->savePolicy($admin['id'], ['max_login_attempts'=>$threshold,'lockout_minutes'=>15,'session_timeout_minutes'=>30,'password_min_length'=>12]);
+        for ($attempt=1; $attempt<=$threshold; $attempt++) $users->recordFailure($manager['id']);
+        $strict=$users->findById($manager['id']);
+        check('Configured threshold locks at '.$threshold, App\Models\User::isLocked($strict) && (int)$strict['failed_attempts']===$threshold);
+        $management->unlock($admin['id'],$manager['id'],$strict['locked_until']);
+        $audit=$pdo->query('SELECT actor_id,details FROM audit_logs WHERE action="security_policy_updated" ORDER BY id DESC LIMIT 1')->fetch();
+        check('Threshold change is actor-attributed and audited', (int)$audit['actor_id']===$admin['id'] && json_decode($audit['details'],true)['after']['max_login_attempts']===$threshold);
+    }
+    foreach ([0,-1,256,['2'],'invalid',1.5,true] as $invalid) {
+        $denied=false;try{$management->savePolicy($admin['id'],['max_login_attempts'=>$invalid,'lockout_minutes'=>15,'session_timeout_minutes'=>30,'password_min_length'=>12]);}catch(InvalidArgumentException){$denied=true;}
+        check('Reject malformed threshold or counter overflow', $denied);
+    }
+    foreach ([$manager['id'],$customer['id']] as $actor) {
+        $denied=false;try{$management->savePolicy($actor,['max_login_attempts'=>1,'lockout_minutes'=>15,'session_timeout_minutes'=>30,'password_min_length'=>12]);}catch(DomainException){$denied=true;}
+        check('Non-administrator cannot change login threshold', $denied && App\Services\SecurityPolicy::values()['max_login_attempts']===255);
+    }
     $management->savePolicy($admin['id'], ['max_login_attempts'=>3,'lockout_minutes'=>15,'session_timeout_minutes'=>30,'password_min_length'=>12]);
     session_name((string) env('SESSION_NAME')); session_start();
     for ($i = 1; $i <= 3; $i++) {
@@ -131,7 +149,7 @@ try {
     check('Unlock history and audit recorded', (int) $pdo->query('SELECT COUNT(*) FROM locked_accounts WHERE user_id=' . $customer['id'] . ' AND unlocked_by=' . $admin['id'])->fetchColumn() === 1 && (int) $pdo->query('SELECT COUNT(*) FROM audit_logs WHERE action="account_unlocked" AND target_id=' . $customer['id'])->fetchColumn() === 1);
     $pdo->prepare('UPDATE users SET failed_attempts=3,locked_until=DATE_SUB(NOW(),INTERVAL 1 SECOND) WHERE id=?')->execute([$customer['id']]);
     $users->recordFailure($customer['id']);
-    check('Expired lock starts a fresh failure window', (int) $users->findById($customer['id'])['failed_attempts'] === 1 && $users->findById($customer['id'])['locked_until'] === null);
+    check('Legacy expired non-persistent lock starts a fresh failure window', (int) $users->findById($customer['id'])['failed_attempts'] === 1 && $users->findById($customer['id'])['locked_until'] === null);
     $workers = [];
     for ($i=0; $i<5; $i++) {
         $command = [PHP_BINARY, __FILE__, ...array_slice($argv, 1), '--worker=' . $customer['id']];
@@ -148,7 +166,7 @@ try {
     $pdo->exec('DROP TRIGGER security_test_lock_failure');
     check('Lock counter rolls back if required history fails', $denied && (int)$users->findById($customer['id'])['failed_attempts']===2 && $users->findById($customer['id'])['locked_until']===null);
     $defaults = ['max_login_attempts'=>3,'lockout_minutes'=>15,'session_timeout_minutes'=>30,'password_min_length'=>12];
-    foreach (['max_login_attempts'=>4,'lockout_minutes'=>0,'session_timeout_minutes'=>0,'password_min_length'=>11] as $key=>$bad) {
+    foreach (['max_login_attempts'=>256,'lockout_minutes'=>0,'session_timeout_minutes'=>0,'password_min_length'=>11] as $key=>$bad) {
         $denied = false; try { $management->savePolicy($admin['id'], [$key=>$bad]+$defaults); } catch (InvalidArgumentException) { $denied = true; }
         check('Reject unsafe policy: ' . $key, $denied);
     }
@@ -161,6 +179,9 @@ try {
     session_write_close();
     $qa = login($admin); $qm = login($manager); $qc = login($customer);
     check('Admin security page renders active policy and history', http('/admin/security', $qa)['code'] === 200 && str_contains(http('/admin/security', $qa)['body'], 'Lock history'));
+    $page=http('/admin/security',$qa)['body'];
+    preg_match('/<input[^>]*name="max_login_attempts"[^>]*>/', $page, $thresholdInput);
+    check('Administrator threshold supports existing counter capacity',isset($thresholdInput[0])&&str_contains($thresholdInput[0],'min="1"')&&str_contains($thresholdInput[0],'max="255"')&&!str_contains($thresholdInput[0],'readonly'));
     foreach ([$qm,$qc] as $client) {
         check('Non-admin security GET denied', http('/admin/security', $client)['code'] === 403);
         check('Non-admin security POST denied', http('/admin/security', $client, ['_token'=>$client['csrf'],'action'=>'save_policy']+$defaults)['code'] === 403);

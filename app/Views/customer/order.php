@@ -1,20 +1,25 @@
-<section class="page-head"><div><span class="eyebrow">ORDER DETAILS</span><h1>Order #<?= (int) $order['id'] ?></h1>
-  <p>Status: <strong><?= e(ucfirst($order['status'])) ?></strong> · Placed <?= e($order['created_at']) ?></p></div></section>
-<section class="order-delivery" aria-label="Delivery and payment">
-  <?php if ($order['checkout_key'] !== null && $order['status'] === 'pending'): ?><p class="order-next-step">Your order is saved. Return to My orders to review its status. This demonstration does not book delivery.</p><?php endif; ?>
-  <h2>Contact and delivery</h2>
-  <p><?= e($order['recipient_name_snapshot'] ?? 'Recipient was not recorded for this older order.') ?></p>
-  <p><?= e($order['contact_email_snapshot'] ?? 'Email was not recorded.') ?> · <?= e($order['contact_no_snapshot'] ?? 'Phone was not recorded.') ?></p>
-  <p class="order-address"><?= e($order['delivery_address_snapshot']) ?></p>
-  <p><?= $order['payment_method'] === 'cod' ? 'Cash on delivery' : 'Manual payment' ?> — <?= $order['checkout_key'] !== null ? 'demonstration order; no online payment was collected.' : 'payment details recorded with the original order.' ?></p>
+<?php
+$staff=(auth_user()['role']??'')==='admin';$payment=$order['maya_payment']??null;$simulated=$payment&&\App\Services\MayaPaymentService::simulatedReference($payment);
+$statusLabels=['pending'=>'Order received','processing'=>'Preparing your order','shipped'=>'Shipped','delivered'=>'Delivered','cancelled'=>'Cancelled'];
+$paymentLabels=['initiating'=>'Awaiting payment','pending'=>'Awaiting payment','paid'=>'Payment confirmed','failed'=>'Payment failed','cancelled'=>'Payment cancelled','expired'=>'Checkout expired','review'=>'Payment awaiting review'];
+?>
+<section class="page-head"><div><span class="eyebrow">YOUR ORDER</span><h1><?= e(\App\Services\OrderReference::display($order)) ?></h1><p>Placed <?= e(date('j F Y, g:i a',strtotime($order['created_at']))) ?> · <?= e($statusLabels[$order['status']]??ucfirst($order['status'])) ?></p></div><a class="text-link" href="<?= e(url($staff?'/admin/orders':'/orders')) ?>">← All orders</a></section>
+<div class="order-detail-layout"><div><section class="order-detail-summary"><h2>Order summary</h2><?php foreach($order['items'] as $item):$image=product_image_url($item['image_path']??null); ?><article class="order-line"><img class="order-item-image" src="<?= e($image??product_placeholder_url('')) ?>" alt="<?= e($item['product_name_snapshot']) ?>" width="60" height="60"><div><h3><?php if($item['product_id']!==null): ?><a href="<?= e(url('/product?id='.(int)$item['product_id'])) ?>"><?= e($item['product_name_snapshot']) ?></a><?php else: ?><?= e($item['product_name_snapshot']) ?><?php endif; ?></h3><p><?= (int)$item['quantity'] ?> × ₱<?= e(number_format((float)$item['unit_price_snapshot'],2)) ?></p></div><strong>₱<?= e(number_format((float)$item['unit_price_snapshot']*(int)$item['quantity'],2)) ?></strong></article><?php endforeach; ?>
+<div class="order-detail-totals"><div><span>Subtotal</span><span>₱<?= e(number_format((float)$order['subtotal'],2)) ?></span></div><?php if(!empty($order['discount'])): ?><div><span>Discount · <?= e($order['discount']['code_snapshot']) ?></span><span>−₱<?= e(\App\Services\ShippingService::decimal((int)$order['discount']['amount_cents'])) ?></span></div><?php endif; ?><?php if($order['delivery']): ?><div><span>Shipping · <?= e(ucfirst($order['delivery']['shipping_method'])) ?></span><span>₱<?= e(number_format((float)$order['delivery']['shipping_fee'],2)) ?></span></div><?php endif; ?><div><span>Order total</span><span>₱<?= e(number_format((float)$order['total'],2)) ?></span></div></div></section>
+<section class="order-detail-delivery"><h2>Delivery details</h2><p><strong><?= e($order['recipient_name_snapshot']??'Recipient was not recorded') ?></strong></p><p class="order-address"><?= nl2br(e($order['delivery_address_snapshot'])) ?></p><p><?= e($order['contact_email_snapshot']??'') ?><br><?= e($order['contact_no_snapshot']??'') ?></p></section></div>
+<div><section class="order-detail-summary"><span class="eyebrow">PAYMENT</span><h2><?= $order['payment_method']==='cod'?'Cash on delivery':($payment?'Debit/Credit Card':'Payment on arrangement') ?></h2>
+<?php if($order['payment_method']==='cod'): ?><p><?= e(\App\Services\OrderPaymentStatus::label($order)) ?></p>
+<?php elseif($simulated): ?><p>No payment was collected for this order.</p>
+<?php elseif($payment): ?><strong data-payment-label><?= e(\App\Services\OrderPaymentStatus::label($order)) ?></strong>
+<?php if(in_array($payment['state'],['initiating','pending'],true)): ?><p>Your order is saved and your items are reserved. Complete card checkout, then check your payment status.</p><?php if(!$staff): ?><div class="order-payment-actions" data-payment-actions><form method="post" data-payment-check data-auto-check="true" action="<?= e(url('/payments/maya/refresh')) ?>"><?= csrf_field() ?><input type="hidden" name="order_id" value="<?= (int)$order['id'] ?>"><button type="submit" class="btn btn-secondary">Check payment status</button></form><form method="post" action="<?= e(url('/payments/maya/continue')) ?>"><?= csrf_field() ?><input type="hidden" name="order_id" value="<?= (int)$order['id'] ?>"><button type="submit" class="btn btn-primary">Continue to card payment</button></form></div><?php endif; ?>
+<?php elseif(in_array($payment['state'],['failed','cancelled','expired'],true)): ?><p>Your payment did not complete. Your reserved items and discount use have been released.</p><a class="text-link" href="<?= e(url('/shop')) ?>">Start a new order →</a>
+<?php elseif($payment['state']==='paid'&&!empty($payment['verified_at'])): ?><p>Your payment has been confirmed by the payment provider.</p>
+<?php else: ?><p>We need to confirm the payment details before preparing your order.</p><?php endif; ?>
+<?php endif; ?>
+<?php if($payment&&!$simulated): ?><p class="muted small" data-payment-feedback role="status" aria-live="polite"><?php if(!empty($payment['verified_at'])): ?>Last checked <?= e(date('j M, g:i a',strtotime($payment['verified_at']))) ?>.<?php else: ?>Payment has not been confirmed yet.<?php endif; ?></p><?php endif; ?>
 </section>
-<div class="order-table-wrap"><table>
-  <thead><tr><th>Product</th><th>Quantity</th><th>Unit price</th><th>Subtotal</th></tr></thead>
-  <tbody><?php foreach ($order['items'] as $item): ?><tr>
-    <td><?= e($item['product_name_snapshot']) ?></td><td><?= (int) $item['quantity'] ?></td>
-    <td>₱<?= e(number_format((float) $item['unit_price_snapshot'], 2)) ?></td>
-    <td>₱<?= e(number_format((float) $item['unit_price_snapshot'] * (int) $item['quantity'], 2)) ?></td>
-  </tr><?php endforeach; ?></tbody>
-  <tfoot><tr><th colspan="3">Order total</th><td>₱<?= e(number_format((float) $order['total'], 2)) ?></td></tr></tfoot>
-</table></div>
-<p><a class="btn btn-secondary" href="<?= e(url('/orders')) ?>">My orders</a> <a class="btn btn-primary" href="<?= e(url('/shop')) ?>">Continue shopping</a></p>
+<?php $email=$order['email_confirmation']??null; if($email&&!$simulated): ?><section class="order-detail-summary"><h2>Order email</h2>
+<?php if($email['status']==='sent'): ?><p>Sent to your order email address. Check your inbox and spam folder.</p>
+<?php elseif($email['status']==='pending'): ?><p>Your order confirmation is ready to send.</p><?php if(!$staff): ?><form method="post" action="<?= e(url('/orders/confirmation')) ?>"><?= csrf_field() ?><input type="hidden" name="order_id" value="<?= (int)$order['id'] ?>"><button class="btn btn-secondary" type="submit">Send order email</button></form><?php endif; ?>
+<?php else: ?><p>We could not confirm email delivery. Your order is still saved. Please contact Avela before requesting another copy.</p><?php endif; ?></section><?php endif; ?>
+<section class="order-progress" aria-labelledby="order-progress-title"><h2 id="order-progress-title">Order updates</h2><?php if($order['events']): ?><ol class="order-timeline"><?php foreach($order['events'] as $event): ?><li><strong><?= e($statusLabels[$event['to_status']]??ucfirst($event['to_status'])) ?></strong><time datetime="<?= e(str_replace(' ','T',$event['created_at'])) ?>"><?= e(date('j M Y, g:i a',strtotime($event['created_at']))) ?></time></li><?php endforeach; ?></ol><?php else: ?><p><?= e($statusLabels[$order['status']]??ucfirst($order['status'])) ?></p><?php endif; ?></section></div></div>

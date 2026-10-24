@@ -37,7 +37,7 @@ function hairRequest(string $path, ?array $client = null, ?array $data = null): 
     return ['code' => (int) ($match[1] ?? 0), 'body' => (string) $body, 'headers' => $responseHeaders];
 }
 function hairForm(array $client): array {
-    $response = hairRequest('/assessment', $client);
+    $response = hairRequest('/assessment?edit=1', $client);
     if ($response['code'] !== 200) throw new RuntimeException('Assessment fixture unavailable.');
     preg_match('/name="profile_version" value="([a-f0-9]{64})"/', $response['body'], $match);
     return ['_token' => $client['csrf'], 'profile_version' => $match[1] ?? '', 'hair_texture' => 'wavy',
@@ -131,7 +131,7 @@ try {
     $updated = $model->forUser($a);
     verifyHair('Update preserves same owner/profile ID', $updated['id'] === $profile['id'] && !$model->forUser($b));
     verifyHair('Old tags replaced; negation not positive', !(bool) array_filter($updated['tags'], static fn($tag) => $tag['code'] === 'dryness'));
-    $view = hairRequest('/assessment', $client);
+    $view = hairRequest('/assessment?edit=1', $client);
     verifyHair('Submitted markup encoded', str_contains($view['body'], '&lt;script&gt;alert(1)&lt;/script&gt;') && !str_contains($view['body'], '<script>alert(1)</script>'));
     verifyHair('Profile response no-store', (bool) array_filter($view['headers'], static fn($h) => str_starts_with(strtolower($h),'cache-control:') && str_contains($h,'no-store')));
     $before = hairState($pdo);
