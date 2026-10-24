@@ -1231,3 +1231,4 @@ html {scroll-padding-top:calc(var(--header-height) + 20px)}
 .staff-list-summary nav .btn[aria-current="page"]{background:#43362c;border-color:#43362c;color:#fff}
 .staff-list-summary nav .page-gap{padding:0 2px}
 .page-numbers-inline{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center}
+.staff-list-summary nav .btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
