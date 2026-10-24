@@ -509,7 +509,6 @@ async function submitFavorite(form) {
       const card = form.closest('.product-card');
       const nextFocus = card?.nextElementSibling?.querySelector('a') || card?.previousElementSibling?.querySelector('a') || document.querySelector('[data-favorite-link]');
       card?.remove();
-      const resultCount=document.querySelector('[data-favorite-result-count]');if(resultCount){const remaining=Math.max(0,Number(resultCount.dataset.matchingTotal)-1);resultCount.dataset.matchingTotal=String(remaining);resultCount.textContent=document.querySelectorAll('.favorite-grid .product-card').length+' shown · '+remaining+' matching favorites';}
       nextFocus?.focus();
       if (!document.querySelector('.favorite-grid .product-card')) window.location.reload();
     }
@@ -731,8 +730,7 @@ function setStaffNavigation(requestedOpen, restoreFocus = true) {
 }
 
 function setupStaffInterface() {
-  if (document.querySelector('.staff-sidebar')&&!document.querySelector('.staff-sidebar').dataset.avelaInitialized) {
-    document.querySelector('.staff-sidebar').dataset.avelaInitialized='true';
+  if (document.querySelector('.staff-sidebar')) {
     document.body.classList.add('staff-enhanced');
     setStaffNavigation(false, false);
     const sidebar = document.querySelector('.staff-sidebar');
@@ -744,18 +742,78 @@ function setupStaffInterface() {
     window.matchMedia('(max-width:1000px)').addEventListener('change', () => setStaffNavigation(false));
   }
   document.querySelectorAll('[data-staff-list]').forEach((root) => {
-    if(root.dataset.avelaInitialized)return;root.dataset.avelaInitialized='true';
     const rows = [...root.querySelectorAll('[data-staff-row]')];
     if (!rows.length) return;
     const search = root.querySelector('[data-staff-search]');
     const status = root.querySelector('[data-staff-status]');
     const sort = root.querySelector('[data-staff-sort]');
-    const previous = root.querySelector('[data-staff-previous]');
-    const next = root.querySelector('[data-staff-next]');
+    const numbers = root.querySelector('[data-staff-numbers]');
     const initialOrder = new Map(rows.map((row, index) => [row, index]));
     const normalize = (value) => value.normalize('NFKC').toLocaleLowerCase();
     const pageSize = 10;
     let page = 1;
+    // Previous/Next are created once and never rebuilt, so keyboard focus stays on them.
+    // They use aria-disabled (not disabled) so a focused button at the first/last page
+    // keeps focus instead of being dropped by the browser.
+    const makePageButton = (text, label) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'btn btn-secondary btn-sm';
+      button.textContent = text;
+      button.setAttribute('aria-label', label);
+      return button;
+    };
+    const previous = makePageButton('Previous', 'Previous page');
+    const next = makePageButton('Next', 'Next page');
+    const pageList = document.createElement('span');
+    pageList.className = 'page-numbers-inline';
+    pageList.dataset.staffPageList = '';
+    numbers.replaceChildren(previous, pageList, next);
+    const renderNumbers = (pages) => {
+      numbers.hidden = pages <= 1;
+      previous.setAttribute('aria-disabled', String(page <= 1));
+      next.setAttribute('aria-disabled', String(page >= pages));
+      // Only the numbered buttons are rebuilt. If one had focus, put focus back on the
+      // button for the page now showing, so repeated Enter/Space keeps working.
+      const hadFocus = pageList.contains(document.activeElement);
+      pageList.replaceChildren();
+      if (pages > 1) {
+        const shown = [...new Set([1, pages, ...[-2, -1, 0, 1, 2].map((d) => page + d)])]
+          .filter((n) => n >= 1 && n <= pages).sort((a, b) => a - b);
+        let last = 0;
+        shown.forEach((n) => {
+          if (last && n - last > 1) {
+            const gap = document.createElement('span');
+            gap.className = 'page-gap';
+            gap.textContent = '…';
+            gap.setAttribute('aria-hidden', 'true');
+            pageList.appendChild(gap);
+          }
+          const button = makePageButton(String(n), `Page ${n}`);
+          button.dataset.staffGoto = String(n);
+          if (n === page) button.setAttribute('aria-current', 'page');
+          pageList.appendChild(button);
+          last = n;
+        });
+      }
+      if (hadFocus) (pageList.querySelector('[aria-current="page"]') || search).focus();
+    };
+    pageList.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-staff-goto]');
+      if (!button || button.getAttribute('aria-current') === 'page') return;
+      page = Number(button.dataset.staffGoto);
+      render();
+    });
+    previous.addEventListener('click', () => {
+      if (previous.getAttribute('aria-disabled') === 'true') return;
+      page--;
+      render();
+    });
+    next.addEventListener('click', () => {
+      if (next.getAttribute('aria-disabled') === 'true') return;
+      page++;
+      render();
+    });
     const render = () => {
       const query = normalize(search.value.trim());
       const matches = rows.filter((row) => normalize(row.dataset.listSearch).includes(query)
@@ -770,8 +828,7 @@ function setupStaffInterface() {
       const visible = new Set(matches.slice((page - 1) * pageSize, page * pageSize));
       rows.forEach((row) => { row.hidden = !visible.has(row); });
       matches.forEach((row) => row.parentElement.appendChild(row));
-      previous.disabled = page === 1;
-      next.disabled = page === pages;
+      renderNumbers(pages);
       root.querySelector('[data-staff-page]').textContent = `Page ${page} of ${pages}`;
       root.querySelector('[data-staff-count]').textContent = matches.length
         ? `Showing ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, matches.length)} of ${matches.length} matching ${root.dataset.listLabel} (${rows.length} total).`
@@ -781,10 +838,8 @@ function setupStaffInterface() {
     root.querySelectorAll('[data-staff-tools]').forEach((tools) => { tools.hidden = false; });
     search.addEventListener('input', () => { page = 1; render(); });
     [status, sort].forEach((control) => control.addEventListener('change', () => { page = 1; render(); }));
-    previous.addEventListener('click', () => { page--; render(); });
-    next.addEventListener('click', () => { page++; render(); });
     root.querySelector('[data-staff-reset]').addEventListener('click', () => {
-      search.value = ''; status.value = ''; sort.value = 'original'; page = 1; render(); status.dispatchEvent(new Event('change',{bubbles:true})); sort.dispatchEvent(new Event('change',{bubbles:true})); search.focus();
+      search.value = ''; status.value = ''; sort.value = 'original'; page = 1; render(); search.focus();
     });
     render();
   });
@@ -1067,25 +1122,20 @@ document.querySelectorAll('[data-assessment-form]').forEach((form) => {
 });
 
 
-function mountImageUploads(root=document){
-root.querySelectorAll('[data-image-upload]').forEach((input) => {
-  if(input.dataset.avelaUploadReady)return;input.dataset.avelaUploadReady='true';
+document.querySelectorAll('[data-image-upload]').forEach((input) => {
   const feedback = document.createElement('small');
   feedback.className = 'field-error';
   feedback.setAttribute('role', 'alert');
   input.insertAdjacentElement('afterend', feedback);
   input.addEventListener('change', () => {
     const file = input.files?.[0];
-    const message = file && (file.size === 0 || file.size > Number(input.dataset.maxBytes || 2621440))
-      ? 'Choose a nonempty image of ' + (input.dataset.maxLabel || '2.5 MB') + ' or smaller.' : '';
+    const message = file && (file.size === 0 || file.size > 5 * 1024 * 1024)
+      ? 'Choose a nonempty image of 5 MB or smaller.' : '';
     input.setCustomValidity(message);
     feedback.textContent = message;
     input.setAttribute('aria-invalid', message ? 'true' : 'false');
   });
 });
-}
-mountImageUploads();
-document.addEventListener('avela:content',event=>{setupStaffInterface();syncAllPasswordToggles();mountImageUploads(event.detail?.root||document);});
 const addressChoices = document.querySelectorAll('[data-address-source]');
 const deliveryField = document.querySelector('[data-delivery-address]');
 if (addressChoices.length && deliveryField) {
@@ -1107,8 +1157,16 @@ window.addEventListener('pageshow', (event) => {
   refreshFavoriteState().catch(() => announceFavorite('Refresh this page to check your saved products.'));
 });
 
-const unsavedBaselines=new WeakMap(),submittedDrafts=new WeakSet();
-function mountUnsavedForms(root=document){root.querySelectorAll('[data-unsaved-form]').forEach(form=>{if(!unsavedBaselines.has(form))unsavedBaselines.set(form,new URLSearchParams(new FormData(form)).toString());});}
-mountUnsavedForms();document.addEventListener('avela:content',event=>mountUnsavedForms(event.detail?.root||document));
-document.addEventListener('submit',event=>{if(event.target.matches('[data-unsaved-form]'))submittedDrafts.add(event.target);});
-window.addEventListener('beforeunload',event=>{for(const form of document.querySelectorAll('[data-unsaved-form]')){if(submittedDrafts.has(form)||!form.getClientRects().length)continue;if(new URLSearchParams(new FormData(form)).toString()!==unsavedBaselines.get(form)){event.preventDefault();event.returnValue='';break;}}});
+document.querySelectorAll('[data-unsaved-form]').forEach((form) => {
+  const initial = new URLSearchParams(new FormData(form)).toString();
+  let submitting = false;
+  const dirty = () => new URLSearchParams(new FormData(form)).toString() !== initial;
+  form.addEventListener('submit', () => { submitting = true; });
+  // Cancel explicitly discards the local draft; other navigation warns if it changed.
+  form.querySelector('[data-profile-cancel]')?.addEventListener('click', () => { submitting = true; });
+  window.addEventListener('beforeunload', (event) => {
+    if (submitting || !dirty()) return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
+});

@@ -9,9 +9,8 @@
 <div class="staff-list-summary" data-staff-tools hidden>
   <p class="muted small" data-staff-count role="status" aria-live="polite"></p>
   <nav aria-label="<?= e(ucfirst($staffListLabel)) ?> pages">
-    <button class="btn btn-secondary btn-sm" type="button" data-staff-previous>Previous</button>
+    <span data-staff-numbers class="page-numbers-inline"></span>
     <span data-staff-page></span>
-    <button class="btn btn-secondary btn-sm" type="button" data-staff-next>Next</button>
   </nav>
 </div>
 <p class="staff-list-empty" data-staff-empty hidden>No matching <?= e($staffListLabel) ?>. Try another search or clear the filters.</p>

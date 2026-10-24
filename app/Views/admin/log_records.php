@@ -32,5 +32,5 @@ $paginationUrl=static fn(int $number):string=>url($path).'?'.http_build_query(ar
     </tbody></table>
   </div>
   <?php endif; ?>
-  <nav aria-label="Log pages"><?php if($page>1): ?><a class="btn btn-secondary" href="<?= e($paginationUrl($page-1)) ?>">Previous</a><?php endif; ?> <?php if($page<$pages): ?><a class="btn btn-secondary" href="<?= e($paginationUrl($page+1)) ?>">Next</a><?php endif; ?></nav>
+  <?= pagination_nav((int)$page,(int)$pages,$paginationUrl,'Log pages') ?>
 </section>

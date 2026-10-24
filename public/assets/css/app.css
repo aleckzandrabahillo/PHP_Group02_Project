@@ -1218,3 +1218,17 @@ html {scroll-padding-top:calc(var(--header-height) + 20px)}
 .catalog-activity-table table {width:100%;min-width:520px;border-collapse:collapse;font-size:13px}
 .catalog-activity-table th,.catalog-activity-table td {padding:12px;text-align:left;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
 .catalog-activity-table:focus-visible {outline:2px solid var(--focus);outline-offset:3px}
+
+/* Numbered pagination */
+.page-numbers{flex-wrap:wrap;gap:8px}
+.page-numbers a,.page-numbers .page-current{display:inline-flex;align-items:center;justify-content:center;min-width:38px;min-height:38px;padding:0 10px;border:1px solid #d6cdc2;border-radius:7px;font-size:13px;text-decoration:none;color:inherit;background:#fff}
+.page-numbers a:hover,.page-numbers a:focus-visible{background:#eae2d7}
+.page-numbers .page-current{background:#43362c;border-color:#43362c;color:#fff;font-weight:600}
+.page-numbers .page-gap{padding:0 2px}
+.page-numbers .page-summary{flex-basis:100%;text-align:center;font-size:12px;opacity:.75}
+.staff-list-summary nav{flex-wrap:wrap}
+.staff-list-summary nav .btn[data-staff-goto]{min-width:38px;padding-inline:10px}
+.staff-list-summary nav .btn[aria-current="page"]{background:#43362c;border-color:#43362c;color:#fff}
+.staff-list-summary nav .page-gap{padding:0 2px}
+.page-numbers-inline{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center}
+.staff-list-summary nav .btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
