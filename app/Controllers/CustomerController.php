@@ -18,6 +18,8 @@ use App\Services\OtpService;
 use App\Core\CheckoutValidator;
 use App\Models\Order;
 use App\Services\CheckoutService;
+use App\Services\PaymentService;
+use App\Services\PayMongoService;
 
 final class CustomerController
 {
@@ -31,6 +33,7 @@ final class CustomerController
         private readonly OtpService $otp,
         private readonly CheckoutService $checkoutService,
         private readonly Order $orders,
+        private readonly PaymentService $payments = new PaymentService(),
     ) {}  
 
     public function dashboard(): void
@@ -95,7 +98,7 @@ final class CustomerController
         $user = AuthGuard::roles(['customer']);
         Csrf::enforce(is_string($_POST['_token'] ?? null) ? $_POST['_token'] : null);
         $userId = (int) $user['id'];
-        $checked = CheckoutValidator::validate($_POST);
+        $checked = CheckoutValidator::validate($_POST, PayMongoService::isConfigured() ? ['cod', 'paymongo'] : ['cod']);
         $key = is_string($_POST['checkout_key'] ?? null) ? $_POST['checkout_key'] : '';
         try {
             // Replays always resolve to this customer's existing order, even after a new checkout.
@@ -114,6 +117,10 @@ final class CustomerController
                 $this->renderCheckout($userId, $checked['values'], $checked['errors']);
                 return;
             }
+            if ($checked['values']['payment_method'] === 'paymongo') {
+                $this->payOnline($userId, $checked['values'], $key, $intent['signature']);
+                return;
+            }
             $id = $this->checkoutService->place($userId, $checked['values'], $key, $intent['signature']);
             Session::flash('success', 'Your order has been received. No online payment was collected.');
             http_response_code(303);
@@ -125,6 +132,123 @@ final class CustomerController
             http_response_code(503);
             $this->renderCheckout($userId, $checked['values'], ['form' => 'We could not place your order. Your bag was preserved; please try again later.']);
         }
+    }
+
+    /** Save the order, then send the customer to PayMongo's hosted checkout to pay it. */
+    private function payOnline(int $userId, array $values, string $key, string $signature): void
+    {
+        $placed = $this->checkoutService->placeOnline($userId, $values, $key, $signature);
+        if (!$placed['created']) {
+            http_response_code(303);
+            Response::redirect('/orders/view?id=' . $placed['order_id']);
+        }
+        // This key now belongs to the saved order, so the next checkout form needs a fresh one.
+        Session::forget('checkout_intent');
+        try {
+            $checkoutUrl = $this->payments->start($placed['order_id'], $userId, $placed['cart_ids']);
+        } catch (\Throwable) {
+            http_response_code(503);
+            $this->renderCheckout($userId, $values, ['form' => 'We could not start your online payment, so no order was placed and your bag was kept. Please try again, or choose cash on delivery.']);
+            return;
+        }
+        try {
+            http_response_code(303);
+            Response::redirectExternal($checkoutUrl);
+        } catch (\RuntimeException) {
+            // The order is saved; the customer can pay from its page.
+            http_response_code(303);
+            Session::flash('warning', 'Your order is saved but unpaid. Use "Pay now" on this page to continue.');
+            Response::redirect('/orders/view?id=' . $placed['order_id']);
+        }
+    }
+
+    /** PayMongo sends the customer here after paying. The redirect proves nothing: ask PayMongo. */
+    public function paymentReturn(): void
+    {
+        header('Cache-Control: no-store, private');
+        $user = AuthGuard::roles(['customer']);
+        $id = $this->orderIdFrom($_GET['id'] ?? null);
+        if ($id < 1 || $this->orders->owned($id, (int) $user['id']) === null) {
+            Response::redirect('/orders');
+        }
+        try {
+            $state = $this->payments->reconcile($id, (int) $user['id']);
+        } catch (\Throwable) {
+            $state = 'pending';
+        }
+        if ($state === 'paid') {
+            Session::flash('success', 'Payment received. Thank you! Your order is confirmed.');
+        } elseif ($state === 'pending') {
+            Session::flash('warning', 'We are still confirming your payment with PayMongo. This page updates once it is confirmed; refresh in a moment.');
+        } else {
+            Session::flash('warning', 'This order is no longer waiting for payment.');
+        }
+        Response::redirect('/orders/view?id=' . $id);
+    }
+
+    /** PayMongo sends the customer here if they back out of the payment page. */
+    public function paymentCancelled(): void
+    {
+        header('Cache-Control: no-store, private');
+        $user = AuthGuard::roles(['customer']);
+        $id = $this->orderIdFrom($_GET['id'] ?? null);
+        if ($id < 1 || $this->orders->owned($id, (int) $user['id']) === null) {
+            Response::redirect('/orders');
+        }
+        Session::flash('warning', 'Payment was not completed. Your order is saved and unpaid: you can pay now or cancel it.');
+        Response::redirect('/orders/view?id=' . $id);
+    }
+
+    /** "Pay now": resume the hosted checkout of an unpaid online order. */
+    public function payOrder(): void
+    {
+        header('Cache-Control: no-store, private');
+        $user = AuthGuard::roles(['customer']);
+        Csrf::enforce(is_string($_POST['_token'] ?? null) ? $_POST['_token'] : null);
+        $id = $this->orderIdFrom($_POST['id'] ?? null);
+        if ($id < 1) {
+            Response::redirect('/orders');
+        }
+        try {
+            $url = $this->payments->checkoutUrlFor($id, (int) $user['id']);
+            if ($url !== null) {
+                http_response_code(303);
+                Response::redirectExternal($url);
+            }
+            Session::flash('warning', 'This order is not waiting for payment.');
+        } catch (\Throwable) {
+            Session::flash('error', 'We could not reach PayMongo. Please try again in a moment.');
+        }
+        Response::redirect('/orders/view?id=' . $id);
+    }
+
+    /** Let a customer cancel an online order they have not paid for (returns the reserved stock). */
+    public function cancelUnpaidOrder(): void
+    {
+        header('Cache-Control: no-store, private');
+        $user = AuthGuard::roles(['customer']);
+        Csrf::enforce(is_string($_POST['_token'] ?? null) ? $_POST['_token'] : null);
+        $id = $this->orderIdFrom($_POST['id'] ?? null);
+        if ($id < 1) {
+            Response::redirect('/orders');
+        }
+        try {
+            $state = $this->payments->closeUnpaid($id, (int) $user['id']);
+        } catch (\Throwable) {
+            $state = 'error';
+        }
+        match ($state) {
+            'cancelled' => Session::flash('success', 'Your unpaid order was cancelled.'),
+            'paid' => Session::flash('success', 'Your payment was already received, so this order cannot be cancelled here.'),
+            'error' => Session::flash('error', 'We could not reach PayMongo to cancel this order. Please try again in a moment.'),
+            default => Session::flash('warning', 'This order cannot be cancelled here.'),
+        };
+        Response::redirect('/orders/view?id=' . $id);
+    }
+
+    private function orderIdFrom(mixed $value): int
+    {
+        return is_string($value) && preg_match('/^[1-9][0-9]{0,17}$/D', $value) ? (int) $value : 0;
     }
 
     public function orders(): void
@@ -147,6 +271,15 @@ final class CustomerController
             http_response_code(404);
             View::render('errors/404', ['pageTitle' => 'Order not found'], 'plain');
             return;
+        }
+        if (($order['payment_method'] ?? '') === 'paymongo' && ($order['payment_status'] ?? '') === 'pending'
+            && !empty($order['paymongo_checkout_session_id'])) {
+            try {
+                $this->payments->reconcile($id, (int) $user['id']);
+                $order = $this->orders->owned($id, (int) $user['id']) ?? $order;
+            } catch (\Throwable) {
+                // PayMongo unreachable: show the order as saved; the webhook or next visit will catch up.
+            }
         }
         View::render('customer/order', ['pageTitle' => 'Order #' . $order['id'], 'order' => $order,
             ...$this->commonData((int) $user['id'])]);
@@ -179,7 +312,8 @@ final class CustomerController
             Session::put('checkout_intent', $intent);
         }
         View::render('customer/checkout', ['pageTitle' => 'Checkout', 'cart' => $cart, 'profile' => $profile,
-            'values' => $values, 'errors' => $errors, 'checkoutKey' => $intent['key']], 'checkout');
+            'values' => $values, 'errors' => $errors, 'checkoutKey' => $intent['key'],
+            'onlinePayment' => PayMongoService::isConfigured()], 'checkout');
     }
 
     public function routine(): void

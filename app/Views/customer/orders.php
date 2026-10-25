@@ -12,7 +12,7 @@ require dirname(__DIR__) . '/partials/empty_state.php';
     <thead><tr><th>Order</th><th>Placed</th><th>Status</th><th>Total</th><th>Details</th></tr></thead>
     <tbody><?php foreach ($history['items'] as $item): ?><tr>
       <td>#<?= (int) $item['id'] ?></td><td><?= e($item['created_at']) ?></td>
-      <td><?= e(ucfirst($item['status'])) ?></td><td>₱<?= e(number_format((float) $item['total'], 2)) ?></td>
+      <td><?= e(ucfirst($item['status'])) ?><?php if (($item['payment_method'] ?? '') === 'paymongo'): ?><br><small><?= e(['paid' => 'Paid online', 'pending' => 'Awaiting payment', 'failed' => 'Payment failed', 'expired' => 'Unpaid'][$item['payment_status'] ?? 'pending'] ?? '') ?></small><?php endif; ?></td><td>₱<?= e(number_format((float) $item['total'], 2)) ?></td>
       <td><a href="<?= e(url('/orders/view?id=' . (int) $item['id'])) ?>">View order #<?= (int) $item['id'] ?></a></td>
     </tr><?php endforeach; ?></tbody>
   </table></div>

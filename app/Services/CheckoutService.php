@@ -23,15 +23,37 @@ final class CheckoutService
         });
     }
 
+    /** Cash-on-delivery order. Returns the order id. */
     public function place(int $userId, array $input, string $key, string $signature): int
     {
-        $checked = CheckoutValidator::validate($input);
+        return $this->create($userId, $input, $key, $signature, 'cod')['order_id'];
+    }
+
+    /**
+     * Order paid online through PayMongo. The order is saved as payment_status=pending with stock
+     * reserved; PaymentService then opens the hosted checkout. 'created' is false when this
+     * checkout key already produced an order (a replayed or double-submitted request).
+     *
+     * @return array{order_id: int, cart_ids: int[], created: bool}
+     */
+    public function placeOnline(int $userId, array $input, string $key, string $signature): array
+    {
+        return $this->create($userId, $input, $key, $signature, 'paymongo');
+    }
+
+    /** @return array{order_id: int, cart_ids: int[], created: bool} */
+    private function create(int $userId, array $input, string $key, string $signature, string $method): array
+    {
+        if ($method === 'paymongo' && !PayMongoService::isConfigured()) {
+            throw new InvalidArgumentException('Online payment is not available right now.');
+        }
+        $checked = CheckoutValidator::validate($input, [$method]);
         if ($checked['errors']) throw new InvalidArgumentException('Check your contact and delivery information.');
         if (!preg_match('/^[a-f0-9]{64}$/D', $key) || !preg_match('/^[a-f0-9]{64}$/D', $signature)) {
             throw new InvalidArgumentException('Refresh checkout before placing an order.');
         }
         $values = $checked['values'];
-        return $this->transaction(function (PDO $pdo) use ($userId, $values, $key, $signature): int {
+        return $this->transaction(function (PDO $pdo) use ($userId, $values, $key, $signature, $method): array {
             $customer = $this->lockCustomer($pdo, $userId);
             // User-row locking serializes same-customer cart mutations and repeated submissions.
             // The customer lock handles replays; avoid absent-key gap locks before stock locking.
@@ -39,7 +61,7 @@ final class CheckoutService
             $repeat->execute([$key]);
             if ($existing = $repeat->fetch()) {
                 if ((int) $existing['user_id'] !== $userId) throw new InvalidArgumentException('Refresh checkout before placing an order.');
-                return (int) $existing['id'];
+                return ['order_id' => (int) $existing['id'], 'cart_ids' => [], 'created' => false];
             }
             $bag = $this->lockBag($pdo, $userId);
             if (!$bag['items']) throw new InvalidArgumentException('Your bag is empty.');
@@ -48,7 +70,9 @@ final class CheckoutService
                 throw new InvalidArgumentException('Your bag or product details changed. Review the updated summary before placing your order.');
             }
             if (!filter_var($customer['email'], FILTER_VALIDATE_EMAIL)) throw new InvalidArgumentException('Your account needs a valid email address before checkout.');
-            $stmt = $pdo->prepare('INSERT INTO orders (user_id,delivery_address_snapshot,recipient_name_snapshot,contact_email_snapshot,contact_no_snapshot,payment_method,subtotal,total,status,checkout_key) VALUES (?,?,?,?,?,"cod",?,?,"pending",?)');
+            $stmt = $pdo->prepare($method === 'paymongo'
+                ? 'INSERT INTO orders (user_id,delivery_address_snapshot,recipient_name_snapshot,contact_email_snapshot,contact_no_snapshot,payment_method,payment_status,subtotal,total,status,checkout_key) VALUES (?,?,?,?,?,"paymongo","pending",?,?,"pending",?)'
+                : 'INSERT INTO orders (user_id,delivery_address_snapshot,recipient_name_snapshot,contact_email_snapshot,contact_no_snapshot,payment_method,subtotal,total,status,checkout_key) VALUES (?,?,?,?,?,"cod",?,?,"pending",?)');
             $stmt->execute([$userId, $values['delivery_address'], $values['full_name'], $customer['email'], $values['contact_no'], $bag['subtotal'], $bag['subtotal'], $key]);
             $orderId = (int) $pdo->lastInsertId();
             $insert = $pdo->prepare('INSERT INTO order_items (order_id,product_id,product_name_snapshot,quantity,unit_price_snapshot) VALUES (?,?,?,?,?)');
@@ -61,8 +85,8 @@ final class CheckoutService
             $convert = $pdo->prepare('UPDATE carts SET status="converted",updated_at=NOW() WHERE id=? AND user_id=? AND status="active"');
             foreach ($bag['cart_ids'] as $id) $convert->execute([$id, $userId]);
             $audit = $pdo->prepare('INSERT INTO audit_logs (actor_id,action,target_type,target_id,details) VALUES (?,"order.create","order",?,?)');
-            $audit->execute([$userId, $orderId, 'Checkout / Order Processing; items ' . $bag['item_count'] . '; COD; total PHP ' . $bag['subtotal']]);
-            return $orderId;
+            $audit->execute([$userId, $orderId, 'Checkout / Order Processing; items ' . $bag['item_count'] . '; ' . ($method === 'paymongo' ? 'PayMongo' : 'COD') . '; total PHP ' . $bag['subtotal']]);
+            return ['order_id' => $orderId, 'cart_ids' => $bag['cart_ids'], 'created' => true];
         });
     }
 

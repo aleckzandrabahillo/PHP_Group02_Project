@@ -3,7 +3,8 @@
 // $nextStatuses is Order::FLOW[current status], so the dropdown can only offer legal moves.
 $nextStatuses = $nextStatuses ?? [];
 $history = $history ?? [];
-$paymentLabels = ['cod' => 'Cash on delivery', 'manual' => 'Manual payment'];
+$paymentLabels = ['cod' => 'Cash on delivery', 'manual' => 'Manual payment', 'paymongo' => 'Online (PayMongo)'];
+$paymentStatusLabels = ['paid' => 'Paid', 'pending' => 'Awaiting payment', 'failed' => 'Failed', 'expired' => 'Not completed'];
 ?>
 <section class="page-head">
   <div>
@@ -20,7 +21,16 @@ $paymentLabels = ['cod' => 'Cash on delivery', 'manual' => 'Manual payment'];
     <p><strong><?= e($order['customer']) ?></strong></p>
     <p class="muted"><?= e($order['email']) ?><?= !empty($order['contact_no']) ? ' · ' . e($order['contact_no']) : '' ?></p>
     <p><?= e($order['delivery_address_snapshot']) ?></p>
-    <p class="muted small">Payment: <?= e($paymentLabels[$order['payment_method']] ?? $order['payment_method']) ?></p>
+    <p class="muted small">Payment: <?= e($paymentLabels[$order['payment_method']] ?? $order['payment_method']) ?><?php if ($order['payment_method'] === 'paymongo'): ?> — <strong><?= e($paymentStatusLabels[$order['payment_status'] ?? ''] ?? ($order['payment_status'] ?? '')) ?></strong><?php if (!empty($order['paid_at'])): ?> on <?= e($order['paid_at']) ?><?php endif; ?><?php endif; ?></p>
+    <?php if ($order['payment_method'] === 'paymongo' && !empty($order['paymongo_checkout_session_id'])): ?>
+      <p class="muted small">PayMongo checkout session: <?= e($order['paymongo_checkout_session_id']) ?><?= !empty($order['paymongo_payment_intent_id']) ? ' · payment intent: ' . e($order['paymongo_payment_intent_id']) : '' ?></p>
+    <?php endif; ?>
+    <?php if ($order['payment_method'] === 'paymongo' && ($order['payment_status'] ?? '') === 'paid' && $order['status'] === 'cancelled'): ?>
+      <p class="alert alert-warning" role="alert">This order is cancelled but was paid. Refund it from the PayMongo dashboard.</p>
+    <?php endif; ?>
+    <?php if ($order['payment_method'] === 'paymongo' && ($order['payment_status'] ?? '') === 'pending'): ?>
+      <p class="muted small">Waiting for online payment: this order cannot be processed or shipped until PayMongo confirms it.</p>
+    <?php endif; ?>
   </div>
 
   <div class="panel">

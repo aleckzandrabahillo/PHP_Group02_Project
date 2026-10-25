@@ -60,8 +60,14 @@ $cart = $cart ?? ['items' => [], 'subtotal' => 0.0, 'item_count' => 0];
 
     <div class="checkout-section checkout-payment-section">
       <div class="checkout-section-heading"><h2>Payment</h2></div>
-      <label class="checkout-payment-choice"><input type="radio" name="payment_method" value="cod" checked required> Cash on delivery (demonstration)</label>
-      <p class="muted small">No online payment is collected. Do not enter card or bank details.</p>
+      <?php $onlinePayment = !empty($onlinePayment); $chosenMethod = $onlinePayment && ($values['payment_method'] ?? 'cod') === 'paymongo' ? 'paymongo' : 'cod'; ?>
+      <label class="checkout-payment-choice"><input type="radio" name="payment_method" value="cod" <?= $chosenMethod === 'cod' ? 'checked' : '' ?> required> Cash on delivery (demonstration)</label>
+      <?php if ($onlinePayment): ?>
+        <label class="checkout-payment-choice"><input type="radio" name="payment_method" value="paymongo" <?= $chosenMethod === 'paymongo' ? 'checked' : '' ?>> Pay online with GCash, Maya or card (PayMongo)</label>
+        <p class="muted small">Online payment opens PayMongo's secure page. Avela never sees or stores your card or wallet details. Your order is held for you until you pay or cancel it.</p>
+      <?php else: ?>
+        <p class="muted small">No online payment is collected. Do not enter card or bank details.</p>
+      <?php endif; ?>
       <a class="back-link" href="<?= e(url('/cart')) ?>">Return to your bag</a>
     </div>
   </section>

@@ -4,7 +4,8 @@ namespace App\Core;
 
 final class CheckoutValidator
 {
-    public static function validate(array $input): array
+    /** @param string[] $allowedMethods payment methods the customer may choose */
+    public static function validate(array $input, array $allowedMethods = ['cod']): array
     {
         $values = ['full_name' => '', 'contact_no' => '', 'delivery_address' => '', 'payment_method' => 'cod'];
         $errors = [];
@@ -36,7 +37,9 @@ final class CheckoutValidator
                 $values['contact_no'] = $phone;
             }
         }
-        if ($values['payment_method'] !== 'cod') $errors['payment_method'] = 'Choose the available cash-on-delivery option.';
+        if (!in_array($values['payment_method'], $allowedMethods, true)) {
+            $errors['payment_method'] = $allowedMethods === ['cod'] ? 'Choose the available cash-on-delivery option.' : 'Choose an available payment method.';
+        }
         return ['values' => $values, 'errors' => $errors];
     }
 }

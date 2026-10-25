@@ -165,7 +165,11 @@ CREATE TABLE IF NOT EXISTS orders (
   contact_email_snapshot VARCHAR(190) NULL,
   contact_no_snapshot VARCHAR(25) NULL,
   checkout_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL,
-  payment_method ENUM('cod','manual') NOT NULL DEFAULT 'cod',
+  payment_method ENUM('cod','manual','paymongo') NOT NULL DEFAULT 'cod',
+  payment_status ENUM('not_required','pending','paid','failed','expired') NOT NULL DEFAULT 'not_required',
+  paymongo_checkout_session_id VARCHAR(100) NULL,
+  paymongo_payment_intent_id VARCHAR(100) NULL,
+  paid_at DATETIME NULL,
   subtotal DECIMAL(10,2) NOT NULL,
   total DECIMAL(10,2) NOT NULL,
   status ENUM('pending','processing','shipped','delivered','cancelled') NOT NULL DEFAULT 'pending',
@@ -173,6 +177,8 @@ CREATE TABLE IF NOT EXISTS orders (
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
   UNIQUE KEY uq_orders_checkout_key (checkout_key),
+  UNIQUE KEY uq_orders_paymongo_session (paymongo_checkout_session_id),
+  UNIQUE KEY uq_orders_paymongo_intent (paymongo_payment_intent_id),
   INDEX idx_orders_user_status_date (user_id, status, created_at),
   INDEX idx_orders_status_date (status, created_at)
 ) ENGINE=InnoDB;

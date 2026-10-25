@@ -139,12 +139,22 @@ final class Order
         }
 
         return Database::transaction(function (PDO $pdo) use ($id, $to, $afterChange): array {
-            $stmt = $pdo->prepare('SELECT status FROM orders WHERE id = :id FOR UPDATE');
+            $stmt = $pdo->prepare('SELECT * FROM orders WHERE id = :id FOR UPDATE');
             $stmt->execute(['id' => $id]);
-            $from = $stmt->fetchColumn();
+            $row = $stmt->fetch();
 
-            if ($from === false) {
+            if (!$row) {
                 return ['ok' => false, 'missing' => true, 'message' => 'Order not found.'];
+            }
+            $from = $row['status'];
+
+            // An online order is only fulfilled once PayMongo has confirmed payment.
+            if (
+                ($row['payment_method'] ?? '') === 'paymongo'
+                && ($row['payment_status'] ?? '') !== 'paid'
+                && in_array($to, ['processing', 'shipped', 'delivered'], true)
+            ) {
+                return ['ok' => false, 'from' => $from, 'message' => "Order #{$id} is waiting for online payment and cannot move to {$to} until PayMongo confirms it."];
             }
             if (!in_array($to, self::FLOW[$from] ?? [], true)) {
                 return ['ok' => false, 'from' => $from, 'message' => "Order #{$id} is {$from} and cannot be changed to {$to}."];
@@ -169,7 +179,7 @@ final class Order
         $total = (int) $count->fetchColumn();
         $pages = max(1, (int) ceil($total / 10));
         $page = max(1, min($page, $pages));
-        $stmt = $pdo->prepare('SELECT id,total,status,payment_method,created_at FROM orders WHERE user_id=? ORDER BY id DESC LIMIT 10 OFFSET ' . (($page - 1) * 10));
+        $stmt = $pdo->prepare('SELECT * FROM orders WHERE user_id=? ORDER BY id DESC LIMIT 10 OFFSET ' . (($page - 1) * 10));
         $stmt->execute([$userId]);
         return ['items' => $stmt->fetchAll(), 'total' => $total, 'page' => $page, 'pages' => $pages];
     }

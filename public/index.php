@@ -56,6 +56,7 @@ $security = new \App\Controllers\SecurityController(new \App\Services\SecurityMa
 $mfa = new \App\Controllers\MfaController(new \App\Services\MfaService($users, $otp, $logs), $authService);
 $hairProfile = new \App\Controllers\HairProfileController(new \App\Models\HairProfile(), new \App\Services\ConcernInterpreter());
 $recommendations = new \App\Controllers\RecommendationController();
+$paymentWebhooks = new \App\Controllers\PaymentWebhookController();
 
 $router = new Router();
 $router->get('/', [$public, 'landing']);
@@ -99,6 +100,11 @@ $router->post('/cart/update', [$customer, 'updateCart']);
 $router->post('/cart/remove', [$customer, 'removeFromCart']);
 $router->get('/orders', [$customer, 'orders']);
 $router->get('/orders/view', [$customer, 'order']);
+$router->post('/orders/pay', [$customer, 'payOrder']);
+$router->post('/orders/cancel-unpaid', [$customer, 'cancelUnpaidOrder']);
+$router->get('/payments/return', [$customer, 'paymentReturn']);
+$router->get('/payments/cancelled', [$customer, 'paymentCancelled']);
+$router->post('/webhooks/paymongo', [$paymentWebhooks, 'paymongo']);
 $router->get('/profile', fn() => $customer->page('profile','Profile'));
 $router->post('/profile/image', [$customer, 'updateProfileImage']);
 $router->post('/profile/update', [$customer, 'updateProfile']);
