@@ -25,7 +25,7 @@
         </div>
         <div class="product-grid catalog-grid search-product-grid">
           <?php foreach ($productResults as $product): ?>
-            <?php $showExcerpt = false; require dirname(__DIR__) . '/partials/product_card.php'; ?>
+            <?php $showExcerpt = true; require dirname(__DIR__) . '/partials/product_card.php'; ?>
           <?php endforeach; ?>
         </div>
       </section>

@@ -1,6 +1,5 @@
 <section class="page-head">
   <div>
-    <span class="eyebrow">CATALOG</span>
     <h1>Inventory</h1>
     <p>Check current stock levels and product availability.</p>
   </div>
@@ -54,7 +53,7 @@
     <div class="data-row header" role="row">
       <span role="columnheader">Product</span>
       <span role="columnheader">SKU</span>
-      <span role="columnheader">Stock</span>
+      <span role="columnheader" class="num">Stock</span>
       <span role="columnheader">Availability</span>
       <span role="columnheader">Actions</span>
     </div>
@@ -63,8 +62,8 @@
       <div class="data-row" role="row" data-staff-row data-list-search="<?= e($product['name'] . ' ' . $product['sku']) ?>" data-list-name="<?= e($product['name']) ?>" data-list-status="<?= e(\App\Models\Product::availability($product)) ?>" data-list-quantity="<?= (int) $product['stock_qty'] ?>">
         <span role="cell"><?= e($product['name']) ?></span>
         <span role="cell"><?= e($product['sku']) ?></span>
-        <span role="cell"><?= (int) $product['stock_qty'] ?></span>
-        <span role="cell"><?= e(\App\Models\Product::availability($product)) ?></span>
+        <span role="cell" class="num"><?= (int) $product['stock_qty'] ?></span>
+        <span role="cell"><?= staff_status(\App\Models\Product::availability($product)) ?></span>
         <span role="cell"><a class="btn btn-secondary btn-sm" href="<?= e(url('/catalog/inventory?stock=' . (int) $product['id'] . '#stock-form')) ?>">Update stock</a></span>
       </div>
     <?php endforeach; ?>

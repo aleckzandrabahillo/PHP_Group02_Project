@@ -43,12 +43,36 @@ final class PublicController
         ], 'public');
     }
 
+    public function help(): void
+    {
+        View::render('public/help', [
+            'pageTitle'=>'Help & care', 'privacyEmail'=>\App\Services\PrivacyContact::configured(),
+            'storeNav'=>$this->storeNavigation($this->products->filterOptions()), ...$this->customerContext(),
+        ], 'public');
+    }
+
     public function privacy(): void
     {
         $options = $this->products->filterOptions();
         View::render('public/privacy', [
             'pageTitle'=>'Privacy & cookies', 'privacyEmail'=>\App\Services\PrivacyContact::configured(),
             'storeNav'=>$this->storeNavigation($options), ...$this->customerContext(),
+        ], 'public');
+    }
+
+    /** Public editorial content; account and recommendation actions keep their own guards. */
+    public function careGuide(string $slug = ''): void
+    {
+        $articles = ['know-your-texture', 'wash-day', 'condition-with-care', 'a-gentler-finish'];
+        if ($slug !== '' && !in_array($slug, $articles, true)) {
+            http_response_code(404);
+            View::render('errors/404', ['pageTitle' => 'Page not found'], 'plain');
+            return;
+        }
+        View::render($slug === '' ? 'public/care-guide' : 'public/care-' . $slug, [
+            'pageTitle' => 'Care guide',
+            'storeNav' => $this->storeNavigation($this->products->filterOptions()),
+            ...$this->customerContext(),
         ], 'public');
     }
 
@@ -163,6 +187,7 @@ final class PublicController
             return [
                 'title' => (string) $product['name'],
                 'subtitle' => (string) $product['category_name'] . ' · ₱' . number_format((float) $product['price'], 2),
+                'priceLabel' => '₱' . number_format((float) $product['price'], 2),
                 'url' => url('/product?id=' . (int) $product['id']),
                 'imageUrl' => $imageUrl ?? product_placeholder_url((string) $product['category_name']),
                 'imageAlt' => $imageUrl !== null ? (string) $product['name'] : '',
@@ -212,6 +237,11 @@ final class PublicController
             ['title' => 'Shop', 'subtitle' => 'Browse the full Avela hair care catalog.', 'url' => url('/shop'), 'keywords' => 'shop products catalog hair care'],
             ['title' => 'Hair Assessment', 'subtitle' => 'Save your hair characteristics and interpret an optional concern description.', 'url' => url('/assessment'), 'keywords' => 'hair assessment profile texture scalp concerns personalized'],
             ['title' => 'About Avela', 'subtitle' => 'Learn how Avela combines e-commerce with optional personalization.', 'url' => url('/about'), 'keywords' => 'about avela store ecommerce personalization'],
+            ['title' => 'Care guide', 'subtitle' => 'Thoughtful notes for getting to know your hair.', 'url' => url('/care-guide'), 'keywords' => 'care guide notes articles'],
+            ['title' => 'Your texture is a starting point', 'subtitle' => 'Get to know the natural shape of your hair.', 'url' => url('/care-guide/know-your-texture'), 'keywords' => 'care guide texture straight wavy curly coily'],
+            ['title' => 'A wash day with a little more clarity', 'subtitle' => 'Start with a simple order.', 'url' => url('/care-guide/wash-day'), 'keywords' => 'care guide shampoo wash cleanse'],
+            ['title' => 'Condition with care', 'subtitle' => 'A little attention for your lengths.', 'url' => url('/care-guide/condition-with-care'), 'keywords' => 'care guide conditioner conditioning'],
+            ['title' => 'A gentler finish', 'subtitle' => 'Small everyday habits, with a little more care.', 'url' => url('/care-guide/a-gentler-finish'), 'keywords' => 'care guide finish drying everyday'],
         ];
 
         $current = auth_user();

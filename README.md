@@ -6,23 +6,23 @@ A student hair-care demonstration store for Group 02's Open Source Programming a
 
 - Catalog, filters, sorting, pagination, product details and persistent favorites.
 - Customer profiles, structured saved delivery addresses and independently editable Checkout recipients.
-- Customer registration with reCAPTCHA v2 Checkbox, single-use email activation links and numeric verification fallback.
+- Customer registration with reCAPTCHA v2 Checkbox, email-code verification followed by a separate, single-use activation link.
 - Transactional Cash on Delivery Checkout, shipping quotes, guarded discounts, public order references, private history and fulfillment timelines.
 - Maya-hosted **Sandbox-only** card checkout with authenticated payment reconciliation, idempotency and stock reservations. Avela does not collect or store card details; browser redirects do not prove payment.
 - Catalog Manager/Administrator Category and Product CRUD, image uploads, archive/reactivation and guarded inventory updates.
-- Staff email OTP, optional authenticator enrollment/recovery, three-attempt account locking, Administrator recovery, password changes/expiry and automatic session-expiry navigation.
+- Staff email OTP, optional authenticator enrollment/recovery, configurable account locking (default three attempts), Administrator recovery, password changes/expiry and automatic session-expiry navigation.
 - Administrator users/staff management, actor-attributed audits, filtered activity lists and transactional order cancellation/stock restoration.
 - Responsive customer/staff pages, dashboard reports, native address dialogs, consistent interaction motion and staff list filtering/sorting/paging.
 - Private, editable hair profiles with separate scalp/length characteristics and bounded English/Taglish concern interpretation using Python.
 - Explainable profile-based product matches and saved routines, using reviewed demonstration suitability metadata and existing cart/Checkout paths.
 
-External SMTP delivery, public HTTPS, genuine Sandbox webhook delivery and worker scheduling require operator configuration and separate acceptance evidence. Sensitive-field encryption remains a separate planned workstream. The Privacy Policy retains its review notice until a monitored contact channel is configured and verified. Source tests do not establish production or legal compliance.
+External SMTP delivery, public HTTPS, genuine Sandbox webhook delivery and worker scheduling require operator configuration and separate acceptance evidence. Selected PII encryption and real upload scanning are opt-in implementations requiring separately verified schema/key/scanner rollout. The Privacy Policy retains its review notice until a monitored contact channel is configured and verified. Source tests do not establish production or legal compliance.
 
 ## Local setup
 
 Concern interpretation requires Python **3.10+** (standard library only) and PHP proc_open. Configure a working NLP_PYTHON_BINARY in private .env; no Python service, packages or external API is required. See [hair-profile setup and limitations](docs/HAIR_PROFILE.md).
 
-Requires PHP **8.2+**, Composer, MySQL/MariaDB with InnoDB, and PHP `pdo_mysql`, `mbstring`, `fileinfo` and `openssl`; Maya additionally requires `curl`. PHP must support HTTPS requests for Google verification. Enable required extensions in your development environment; do not replace locked dependencies with an update.
+Requires PHP **8.2+**, Composer, MySQL/MariaDB with InnoDB, and PHP `pdo_mysql`, `mbstring`, `fileinfo`, `gd` and `openssl`; Maya additionally requires `curl`. PHP must support HTTPS requests for Google verification. Enable required extensions in your development environment; do not replace locked dependencies with an update.
 
 1. Clone the repository and run `composer install`.
 2. Copy `.env.example` to private `.env`. Set your own database target, `APP_ENV=development`, `APP_URL=http://localhost:8000`, and reCAPTCHA v2 Checkbox keys registered for **localhost**. Never commit credentials. Missing CAPTCHA configuration fails closed.
@@ -60,7 +60,9 @@ The underlying PHP helper accepts `<role> <email> <username> <full-name> --passw
 
 ## Demonstration data and assets
 
-The canonical [catalog manifest](database/demo_catalog.json) contains twenty fictional products. The [separate image manifest](database/demo_images.json) contains fifteen approved photographs; five products retain placeholders. Source assets alone do not assign database image paths.
+The current owner-approved [fictional catalog](database/avela_catalog_20261030.json) contains 100 products, with 95 supplied images and five honest placeholders. Its [reviewed suitability metadata](database/avela_suitability_20261030.json) supports 76 cosmetic demonstration entries; 24 remain outside recommendations pending review. See the [catalog refresh guide](docs/CATALOG_REFRESH.md) and [team setup guide](docs/TEAM_SETUP.md). Git includes the catalog source and images, not anyone's database, accounts, orders or private settings. Catalog installation requires a separate, guarded local import.
+
+The earlier [twenty-product manifest](database/demo_catalog.json) and [image manifest](database/demo_images.json) remain for historical compatibility and regression fixtures. Source assets alone do not assign database image paths. The current refresh archives older demonstration products rather than deleting their history or relationships.
 
 - [Repeat-safe catalog import and disposable tests](docs/DEMO_CATALOG.md).
 - [Guarded image assignment and disposable tests](docs/DEMO_IMAGES.md).
@@ -81,3 +83,7 @@ Keep `.env`, logs, backups, sessions, recovery codes and user uploads private. S
 ## Group members
 
 Aleckzandra Bahillo (@aleckzandrabahillo), Jasmine Iris Eva (@EvaIris5892), Alexzis Mae Tutor (@alexzismaetutor), Angela Nicole Zurbano (@zurbanoangelanicole).
+
+## Interface and architecture
+
+Avela uses an airy editorial storefront with locally hosted typography, approved imagery, accessible controls and a compact staff workspace. The PHP application remains authoritative for accounts, permissions, stock, checkout and hair personalization. See [design guidelines](DESIGN.md), [team setup](docs/TEAM_SETUP.md) and the focused feature/security documentation above. Local preview state never replaces authenticated application data or server validation.

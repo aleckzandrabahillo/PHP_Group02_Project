@@ -158,7 +158,10 @@ try {
         verifyHair('Static asset delivered ' . $path, $asset['code'] === 200 && strlen($asset['body']) > 1000
             && (bool) array_filter($asset['headers'], static fn($header) => str_contains(strtolower($header), $mime)));
     }
-    foreach (['/cart','/orders','/routine','/profile'] as $path) verifyHair('Customer regression ' . $path, hairRequest($path,$client)['code']===200);
+    foreach (['/orders','/routine','/profile'] as $path) verifyHair('Customer regression ' . $path, hairRequest($path,$client)['code']===200);
+    $bagRedirect=hairRequest('/cart',$client);
+    verifyHair('Legacy cart opens the shared drawer', $bagRedirect['code']===302 && in_array('Location: /?bag=open',$bagRedirect['headers'],true));
+    verifyHair('Cart fragment remains customer accessible',hairRequest('/cart?panel=1',$client)['code']===200);
     $failed = count(array_filter($checks, static fn($row) => $row['status']==='FAIL'));
     if (isset($options['output'])) file_put_contents($options['output'], json_encode($checks, JSON_PRETTY_PRINT|JSON_THROW_ON_ERROR));
     echo (count($checks)-$failed) . ' PASS, ' . $failed . " FAIL\n";

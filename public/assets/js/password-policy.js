@@ -42,3 +42,27 @@ document.addEventListener('click',event=>{
   const reveal=input.type==='password';input.type=reveal?'text':'password';
   button.textContent=reveal?'Hide setup key':'Show setup key';button.setAttribute('aria-pressed',String(reveal));
 });
+
+function setupPasswordConfirmation(form) {
+  const confirmation=form.querySelector('input[name="password_confirmation"]');
+  const password=form.querySelector('input[name="password"]');
+  if(!confirmation||!password||confirmation.dataset.avelaConfirmationReady)return;
+  confirmation.dataset.avelaConfirmationReady='true';
+  const label=confirmation.labels?.[0];
+  if(label&&!confirmation.getAttribute('aria-labelledby')&&!confirmation.getAttribute('aria-label'))confirmation.setAttribute('aria-label',label.textContent.trim());
+  const feedback=document.createElement('small'),icon=document.createElement('span'),message=document.createElement('span');
+  feedback.className='password-match';feedback.id=(confirmation.id||'password-confirmation')+'-match';feedback.hidden=true;
+  feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');feedback.setAttribute('aria-atomic','true');icon.setAttribute('aria-hidden','true');feedback.append(icon,message);
+  (confirmation.closest('.password-wrap')||confirmation).insertAdjacentElement('afterend',feedback);
+  confirmation.setAttribute('aria-describedby',[confirmation.getAttribute('aria-describedby'),feedback.id].filter(Boolean).join(' '));
+  const update=()=>{
+    const entered=confirmation.value.length>0,matched=entered&&password.value.length>0&&password.value===confirmation.value;
+    feedback.hidden=!entered;feedback.dataset.matched=String(matched);icon.textContent=matched?'✓':'×';
+    message.textContent=entered?(matched?'Passwords match.':'Passwords don’t match yet.'):'';
+  };
+  password.addEventListener('input',update);confirmation.addEventListener('input',update);confirmation.addEventListener('change',update);
+  form.addEventListener('reset',()=>{feedback.hidden=true;message.textContent='';});update();
+}
+function mountPasswordConfirmations(){document.querySelectorAll('form').forEach(setupPasswordConfirmation);}
+mountPasswordConfirmations();
+document.addEventListener('avela:content',mountPasswordConfirmations);

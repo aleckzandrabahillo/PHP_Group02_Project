@@ -1,52 +1,27 @@
 <?php
-$homeRole = auth_user()['role'] ?? null;
-$profileLink = $homeRole === 'customer' ? url('/assessment') : ($homeRole === null ? url('/login') : url('/shop'));
+require_once dirname(__DIR__).'/partials/handoff_art.php';
+$homeRole=auth_user()['role']??null;
+$profileLink=$homeRole==='customer'?url('/assessment'):($homeRole===null?url('/login'):url('/shop'));
 ?>
-<main id="main-content" tabindex="-1" class="editorial-home">
-  <section class="editorial-hero" aria-labelledby="home-hero-title">
-    <div class="editorial-hero-visual">
-      <img src="<?= e(asset('images/editorial/hair-campaign.jpg')) ?>" alt="Natural curls photographed close up in warm light" width="2400" height="1998" fetchpriority="high" decoding="async">
-    </div>
-    <div class="editorial-hero-copy">
-      <h1 id="home-hero-title">A routine that<br>starts with you.</h1>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="<?= e($profileLink) ?>"><?= $homeRole === 'admin' || $homeRole === 'catalog_manager' ? 'Explore the catalog' : 'Find your routine' ?><span aria-hidden="true">→</span></a>
-        <a class="editorial-text-link" href="<?= e(url('/shop')) ?>">Shop Avela <span aria-hidden="true">↗</span></a>
-      </div>
-    </div>
-    <div class="editorial-hero-caption"><span>INDIVIDUAL HAIR. CONSIDERED CARE.</span><span>THE AVELA APPROACH</span></div>
-  </section>
-  <section class="editorial-section" id="featured" aria-labelledby="home-shop-title">
-    <div class="editorial-section-heading"><h2 id="home-shop-title">Shop Avela.</h2><span>Care for your everyday.</span></div>
-    <?php if (!empty($featuredProducts)): ?>
-      <div class="product-grid">
-        <?php foreach ($featuredProducts as $product): ?>
-          <?php $showExcerpt = false; require dirname(__DIR__) . '/partials/product_card.php'; ?>
-        <?php endforeach; ?>
-      </div>
-    <?php else: ?><div class="empty-store-state"><p>New additions to the catalog will appear here.</p></div><?php endif; ?>
-    <div class="editorial-collection-footer"><a class="editorial-text-link" href="<?= e(url('/shop')) ?>">View all care <span aria-hidden="true">→</span></a></div>
-  </section>
-  <section class="editorial-concerns" aria-labelledby="home-concern-title">
-    <figure><img src="<?= e(asset('images/editorial/hair-editorial.jpg')) ?>" alt="A close-up study of flowing brunette hair" width="1200" height="1800" loading="lazy" decoding="async"><figcaption>THE TEXTURE OF YOU.</figcaption></figure>
-    <div class="editorial-concern-copy">
-      <h2 id="home-concern-title">Start with<br>what you notice.</h2>
-      <p>Different hair. Different needs. Find your starting point.</p>
-      <div class="editorial-concern-links">
-        <?php foreach (($concerns ?? []) as $concern): ?>
-          <a href="<?= e(url('/shop?concern[]=' . rawurlencode((string) $concern['code']))) ?>"><?= e($concern['display_name']) ?><span aria-hidden="true">↗</span></a>
-        <?php endforeach; ?>
-      </div>
-      <small>Browse the catalog by its listed suitability tags.</small>
-    </div>
-  </section>
-  <section class="editorial-section editorial-approach" aria-labelledby="home-approach-title">
-    <div><h2 id="home-approach-title">A little about you.<br>A clearer kind of care.</h2><p>Your texture, scalp and concerns. Build a shortlist with explanations you can understand.</p><a class="editorial-text-link" href="<?= e($profileLink) ?>">Explore your care <span aria-hidden="true">→</span></a></div>
-    <div class="editorial-approach-details">
-      <article><h3>A profile, not a guess.</h3><p>Choose your hair details and add an optional description.</p></article>
-      <article><h3>Know why it matches.</h3><p>Simple language rules and catalog suitability tags give each supported match a clear reason.</p></article>
-      <article><h3>Keep it together.</h3><p>Save your routine, review current prices and availability, and add only what you need to your bag.</p></article>
-      <p class="editorial-disclosure">Explore care based on your hair profile and listed product attributes. Matches are not medical advice.</p>
-    </div>
-  </section>
-</main>
+<main id="main-content" tabindex="-1" class="v2-reference v2-home">
+    <section class="campaign editorial-hero" aria-labelledby="hero-title"><img class="campaign-photo" src="<?= e(asset('editorial-v2/campaign-wide.webp')) ?>" width="1672" height="941" alt="Naturally wavy brunette hair falling over a white cotton top in soft studio daylight" fetchpriority="high"><div class="campaign-headline"><p class="eyebrow">HAIR CARE, MADE PERSONAL</p><h1 id="hero-title"><span>Your hair.</span><span>Your kind of care.</span></h1></div><div class="campaign-bottom"><div class="campaign-story"><p>Good care starts with getting to know your hair. Let’s find what makes yours, yours.</p><a class="button" href="<?= e($profileLink) ?>">Find my routine </a><a class="text-link" href="#discover">Discover <span aria-hidden="true">↓</span></a></div><a class="campaign-card" href="<?= e($profileLink) ?>"><div class="campaign-card-copy"><p class="eyebrow">A LITTLE CLARITY</p><h2>Meet your<br>hair profile.</h2></div><span class="card-arrow" aria-hidden="true">↗</span></a></div><div class="campaign-meta"><span>ROOTED IN YOU.</span><span>EVERY TEXTURE. EVERY VERSION OF YOU.</span></div></section>
+
+    <div class="intro-strip" aria-label="How Avela works"><div><span>01</span><p>Know your hair.</p></div><span class="strip-rule"></span><div><span>02</span><p>Understand your needs.</p></div><span class="strip-rule"></span><div><span>03</span><p>Make care your own.</p></div></div>
+
+    <section class="section home-products-section reveal" id="home-essentials"><div class="section-heading"><div><p class="eyebrow">THE EVERYDAY ESSENTIALS</p><h2>A little care<br>for your shelf.</h2></div><a class="text-link" href="<?= e(url('/shop')) ?>">Shop all</a></div><div class="product-grid" id="home-products"><?php foreach ($featuredProducts ?? [] as $product): $showExcerpt = true; require dirname(__DIR__).'/partials/product_card.php'; endforeach; ?></div><?php if (empty($featuredProducts)): ?><p class="empty-store-state">New additions to the collection will appear here.</p><?php endif; ?></section><section class="section texture-section reveal" id="discover" aria-labelledby="texture-title">
+      <div class="section-heading"><div><p class="eyebrow">A GOOD PLACE TO START</p><h2 id="texture-title">Every texture.<br>Every version of you.</h2></div><div class="heading-side"><p>Straight, wavy, curly, coily.<br>There's no one way to have good hair.</p><a class="text-link"  href="<?= e($profileLink) ?>">Get to know yours </a></div></div>
+<div class="texture-grid"><?php foreach(['straight'=>['Straight','A smooth starting point'],'wavy'=>['Wavy','A little natural movement'],'curly'=>['Curly','Defined curves and loops'],'coily'=>['Coily','Close curves and coils']] as $texture=>$info): ?><button class="texture-card" type="button" data-texture-dialog="texture-<?= e($texture) ?>"><span class="texture-art"><span class="art-index"><?= str_pad((string)(array_search($texture,['straight','wavy','curly','coily'])+1),2,'0',STR_PAD_LEFT) ?></span><?= handoff_texture($texture) ?><span class="art-action" aria-hidden="true">+</span></span><span class="texture-label"><strong><?= e($info[0]) ?></strong><span><?= e($info[1]) ?></span></span></button><dialog class="texture-dialog" id="texture-<?= e($texture) ?>" aria-labelledby="texture-title-<?= e($texture) ?>"><button class="icon-button" type="button" data-texture-close aria-label="Close texture note"><?= handoff_icon('close') ?></button><p class="eyebrow">A GOOD PLACE TO START</p><h2 id="texture-title-<?= e($texture) ?>"><?= e($info[0]) ?></h2><div class="texture-dialog-art"><?= handoff_texture($texture) ?></div><p><?= e($info[1]) ?>. Your texture is one part of the picture. Scalp, lengths, and daily habits help make care personal.</p><a class="button primary" href="<?= e($profileLink) ?>">Get to know your hair </a></dialog><?php endforeach; ?></div>
+      <div class="texture-note"><span>More than one pattern? That's normal.</span><a href="<?= e(url('/care-guide/know-your-texture')) ?>">A note on hair textures <span aria-hidden="true">+</span></a></div>
+    </section>
+
+    <section class="home-editorial reveal"><div class="home-editorial-portrait"><img src="<?= e(asset('editorial-v2/home-portrait.webp')) ?>" width="640" height="640" alt="A woman with naturally curly hair in soft outdoor daylight" loading="lazy"></div><div class="home-editorial-copy"><p class="eyebrow">EVERY TEXTURE. EVERY VERSION OF YOU.</p><h2>There’s a little<br>more to your hair.</h2><p>The way it dries. The way you style it. The things you notice from one day to the next. Start with those details, and make care your own.</p><a class="text-link" href="<?= e($profileLink) ?>">Get to know your hair </a><img class="home-editorial-still" src="<?= e(asset('editorial-v2/home-care.webp')) ?>" width="640" height="640" alt="An ivory comb, cotton towel, and water in soft daylight" loading="lazy"></div></section><section class="routine-section reveal" id="routine" aria-labelledby="routine-title">
+      <div class="routine-intro"><p class="eyebrow">LESS GUESSWORK, MORE YOU</p><h2 id="routine-title">A little structure.<br>A routine that fits.</h2><p>Start with the essentials. Get to know each step, then make room for what your hair needs.</p><a class="button primary"  href="<?= e($profileLink) ?>">Build my routine </a><span class="routine-intro-note">Simple steps. Thoughtful choices.</span></div>
+      <div class="routine-explorer"><div class="routine-tabs" role="tablist" aria-label="Explore routine steps"><button role="tab" id="tab-cleanse" aria-controls="routine-panel" aria-selected="true" data-v2-routine-tab="cleanse"><span>01</span> Cleanse</button><button role="tab" id="tab-condition" aria-controls="routine-panel" aria-selected="false" tabindex="-1" data-v2-routine-tab="condition"><span>02</span> Condition</button><button role="tab" id="tab-finish" aria-controls="routine-panel" aria-selected="false" tabindex="-1" data-v2-routine-tab="finish"><span>03</span> Finish</button></div><div id="routine-panel" role="tabpanel" aria-labelledby="tab-cleanse" tabindex="0"><div class="fade-in"><div class="step-visual"><?php foreach(['cleanse','condition','finish'] as $art): echo str_replace('<svg ', '<svg data-step-art="'.e($art).'" '.($art!=='cleanse'?'hidden ':''), handoff_care_art($art)); endforeach; ?><div><span class="step-number">STEP 01</span><h3 data-v2-step-title>Start at the roots.</h3></div></div><p class="routine-panel-copy" data-v2-step-copy>Focus shampoo on your scalp and let the rinse flow through your lengths. Your texture and how oily your scalp feels can help you find a wash rhythm that suits you.</p><div class="step-category"><span data-v2-step-category>THE CLEANSING STEP</span><span data-v2-step-detail>Shampoo · Wash day</span></div></div></div></div>
+    </section>
+
+    <section class="section home-guide reveal"><div class="section-heading"><div><p class="eyebrow">THE CARE NOTES</p><h2>A little more knowing.</h2></div><a class="text-link" href="<?= e(url('/care-guide')) ?>">All care notes </a></div><div class="home-guide-grid"><a class="home-guide-card" href="<?= e(url('/care-guide/know-your-texture')) ?>"><div class="home-guide-art"><?= handoff_guide_art('texture') ?></div><div><p class="eyebrow">KNOW YOUR HAIR / 2 MIN READ</p><h3>Your texture is<br>a starting point.</h3><span class="text-link">Read the note </span></div></a><a class="home-guide-card" href="<?= e(url('/care-guide/wash-day')) ?>"><div class="home-guide-art"><?= handoff_guide_art('cleanse') ?></div><div><p class="eyebrow">THE ESSENTIALS / 2 MIN READ</p><h3>A wash day with<br>a little more clarity.</h3><span class="text-link">Read the note </span></div></a></div></section><section class="section approach reveal" id="approach" aria-labelledby="approach-title"><div class="approach-top"><p class="eyebrow">THE AVELA APPROACH</p><span>THOUGHTFUL BY NATURE. PERSONAL BY DESIGN.</span></div><h2 id="approach-title">Your hair is personal.<br>Your care should be, too.</h2><div class="approach-bottom"><p>Hair care doesn't have to start with a shelf full of products. It can start with your texture, your everyday habits, and what you want to focus on.</p><div class="approach-points"><div><?= handoff_icon('sliders') ?><span>A profile that starts with you</span></div><div><?= handoff_icon('list') ?><span>Clear steps, in a useful order</span></div><div><?= handoff_icon('spark') ?><span>A little less overthinking</span></div></div></div></section>
+
+    <section class="faq-section section" aria-labelledby="faq-title"><div><p class="eyebrow">A LITTLE MORE CLARITY</p><h2 id="faq-title">Good questions.</h2></div><div class="faqs"><details><summary>How does the hair assessment work?<span aria-hidden="true">+</span></summary><p>Tell us about your texture, scalp, lengths, and everyday concerns. Avela uses your answers to put together a simple care outline with reasons for each step. It uses clear rules, not a chatbot or a medical diagnosis.</p></details><details><summary>What if I don't know my hair type?<span aria-hidden="true">+</span></summary><p>That's okay. Choose “Not sure” and continue. You can revisit your profile as you get to know your hair. Hair can have more than one texture.</p></details><details><summary>Can I save and change my routine?<span aria-hidden="true">+</span></summary><p>Yes. Your completed assessment is saved to your account. Review your matches, save a routine, or retake the assessment. A changed assessment marks an older saved routine for review.</p></details><details><summary>Can I shop Avela products here?<span aria-hidden="true">+</span></summary><p>Explore the collection by care step, save your favorites, and keep your chosen essentials together in your bag.</p></details></div></section>
+
+    <section class="closing"><p class="eyebrow">LET'S START WITH YOU</p><h2>A good hair day<br>begins with a little knowing.</h2><a class="button primary"  href="<?= e($profileLink) ?>">Meet your hair </a></section>
+  </main>

@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__DIR__).'/partials/handoff_art.php';
 $filters = $filters ?? [
     'categories' => [], 'concerns' => [], 'textures' => [], 'scalps' => [],
     'routine_steps' => [], 'availability' => '', 'min_price' => null, 'max_price' => null,
@@ -14,12 +15,7 @@ $clearFilterUrl = url('/shop') . ($clearParams ? '?' . http_build_query($clearPa
 ?>
 
 <main id="main-content" tabindex="-1" class="store-page shop-page">
-  <section class="shop-head">
-    <span class="eyebrow">SHOP</span>
-    <h1>All care.</h1>
-    <p>Find the essentials for your everyday routine.</p>
-  </section>
-
+  <section class="shop-banner"><div><p class="eyebrow">THE EVERYDAY ESSENTIALS</p><h1>A little care<br>for your shelf.</h1></div><div class="shop-banner-side"><p>Thoughtfully chosen essentials for every texture and every day.</p></div></section><section class="shop-listing">
   <form class="shop-form" method="get" action="<?= e(url('/shop')) ?>" data-shop-form>
     <input type="hidden" name="sort" value="<?= e($sort) ?>">
     <?php if (($search ?? '') !== ''): ?><input type="hidden" name="q" value="<?= e($search) ?>"><?php endif; ?>
@@ -30,7 +26,7 @@ $clearFilterUrl = url('/shop') . ($clearParams ? '?' . http_build_query($clearPa
         <?php if (($search ?? '') !== ''): ?><span>for “<?= e($search) ?>”</span><?php endif; ?>
       </div>
 
-      <div class="shop-toolbar">
+      <div class="shop-tools">
         <details class="sort-menu" data-sort-menu>
           <summary class="toolbar-text-control">
             <span>Sort by: <?= e($sortLabel) ?></span>
@@ -51,9 +47,8 @@ $clearFilterUrl = url('/shop') . ($clearParams ? '?' . http_build_query($clearPa
       </div>
     </div>
 
-    <div class="filter-backdrop" data-filter-backdrop hidden></div>
-    <aside id="product-filter-drawer" class="filter-drawer" data-filter-drawer hidden aria-hidden="true">
-      <div class="filter-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="filter-title">
+    <dialog id="product-filter-drawer" class="filter-drawer" data-filter-drawer hidden aria-labelledby="filter-title">
+      <div class="filter-drawer-panel">
         <div class="filter-drawer-head">
           <div>
             <span class="eyebrow">FILTER PRODUCTS</span>
@@ -144,17 +139,17 @@ $clearFilterUrl = url('/shop') . ($clearParams ? '?' . http_build_query($clearPa
         </div>
 
         <div class="filter-drawer-footer">
-          <a class="btn btn-secondary" href="<?= e($clearFilterUrl) ?>">Clear filters</a>
-          <button class="btn btn-primary" type="submit">View results</button>
+          <button class="btn btn-secondary" type="button" data-filter-reset>Clear selections</button>
+          <button class="btn btn-primary" type="submit">Apply filters</button>
         </div>
       </div>
-    </aside>
+    </dialog>
   </form>
 
   <?php if (!empty($products)): ?>
-    <div class="product-grid catalog-grid" data-continuous-list="shop" data-stream-page="<?= (int)$catalogPage ?>" data-next-url="<?= e($pageLinks['Next']??'') ?>">
+    <div class="shop-grid" data-continuous-list="shop" data-stream-page="<?= (int)$catalogPage ?>" data-next-url="<?= e($pageLinks['Next']??'') ?>">
       <?php foreach ($products as $product): ?>
-        <?php $showExcerpt = false; require dirname(__DIR__) . '/partials/product_card.php'; ?>
+        <?php $showExcerpt = true; require dirname(__DIR__) . '/partials/product_card.php'; ?>
       <?php endforeach; ?>
     </div>
   <?php else: ?>
@@ -165,4 +160,4 @@ $clearFilterUrl = url('/shop') . ($clearParams ? '?' . http_build_query($clearPa
     </div>
   <?php endif; ?>
   <?php $moreUrl=$pageLinks['Next']??'';require dirname(__DIR__).'/partials/continuous_status.php'; ?>
-</main>
+</section><section class="shop-routine-callout"><div><p class="eyebrow">A LITTLE LESS GUESSWORK</p><h2>Care that starts with you.</h2><p>Get to know your hair, then explore your own routine.</p></div><a class="button primary" href="<?= e(url('/assessment')) ?>">Find my routine </a></section></main>

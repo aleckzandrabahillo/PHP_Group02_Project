@@ -11,12 +11,29 @@ use PDO;
 
 final class PasswordService
 {
-    /** Disabled pending approval. Legacy unknown timestamps are never silently backdated. */
+    /** Approved coursework period. Existing private deployment overrides remain authoritative. */
     public static function expired(array $user): bool
     {
-        $days=filter_var(env('PASSWORD_EXPIRY_DAYS',0),FILTER_VALIDATE_INT);
-        return $days!==false && $days>=30 && $days<=365 && !empty($user['password_changed_at'])
-            && strtotime($user['password_changed_at'])+$days*86400<=time();
+        $deadline=self::expiresAt($user);
+        return $deadline!==null && $deadline<=time();
+    }
+
+    /** Known password ages use 90 days; legacy ages get an explicit prospective grace deadline. */
+    public static function expiresAt(array $user): ?int
+    {
+        $days=filter_var(env('PASSWORD_EXPIRY_DAYS',90),FILTER_VALIDATE_INT);
+        if($days===0)return null;
+        if($days===false||$days<30||$days>365)throw new \RuntimeException('Password security settings are unavailable.');
+        if(!empty($user['password_changed_at'])){
+            $changed=strtotime((string)$user['password_changed_at']);
+            if($changed===false)throw new \RuntimeException('Password security information is unavailable.');
+            return $changed+$days*86400;
+        }
+        $legacy=env('PASSWORD_LEGACY_GRACE_END','');
+        if($legacy==='')return null; // Existing deployments retain their separately approved transition.
+        if(!is_string($legacy)||!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00$/D',$legacy)
+            ||($deadline=strtotime($legacy))===false||gmdate('Y-m-d\TH:i:sP',$deadline)!==$legacy)throw new \RuntimeException('Password security settings are unavailable.');
+        return $deadline;
     }
 
     public function change(int $id, #[\SensitiveParameter] string $current, #[\SensitiveParameter] string $new): string

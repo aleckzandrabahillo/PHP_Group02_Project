@@ -20,6 +20,8 @@ final class ImageUploadPolicy
  }
  public static function store(string $temporary,string $destination,string $mime):void
  {
+  // PHP's private upload temporary file is scanned before any public file is written.
+  UploadScanner::assertClean($temporary);
   $image=self::decode($temporary,$mime);$config=self::config();$output=null;
   try{
    $width=imagesx($image);$height=imagesy($image);

@@ -1,0 +1,11 @@
+{
+  "evidence_date": "2026-10-24",
+  "kind": "Historical local acceptance; not rerun in this update",
+  "clean_scan_passed": true,
+  "official_harmless_eicar_detected": true,
+  "test_rejected_before_public_storage": true,
+  "real_time_protection_preserved": true,
+  "settings_changed": false,
+  "sample_was_executed": false,
+  "source_record_sha256": "033c2e03a8eebe3d03c0fc7dbb8d79650188351b7704c65ac7af567f9fb3a263"
+}

@@ -1,0 +1,1230 @@
+{
+  "version": "1",
+  "catalog_sha256": "fea741a396974e297c1993d1403fcfe3f999fab81a8863e57fc20b91a0a651b9",
+  "notice": "Reviewed only as fictional demonstration specifications, not manufacturer, formula, FDA or clinical evidence. Unreviewed/medical-boundary products and unsupported treatment claims remain excluded from recommendations.",
+  "products": [
+    {
+      "sku": "AVE-26-0001",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0001",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0002",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0002",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage",
+        "concern:dryness",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0003",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0003",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:frizz",
+        "concern:tangling"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0004",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0004",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:oiliness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0005",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0005",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:curly",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0006",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0006",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:straight",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0007",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0007",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:straight",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0008",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0008",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0009",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0009",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:tangling",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0010",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0010",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0011",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0011",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:straight"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0012",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0012",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:frizz",
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0013",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0013",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0014",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0014",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0015",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0015",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0016",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0016",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0017",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0017",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0018",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0018",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage",
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0019",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0019",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:curly"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0020",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0020",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0021",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0021",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0022",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0022",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage",
+        "concern:frizz",
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0023",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0023",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0024",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0024",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:curly",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0025",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0025",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage",
+        "concern:oiliness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0026",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0026",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0027",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0027",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness",
+        "concern:damage",
+        "concern:tangling"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0028",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0028",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:curly",
+        "concern:frizz",
+        "concern:dryness",
+        "concern:damage",
+        "concern:tangling"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0029",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0029",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0030",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0030",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0031",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0031",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0032",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0032",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0033",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0033",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0034",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0034",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:coily",
+        "texture:curly",
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0035",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0035",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0036",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0036",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0037",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0037",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0038",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0038",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage",
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0039",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0039",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0040",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0040",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage",
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0041",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0041",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0042",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0042",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:straight",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0043",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0043",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0044",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0044",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:coily",
+        "texture:curly",
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0045",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0045",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:oiliness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0046",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0046",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0047",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0047",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0048",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0048",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0049",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0049",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:curly"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0050",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0050",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:curly"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0051",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0051",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0052",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0052",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0053",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0053",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0054",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0054",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0055",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0055",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "scalp:dry_scalp",
+        "scalp:oily_scalp"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0056",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0056",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0057",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0057",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:frizz",
+        "concern:tangling"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0058",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0058",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0059",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0059",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:curly"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0060",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0060",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0061",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0061",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:curly"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0062",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0062",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0063",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0063",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:straight"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0064",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0064",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness",
+        "concern:frizz",
+        "concern:tangling"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0065",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0065",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0066",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0066",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage",
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0067",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0067",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0068",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0068",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0069",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0069",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:curly",
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0070",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0070",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0071",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0071",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0072",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0072",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:straight",
+        "concern:frizz",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0073",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0073",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:curly",
+        "concern:frizz",
+        "concern:tangling",
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0074",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0074",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness",
+        "concern:damage",
+        "concern:frizz"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0075",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0075",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "scalp:oily_scalp"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0076",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0076",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0077",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0077",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0078",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0078",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:frizz",
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0079",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0079",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:oiliness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0080",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0080",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:curly"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0081",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0081",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0082",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0082",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:frizz",
+        "concern:dryness",
+        "texture:straight"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0083",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0083",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0084",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0084",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness",
+        "concern:frizz",
+        "concern:tangling",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0085",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0085",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0086",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0086",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:curly",
+        "concern:frizz",
+        "concern:dryness",
+        "concern:tangling"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0087",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0087",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0088",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0088",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0089",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0089",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "scalp:oily_scalp"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0090",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0090",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "scalp:oily_scalp",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0091",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0091",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "texture:straight",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0092",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0092",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0093",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0093",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0094",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0094",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:tangling",
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0095",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0095",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0096",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0096",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0097",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0097",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0098",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0098",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:damage"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0099",
+      "status": "reviewed_demo",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0099",
+      "reviewed_at": "2026-10-30",
+      "tags": [
+        "concern:dryness"
+      ],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    },
+    {
+      "sku": "AVE-26-0100",
+      "status": "pending_review",
+      "source_type": "approved_demonstration_design",
+      "source_reference": "database/avela_catalog_20261030.json#AVE-26-0100",
+      "reviewed_at": "2026-10-30",
+      "tags": [],
+      "treatment_support": [],
+      "accessory_purpose": ""
+    }
+  ]
+}

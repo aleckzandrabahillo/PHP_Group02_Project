@@ -19,7 +19,7 @@ final class RoutineGuide
             $product = $item['product'];
             $role = match ($product['category_name'] ?? '') {
                 'Shampoo' => 'cleanse', 'Conditioner' => 'condition', 'Treatment' => 'treat',
-                'Serum', 'Hair Oil' => 'finish',
+                'Serum', 'Hair Oil', 'Styling' => 'finish',
                 'Hair Tools' => (($product['sku'] ?? '') === 'AVE-TOL-001' || ($product['accessory_purpose'] ?? '') === 'detangling') ? 'accessory' : null,
                 default => null,
             };
@@ -46,7 +46,7 @@ final class RoutineGuide
             $mask = in_array($sku, ['AVE-TRT-001', 'AVE-TRT-002'], true);
             $cream = $sku === 'AVE-TRT-003';
             $wash[] = $step('treat', $mask ? 'Make room for a mask' : ($cream ? 'Work through knots' : 'Follow your treatment directions'),
-                $mask ? 'Occasional wash-day extra' : 'Optional · follow the label',
+                $mask ? 'Occasional wash-day extra' : 'Optional Â· follow the label',
                 $mask ? 'Use on a wash day at the frequency on its label. Check whether it replaces your conditioner; do not automatically layer both. Rinse as directed.'
                     : ($cream ? 'Work the rinse-out cream through wet sections. Gently loosen knots from the ends upward, then rinse.'
                         : 'Check the label for where this treatment belongs, how often to use it and whether to rinse. Its application method is not confirmed here.'),
@@ -96,7 +96,7 @@ final class RoutineGuide
 
     private static function finish(array $product, callable $step, bool $dry, array $concerns, bool $damp): array
     {
-        return $step('finish', $damp ? 'Apply your leave-in' : 'Finish the lengths', $damp ? 'On damp lengths · optional' : 'After drying · optional',
+        return $step('finish', $damp ? 'Apply your leave-in' : 'Finish the lengths', $damp ? 'On damp lengths Â· optional' : 'After drying Â· optional',
             $damp ? 'Spread a small amount through damp lengths, avoiding the scalp. Leave in and dry or style as usual, following its label.'
                 : 'If you want a finishing step, apply only as directed to the lengths or ends. Keep it off roots that feel oily.',
             in_array('frizz', $concerns, true) ? 'Frizz is one of your recorded concerns: this finish is optional, not a reason to add more layers.'

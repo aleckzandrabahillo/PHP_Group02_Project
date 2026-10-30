@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__DIR__).'/partials/handoff_art.php';
 $currentUser = auth_user();
 $currentRole = $currentUser['role'] ?? null;
 $imageUrl = product_image_url($product['image_path'] ?? null);
@@ -12,8 +13,8 @@ $reviewSummary = $reviewSummary ?? ['count' => 0, 'average' => 0.0];
       <span><?= e($product['category_name']) ?></span>
     </nav>
 
-    <section class="product-detail-shell">
-      <div class="product-detail-art">
+    <section class="product-detail">
+      <div class="product-detail-photo">
         <?php if ($imageUrl !== null): ?>
           <img class="product-detail-image" src="<?= e($imageUrl) ?>" alt="<?= e($product['name']) ?>" width="1200" height="1500" decoding="async" fetchpriority="high">
         <?php else: ?>
@@ -23,19 +24,38 @@ $reviewSummary = $reviewSummary ?? ['count' => 0, 'average' => 0.0];
 
       <div class="product-detail-copy">
 
-        <h1><?= e($product['name']) ?></h1>
-        <strong class="product-price">₱<?= e(number_format((float) $product['price'], 2)) ?></strong>
+<p class="eyebrow"><?= e(mb_strtoupper($product['category_name'])) ?></p><div class="product-title-row"><h1><?= e($product['name']) ?></h1><div class="detail-heart"><?php $favoriteProductId = (int) $product['id']; $favoriteProductName = (string) $product['name']; require dirname(__DIR__) . '/partials/favorite_button.php'; unset($favoriteProductName); ?></div></div>
+        <strong class="detail-price">₱<?= e(number_format((float) $product['price'], 2)) ?></strong>
         <?php if (trim((string) $product['description']) !== ''): ?>
-          <p class="product-summary"><?= e((string) $product['description']) ?></p>
+          <p class="product-description"><?= e((string) $product['description']) ?></p>
         <?php endif; ?>
 
-        <div class="detail-meta">
+        <?php if ($currentRole === 'customer'): ?>
+          <form id="add-to-bag-form" class="purchase-form detail-add-row" method="post" action="<?= e(url('/cart/add')) ?>">
+            <?= csrf_field() ?>
+            <input type="hidden" name="product_id" value="<?= (int) $product['id'] ?>">
+            <input type="hidden" name="return_to" value="<?= e(current_relative_uri()) ?>">
+            <div class="quantity-block">
+              <span class="purchase-label visually-hidden">Quantity</span>
+              <div class="quantity-control" data-quantity-control>
+                <button type="button" data-quantity-minus aria-label="Decrease quantity">−</button>
+                <input type="number" name="quantity" min="1" max="<?= max(1, (int) $product['stock_qty']) ?>" value="1" inputmode="numeric" aria-label="Quantity" <?= $inStock ? '' : 'disabled' ?>>
+                <button type="button" data-quantity-plus aria-label="Increase quantity">+</button>
+              </div>
+            </div>
+<button class="button primary" type="submit" <?= $inStock ? '' : 'disabled' ?>><?= $inStock ? 'Add to bag' : 'Out of stock' ?> <?= handoff_icon('bag') ?></button>
+          </form>
+
+        <?php elseif ($currentRole === null): ?>
+          <a class="btn btn-primary product-signin-cta" href="<?= e(url('/login')) ?>">Sign in to add to bag</a>
+        <?php endif; ?>
+        <div class="product-accordions"><details><summary>Product details <span aria-hidden="true">+</span></summary>        <div class="detail-meta">
           <span>SKU <strong><?= e($product['sku']) ?></strong></span>
           <span>Routine step <strong><?= e($product['routine_step'] ? ucfirst((string) $product['routine_step']) : 'General care') ?></strong></span>
           <span>Availability <strong><?= $inStock ? 'In stock' : 'Out of stock' ?></strong></span>
         </div>
 
-        <?php
+</details><details><summary>Listed suitability <span aria-hidden="true">+</span></summary>        <?php
         $tagGroups = [
             'concern' => 'Hair concerns',
             'texture' => 'Hair texture',
@@ -55,27 +75,7 @@ $reviewSummary = $reviewSummary ?? ['count' => 0, 'average' => 0.0];
           <?php endforeach; ?>
         </div>
 
-        <?php if ($currentRole === 'customer'): ?>
-          <form id="add-to-bag-form" class="purchase-form" method="post" action="<?= e(url('/cart/add')) ?>">
-            <?= csrf_field() ?>
-            <input type="hidden" name="product_id" value="<?= (int) $product['id'] ?>">
-            <input type="hidden" name="return_to" value="<?= e(current_relative_uri()) ?>">
-            <div class="quantity-block">
-              <span class="purchase-label">Quantity</span>
-              <div class="quantity-control" data-quantity-control>
-                <button type="button" data-quantity-minus aria-label="Decrease quantity">−</button>
-                <input type="number" name="quantity" min="1" max="<?= max(1, (int) $product['stock_qty']) ?>" value="1" inputmode="numeric" aria-label="Quantity" <?= $inStock ? '' : 'disabled' ?>>
-                <button type="button" data-quantity-plus aria-label="Increase quantity">+</button>
-              </div>
-            </div>
-          </form>
-          <div class="purchase-actions">
-            <button class="btn btn-primary add-to-bag" type="submit" form="add-to-bag-form" <?= $inStock ? '' : 'disabled' ?>><?= $inStock ? 'Add to bag' : 'Out of stock' ?></button>
-            <?php $favoriteProductId = (int) $product['id']; $favoriteProductName = (string) $product['name']; require dirname(__DIR__) . '/partials/favorite_button.php'; unset($favoriteProductName); ?>
-          </div>
-        <?php elseif ($currentRole === null): ?>
-          <a class="btn btn-primary product-signin-cta" href="<?= e(url('/login')) ?>">Sign in to add to bag</a>
-        <?php endif; ?>
+<p>Suitability reflects the catalog metadata. Ingredient benefits and treatment compatibility are not independently verified.</p></details></div><a class="detail-assessment-link" href="<?= e(url('/assessment')) ?>">Find a little clarity for your hair </a>
       </div>
     </section>
   </div>
@@ -123,7 +123,7 @@ $reviewSummary = $reviewSummary ?? ['count' => 0, 'average' => 0.0];
         <?php if (!empty($recommendations)): ?>
           <div class="product-grid recommendation-grid">
             <?php foreach ($recommendations as $recommendation): ?>
-              <?php $productCard = $recommendation; $showExcerpt = false; require dirname(__DIR__) . '/partials/product_card.php'; unset($productCard); ?>
+              <?php $productCard = $recommendation; $showExcerpt = true; require dirname(__DIR__) . '/partials/product_card.php'; unset($productCard); ?>
             <?php endforeach; ?>
           </div>
         <?php else: ?>

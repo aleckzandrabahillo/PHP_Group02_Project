@@ -1,5 +1,5 @@
-<section class="page-head"><div><span class="eyebrow">ADMINISTRATION</span><h1>Staff &amp; Roles</h1><p>Administrator and Catalog Manager accounts.</p></div></section>
-<details class="panel" <?= $formErrors?'open':'' ?>><summary>Add staff account</summary>
+<section class="page-head"><div><h1>Staff &amp; roles</h1><p>Manage your store team and their access.</p></div></section>
+<details class="panel staff-create-account" <?= $formErrors?'open':'' ?>><summary>Add staff account</summary>
 <?php if($formErrors): ?><div class="alert alert-error" role="alert"><p>Review the staff account details.</p><ul><?php foreach($formErrors as $message): ?><li><?= e($message) ?></li><?php endforeach; ?></ul></div><?php endif; ?>
 <form method="post" action="<?= e(url('/admin/staff/create')) ?>" class="form-stack" novalidate>
 <?= csrf_field() ?>
@@ -11,7 +11,7 @@
 </div>
 <label class="field"><span>Password</span><input type="password" id="staff-password" name="password" required autocomplete="new-password" data-password-requirements data-password-minimum="<?= (int)$passwordPolicy['password_min_length'] ?>" data-password-maximum-bytes="72" data-password-uppercase="<?= (int)$passwordPolicy['password_min_uppercase'] ?>" data-password-lowercase="<?= (int)$passwordPolicy['password_min_lowercase'] ?>" data-password-numbers="<?= (int)$passwordPolicy['password_min_numbers'] ?>" data-password-special="<?= (int)$passwordPolicy['password_min_special'] ?>" aria-describedby="staff-password-help" aria-invalid="<?= isset($formErrors['password'])?'true':'false' ?>"></label>
 <?php $passwordInputId='staff-password';require dirname(__DIR__).'/partials/password_requirements.php'; ?>
-<p class="muted small">Staff must complete their normal email OTP or authenticator verification when signing in.</p>
+<p class="muted small">Staff sign in with their password and email code, followed by 2-step verification if enabled.</p>
 <button class="btn btn-primary" type="submit">Create staff account</button>
 </form></details>
 <?php $staffMode=true;require dirname(__DIR__).'/partials/admin_accounts.php'; ?>

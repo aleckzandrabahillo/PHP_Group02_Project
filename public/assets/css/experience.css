@@ -48,3 +48,9 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .staff-main .profile-card{align-items:flex-start;gap:20px;min-width:0}.staff-main .profile-card>.avatar{flex:none}.staff-main .profile-card>div:not(.avatar){min-width:0;flex:1}.staff-main .profile-card :is(p,h2){overflow-wrap:anywhere}.staff-profile-link>span:last-child{min-width:0;overflow-wrap:anywhere}.notification-stack .alert>span{min-width:0}
 @media(max-width:600px){.dashboard-metrics .metric-card{padding:18px}.dashboard-metrics .metric-card strong{font-size:20px;overflow-wrap:anywhere}.staff-main .profile-card{padding:22px;gap:15px}}
 .product-card .product-quick-add.is-processing{opacity:1;visibility:visible}
+
+
+.password-match{display:flex;align-items:center;gap:7px;margin-top:7px;font-size:12px;line-height:1.5;color:#943c42}
+.password-match[hidden]{display:none}
+.password-match[data-matched=true]{color:#345e48}
+.password-match>span:first-child{font-size:15px;font-weight:700;line-height:1}

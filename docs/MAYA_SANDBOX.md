@@ -66,3 +66,12 @@ References: [one-time checkout/API/key contracts](https://developers.maya.ph/ref
 ## Local simulation
 
 MAYA_LOCAL_SIMULATION defaults to false. Local interactive tests require the explicitly guarded private development launcher, loopback PHP development server and disposable test database. The default provider client refuses to run when simulation is selected; no production API or automatic insecure fallback is enabled. The launcher injects an in-process test transport and clearly labels outcomes as simulated. Keep genuine webhook/worker readiness declarations false until separately verified. Simulated records belong only in the disposable test database.
+
+
+## Accurate order status and local browser reconciliation
+
+Order fulfillment and payment are displayed separately. COD cancellation removes the payment-due claim; a delivered COD order states that collection has not been recorded rather than inventing payment evidence. The current schema has no COD collection ledger, and delivery alone must not mark COD paid. A card paid label requires recorded verification; old simulations remain explicitly distinct.
+
+While an authenticated Customer views an awaiting-payment order, `order-payment.js` submits the existing ownership-checked, CSRF-protected refresh action. It makes up to three checks, at least 30 seconds apart, with loading/failure feedback and the existing manual fallback. Server-side session throttling also bounds repeated checks. The JSON response exposes only the owned order's state, label and verification time. Terminal results reload the order from saved authenticated evidence. GET, including provider return URLs, remains read-only. Successful same-state retrievals also update the verification timestamp.
+
+This browser flow does not replace unattended reconciliation. If the Customer closes the page or a provider result arrives later, the independently guarded `process_maya.php` worker/webhook workflow must run. No public endpoint, proxy exception, production mode or OS scheduled task is enabled by this change; deployment needs reviewed HTTPS ingress and worker scheduling. Targeted receipt delivery occurs after committed reconciliation, never while stock/order locks are held.

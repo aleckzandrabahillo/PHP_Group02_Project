@@ -33,3 +33,13 @@ __pycache__/
 .agents/
 skills-lock.json
 .taste-skill/
+
+# Generated review reports and local integration checkpoints
+/UI_HANDOFF_CORRECTION_*
+/UI_INTEGRATION_*
+/UI_PARITY_AUDIT.md
+/UI_REVIEW_REPAIR_*
+/docs/MAIN_FEATURE_INTEGRATION_*
+/docs/UI_INTEGRATION_*
+/docs/evidence/integration_*_tests.json
+/docs/evidence/ui_integration_*_tests.json

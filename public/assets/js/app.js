@@ -23,10 +23,9 @@ function syncPasswordToggle(input) {
   }
 
   const isVisible = input.type === 'text';
-  const showIcon = button.querySelector('.password-icon-show');
-  const hideIcon = button.querySelector('.password-icon-hide');
-  if (showIcon) showIcon.hidden = isVisible;
-  if (hideIcon) hideIcon.hidden = !isVisible;
+  const showIcon=button.querySelector('.password-icon-show'),hideIcon=button.querySelector('.password-icon-hide');
+  if(showIcon&&hideIcon){showIcon.hidden=isVisible;hideIcon.hidden=!isVisible;}
+  else button.textContent = isVisible ? 'Hide' : 'Show';
 
   if (hasValue) {
     const label = isVisible ? 'Hide password' : 'Show password';
@@ -37,6 +36,14 @@ function syncPasswordToggle(input) {
 }
 
 function syncAllPasswordToggles() {
+  document.querySelectorAll('input[type="password"]:not([data-password-input])').forEach(input=>{
+    if(!input.id){let index=1;while(document.getElementById('avela-password-'+index))index++;input.id='avela-password-'+index;}
+    input.setAttribute('data-password-input','');
+    const wrap=document.createElement('span'),button=document.createElement('button');
+    wrap.className='password-wrap';button.type='button';button.className='password-toggle';button.hidden=true;
+    button.dataset.passwordToggle=input.id;button.setAttribute('aria-controls',input.id);
+    input.insertAdjacentElement('beforebegin',wrap);wrap.append(input,button);
+  });
   document.querySelectorAll('[data-password-input]').forEach(syncPasswordToggle);
 }
 
@@ -74,59 +81,34 @@ function unlockViewport(key) {
   window.scrollTo(0, lockedScrollY);
 }
 
-let filterReturnFocus = null;
-let filterCloseTimer = null;
-
+let filterReturnFocus = null, filterCloseTimer = null, filterDraft = null;
+const filterMounts = new WeakSet();
+function filterControls(){return [...document.querySelectorAll('[data-filter-drawer] input,[data-filter-drawer] select')];}
 function openFilterDrawer(trigger) {
-  const drawer = document.querySelector('[data-filter-drawer]');
-  const backdrop = document.querySelector('[data-filter-backdrop]');
-  if (!drawer || !backdrop) return;
-
-  window.clearTimeout(filterCloseTimer);
-  closeGlobalSearch({restoreFocus: false, immediate: true});
-  closeMegaMenu(false);
-  filterReturnFocus = trigger instanceof HTMLElement ? trigger : null;
-  filterReturnFocus?.setAttribute('aria-expanded', 'true');
-  drawer.hidden = false;
-  backdrop.hidden = false;
-  drawer.setAttribute('aria-hidden', 'false');
-  document.body.classList.add('drawer-open');
-  lockViewport('filter');
-
-  requestAnimationFrame(() => {
-    drawer.classList.add('is-open');
-    backdrop.classList.add('is-open');
-    const firstFocusable = drawer.querySelector('button, input, select, a[href]');
-    if (firstFocusable instanceof HTMLElement) firstFocusable.focus();
-  });
+ const drawer=document.querySelector('[data-filter-drawer]');if(!drawer||drawer.open)return;
+ clearTimeout(filterCloseTimer);closeGlobalSearch({restoreFocus:false,immediate:true});closeMegaMenu(false);
+ filterReturnFocus=trigger;trigger?.setAttribute('aria-expanded','true');
+ filterDraft=filterControls().map(input=>({input,value:input.value,checked:input.checked}));
+ if(!filterMounts.has(drawer)){
+  filterMounts.add(drawer);
+  drawer.addEventListener('cancel',event=>{event.preventDefault();closeFilterDrawer();});
+  drawer.addEventListener('click',event=>{const r=drawer.getBoundingClientRect();if(event.target===drawer&&(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom))closeFilterDrawer();});
+ }
+ drawer.classList.remove('is-closing');drawer.hidden=false;drawer.showModal();drawer.querySelector('.filter-drawer-body').scrollTop=0;document.body.classList.add('drawer-open');
+ requestAnimationFrame(()=>{drawer.classList.add('is-open');drawer.querySelector('[data-filter-close]')?.focus({preventScroll:true});});
 }
-
-function closeFilterDrawer({restoreFocus = true, immediate = false} = {}) {
-  const drawer = document.querySelector('[data-filter-drawer]');
-  const backdrop = document.querySelector('[data-filter-backdrop]');
-  if (!drawer || !backdrop || drawer.hidden) return;
-
-  window.clearTimeout(filterCloseTimer);
-  drawer.classList.remove('is-open');
-  backdrop.classList.remove('is-open');
-  drawer.setAttribute('aria-hidden', 'true');
-
-  const finalize = () => {
-    drawer.hidden = true;
-    backdrop.hidden = true;
-    document.body.classList.remove('drawer-open');
-    unlockViewport('filter');
-    if (restoreFocus && filterReturnFocus instanceof HTMLElement) {
-      filterReturnFocus.setAttribute('aria-expanded', 'false');
-      filterReturnFocus.focus({preventScroll: true});
-    } else if (filterReturnFocus instanceof HTMLElement) {
-      filterReturnFocus.setAttribute('aria-expanded', 'false');
-    }
-  };
-
-  if (immediate || window.AvelaMotion?.reduced()) finalize();
-  else filterCloseTimer = window.setTimeout(finalize, (window.AvelaMotion?.duration('base')??220)+40);
+function closeFilterDrawer({restoreFocus=true,immediate=false,apply=false}={}) {
+ const drawer=document.querySelector('[data-filter-drawer]');if(!drawer||!drawer.open)return;
+ clearTimeout(filterCloseTimer);drawer.classList.remove('is-open');drawer.classList.add('is-closing');
+ if(!apply&&filterDraft)filterDraft.forEach(({input,value,checked})=>{input.value=value;input.checked=checked;});
+ const finish=()=>{drawer.close();drawer.hidden=true;drawer.classList.remove('is-closing');document.body.classList.remove('drawer-open');filterReturnFocus?.setAttribute('aria-expanded','false');if(restoreFocus)filterReturnFocus?.focus({preventScroll:true});};
+ if(immediate||window.AvelaMotion?.reduced())finish();else filterCloseTimer=setTimeout(finish,260);
 }
+document.addEventListener('click',event=>{
+ if(!event.target.closest?.('[data-filter-reset]'))return;
+ filterControls().forEach(input=>{if(input.type==='checkbox')input.checked=false;else if(input.type==='radio')input.checked=input.value==='';else input.value='';});
+});
+document.addEventListener('submit',event=>{if(event.target.matches('[data-shop-form]')&&!event.defaultPrevented)closeFilterDrawer({restoreFocus:false,immediate:true,apply:true});});
 
 const headerSurfaceReasons = new Set();
 
@@ -458,13 +440,7 @@ function syncFavoriteUi(productId, favorite, count) {
     button.setAttribute('aria-label', label);
     button.setAttribute('title', label);
   });
-  document.querySelectorAll('[data-favorite-count]').forEach((badge) => {
-    badge.textContent = String(count);
-    badge.hidden = count < 1;
-  });
-  document.querySelectorAll('[data-favorite-link]').forEach((link) => {
-    link.setAttribute('aria-label', `Favorites, ${count} saved product${count === 1 ? '' : 's'}`);
-  });
+
 }
 
 async function refreshFavoriteState() {
@@ -565,6 +541,19 @@ function normalizeCartQuantity(input) {
 }
 
 function updateCartSummary(data) {
+  if (Array.isArray(data.availability)) {
+    data.availability.forEach(item => {
+      document.querySelectorAll('[data-cart-item]').forEach(row => {
+        if (row.dataset.productId !== String(item.productId)) return;
+        const warning = row.querySelector('[data-cart-stock-warning]');
+        if (warning) { warning.textContent = item.message || ''; warning.hidden = !item.message; }
+        const quantity = row.querySelector('input[name="quantity"]');
+        if (quantity) { quantity.max = String(Math.max(1, Math.min(99, Number(item.stock) || 0))); quantity.disabled = !item.canAdjust; }
+        row.querySelectorAll('[data-quantity-minus],[data-quantity-plus]').forEach(button => { button.disabled = !item.canAdjust; });
+      });
+    });
+    document.querySelectorAll('[data-cart-availability]').forEach(notice => { notice.hidden = data.checkoutReady || Number(data.itemCount) < 1; });
+  }
   const count = Number(data.itemCount || 0);
   document.querySelectorAll('[data-cart-count]').forEach((badge) => {
     badge.textContent = String(count);
@@ -608,6 +597,7 @@ async function sendCartQuantityUpdate(form) {
   const requestedQuantity = normalizeCartQuantity(input);
 
   state.inFlight = true;
+  let accepted = false;
   form.classList.add('is-updating');
   form.setAttribute('aria-busy', 'true');
   showCartFeedback(form);
@@ -620,6 +610,7 @@ async function sendCartQuantityUpdate(form) {
       credentials: 'same-origin',
     });
     const data = await response.json();
+    accepted = response.ok && Boolean(data.ok);
 
     if (data.item && Number.isFinite(Number(data.item.quantity))) {
       const serverQuantity = Number(data.item.quantity);
@@ -648,7 +639,7 @@ async function sendCartQuantityUpdate(form) {
     form.removeAttribute('aria-busy');
 
     const confirmed = Number.parseInt(input.dataset.confirmedQuantity || '1', 10) || 1;
-    if (normalizeCartQuantity(input) !== confirmed) {
+    if (accepted && !input.disabled && normalizeCartQuantity(input) !== confirmed) {
       window.clearTimeout(state.timer);
       state.timer = window.setTimeout(() => sendCartQuantityUpdate(form), 120);
     }
@@ -756,6 +747,31 @@ function setupStaffInterface() {
     const normalize = (value) => value.normalize('NFKC').toLocaleLowerCase();
     const pageSize = 10;
     let page = 1;
+    // Previous/Next remain stable DOM controls, so repeated Enter/Space keeps working.
+    const numbers = root.querySelector('[data-staff-numbers]');
+    const renderNumbers = (pages) => {
+      if (!numbers) return;
+      const focused = numbers.contains(document.activeElement) ? Number(document.activeElement.dataset.staffGoto) : null;
+      const fragment = document.createDocumentFragment();
+      if (pages > 1) {
+        const shown = [...new Set([1, pages, ...[-2,-1,0,1,2].map(offset => page + offset)])].filter(n => n >= 1 && n <= pages).sort((a,b) => a-b);
+        let last = 0;
+        shown.forEach(n => {
+          if (last && n-last > 1) { const gap=document.createElement('span'); gap.className='page-gap'; gap.textContent='…'; gap.setAttribute('aria-hidden','true'); fragment.append(gap); }
+          const button=document.createElement('button'); button.type='button'; button.className='btn btn-secondary btn-sm'; button.dataset.staffGoto=String(n); button.textContent=String(n); button.setAttribute('aria-label',`Page ${n}`);
+          if (n === page) button.setAttribute('aria-current','page');
+          fragment.append(button); last=n;
+        });
+      }
+      numbers.replaceChildren(fragment);
+      if (focused !== null) (numbers.querySelector(`[data-staff-goto="${page}"]`) || next || previous).focus({preventScroll:true});
+    };
+    numbers?.addEventListener('click', event => {
+      const button=event.target.closest('[data-staff-goto]');
+      if (!button || !numbers.contains(button)) return;
+      const requested=Number(button.dataset.staffGoto); if (!Number.isInteger(requested) || requested < 1 || requested === page) return;
+      page=requested; render();
+    });
     const render = () => {
       const query = normalize(search.value.trim());
       const matches = rows.filter((row) => normalize(row.dataset.listSearch).includes(query)
@@ -770,8 +786,11 @@ function setupStaffInterface() {
       const visible = new Set(matches.slice((page - 1) * pageSize, page * pageSize));
       rows.forEach((row) => { row.hidden = !visible.has(row); });
       matches.forEach((row) => row.parentElement.appendChild(row));
+      const focusedEdge = document.activeElement === previous || document.activeElement === next ? document.activeElement : null;
       previous.disabled = page === 1;
       next.disabled = page === pages;
+      renderNumbers(pages);
+      if (focusedEdge?.disabled) (numbers?.querySelector('[aria-current="page"]') || search).focus({preventScroll:true});
       root.querySelector('[data-staff-page]').textContent = `Page ${page} of ${pages}`;
       root.querySelector('[data-staff-count]').textContent = matches.length
         ? `Showing ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, matches.length)} of ${matches.length} matching ${root.dataset.listLabel} (${rows.length} total).`
@@ -832,10 +851,17 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-document.addEventListener('pageshow', () => {
+window.addEventListener('pageshow', () => {
   syncAllPasswordToggles();
   syncStoreHeader();
 });
+
+let passwordTogglePoll=null;
+function watchPasswordValues(){
+  if(passwordTogglePoll||!document.querySelector('[data-password-input],input[type="password"]'))return;
+  passwordTogglePoll=setInterval(()=>{if(document.visibilityState==='visible')syncAllPasswordToggles();},400);
+}
+watchPasswordValues();document.addEventListener('avela:content',watchPasswordValues);
 
 document.addEventListener('input', (event) => {
   const control = event.target;
@@ -954,11 +980,11 @@ document.addEventListener('click', async (event) => {
   if (toggle instanceof HTMLButtonElement) {
     const input = document.getElementById(toggle.dataset.passwordToggle || '');
     if (input instanceof HTMLInputElement && input.value.length > 0) {
+      const start=input.selectionStart,end=input.selectionEnd,direction=input.selectionDirection;
       input.type = input.type === 'password' ? 'text' : 'password';
       syncPasswordToggle(input);
       input.focus({preventScroll: true});
-      const length = input.value.length;
-      try { input.setSelectionRange(length, length); } catch (_) {}
+      try { if(start!==null&&end!==null)input.setSelectionRange(start,end,direction); } catch (_) {}
     }
     return;
   }
@@ -1008,7 +1034,7 @@ document.addEventListener('click', async (event) => {
     openFilterDrawer(openFilters);
     return;
   }
-  if (target.closest('[data-filter-close]') || target.matches('[data-filter-backdrop]')) {
+  if (target.closest('[data-filter-close]')) {
     closeFilterDrawer();
     return;
   }
@@ -1022,7 +1048,10 @@ function syncStoreHeader() {
   const header = document.querySelector('[data-site-header][data-header-overlay="true"]');
   if (!(header instanceof HTMLElement)) return;
 
-  const progress = Math.min(1, Math.max(0, (window.scrollY - 8) / 144));
+  const campaign = document.querySelector('.v2-home .campaign');
+  const progress = campaign
+    ? Math.min(1, Math.max(0, (window.scrollY - Math.max(0, campaign.offsetHeight - 110)) / 30))
+    : Math.min(1, Math.max(0, (window.scrollY - 8) / 144));
   header.style.setProperty('--header-opacity', String(progress));
   const solid = progress >= 0.65;
   header.classList.toggle('is-scrolled', solid);
@@ -1054,7 +1083,8 @@ document.querySelectorAll('[data-assessment-form]').forEach((form) => {
   const button = form.querySelector('button[type="submit"]');
   if (!(button instanceof HTMLButtonElement)) return;
   const label = button.innerHTML;
-  form.addEventListener('submit', () => {
+  form.addEventListener('submit', (event) => {
+    if (event.defaultPrevented) return;
     button.disabled = true;
     button.textContent = 'Finding your matches…';
     form.setAttribute('aria-busy', 'true');
@@ -1069,6 +1099,8 @@ document.querySelectorAll('[data-assessment-form]').forEach((form) => {
 
 function mountImageUploads(root=document){
 root.querySelectorAll('[data-image-upload]').forEach((input) => {
+  // Profile photos already have one shared toast handler for every role.
+  if(input.matches('[data-photo-input]'))return;
   if(input.dataset.avelaUploadReady)return;input.dataset.avelaUploadReady='true';
   const feedback = document.createElement('small');
   feedback.className = 'field-error';

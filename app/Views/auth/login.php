@@ -1,10 +1,12 @@
 <?php use App\Core\Session; $errors = Session::get('errors', []); ?>
+<p class="eyebrow">A LITTLE SPACE FOR YOU</p>
 <div class="form-head">
-  <h1>Sign in to Avela</h1>
+  <h1>Welcome back.</h1>
 
 </div>
+<p class="auth-intro">Your favorites, your care, and a little more you.</p>
 
-<form method="post" action="<?= e(url('/login')) ?>" class="form-stack" novalidate>
+<form method="post" action="<?= e(url('/login')) ?>" class="form-stack auth-form" novalidate>
   <?= csrf_field() ?>
 
   <label class="field <?= isset($errors['identifier']) ? 'has-error' : '' ?>">
@@ -33,9 +35,7 @@
         data-sitekey="<?= e($recaptchaSiteKey ?? '') ?>">
     </div>
 
-    <small class="field-error">
-        <?= e($errors['captcha'] ?? '') ?>
-    </small>
+    <small class="field-error"><?= e($errors['captcha'] ?? '') ?></small>
 </div>
 
   <button class="btn btn-primary w-full" type="submit">Sign in</button>

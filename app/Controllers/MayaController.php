@@ -26,12 +26,28 @@ final class MayaController
 
     public function refresh(): void
     {
+        header('Cache-Control: no-store, private');
         $user=AuthGuard::roles(['customer']);Csrf::enforce(is_string($_POST['_token']??null)?$_POST['_token']:null);
         $id=$this->id($_POST['order_id']??null);
-        try {
-            $this->service()->refresh((int)$user['id'],$id);
-            Session::flash('success','Payment status checked. Review the confirmed status below.');
-        } catch(\Throwable){Session::flash('warning','Payment could not be confirmed yet. No successful payment was assumed. Please check again later.');}
+        $orders=new Order();$order=$orders->owned($id,(int)$user['id']);
+        if(!$order){http_response_code(404);return;}
+        $json=str_contains($_SERVER['HTTP_ACCEPT']??'','application/json');
+        $times=Session::get('payment_checks',[]);$times=is_array($times)?array_filter($times,static fn($t)=>is_int($t)&&$t>time()-60):[];
+        $key=(string)$id;$last=$times[$key]??0;$retry=max(0,30-(time()-$last));$ok=false;
+        if($retry===0&&count($times)<10){
+            $times[$key]=time();Session::put('payment_checks',$times);
+            try{$this->service()->refresh((int)$user['id'],$id);$ok=true;
+                \App\Services\OrderNotification::deliver(\App\Core\Database::connection(),$id);
+            }catch(\Throwable){}
+            $order=$orders->owned($id,(int)$user['id']);
+        }
+        if($json){
+            $payment=$order['maya_payment']??[];
+            Response::json(['ok'=>$ok,'label'=>\App\Services\OrderPaymentStatus::label($order),'state'=>$payment['state']??null,
+                'verified_at'=>$payment['verified_at']??null,'retry_after'=>$retry?:30,
+                'message'=>$ok?'Payment status checked.':($retry?'Please wait a moment before checking again.':'We could not check your payment yet. Please try again shortly.')]);
+        }
+        Session::flash($ok?'success':'warning',$ok?'Payment status checked. Review the confirmed status below.':'Payment could not be confirmed yet. Please check again shortly.');
         http_response_code(303);Response::redirect('/orders/view?id='.$id);
     }
 

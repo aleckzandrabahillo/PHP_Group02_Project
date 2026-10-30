@@ -18,7 +18,7 @@ try{
             $q=$pdo->prepare('SELECT checkout_id,merchant_reference FROM maya_payments WHERE order_id=?');$q->execute([$id]);
             if(App\Services\MayaPaymentService::simulatedReference($q->fetch()?:[]))continue;
         }
-        $service->reconcile((int)$id);$done++;
+        $service->reconcile((int)$id);\App\Services\OrderNotification::deliver($pdo,(int)$id);$done++;
     }catch(Throwable){$retry++;}}
     echo json_encode(['processed'=>$done,'verification_pending'=>$retry,'sandbox_only'=>true,'raw_payloads_logged'=>false],JSON_THROW_ON_ERROR),PHP_EOL;
     exit($retry?2:0);

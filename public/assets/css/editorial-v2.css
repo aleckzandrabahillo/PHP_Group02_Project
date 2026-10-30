@@ -1,0 +1,289 @@
+/* Avela Site v8 → native PHP. Functional selectors and staff scope are retained. */
+@font-face{font-family:Manrope;src:url('../editorial-v2/manrope-400.ttf') format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:Manrope;src:url('../editorial-v2/manrope-500.ttf') format('truetype');font-weight:500;font-display:swap}
+@font-face{font-family:Manrope;src:url('../editorial-v2/manrope-600.ttf') format('truetype');font-weight:600;font-display:swap}
+@font-face{font-family:Manrope;src:url('../editorial-v2/manrope-700.ttf') format('truetype');font-weight:700;font-display:swap}
+html{scrollbar-gutter:stable;scroll-padding-top:110px}
+.avela-v2{--paper:#fcfbf8;--oat:#f7f5f0;--surface:#eeebe5;--ink:#352f2a;--muted:#6d6359;--line:#dcd7cf;--accent:#51453d;--ease:cubic-bezier(.22,.7,.25,1);--avela-paper:var(--paper);--avela-panel:var(--surface);--avela-ink:var(--ink);--avela-secondary:var(--muted);--avela-action:var(--accent);--bg:var(--paper);--text:var(--ink);background:var(--paper);color:var(--ink);font-family:Manrope,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.avela-v2.customer-experience{font-size:15px;line-height:1.7;font-synthesis:style}
+.avela-v2 [hidden]{display:none!important}
+.avela-v2 :is(a,button,input,select,textarea,summary):focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.avela-v2 :is(button,input,select,textarea){font:inherit}
+.avela-v2 .avela-wordmark{display:block;width:116px;height:41px;fill:currentColor;max-width:100%;background:none;mask:none;-webkit-mask:none}
+.avela-v2 .brand,.avela-v2 .auth-logo,.avela-v2 .checkout-brand{color:inherit;line-height:1;background:none}
+.avela-v2.customer-experience :is(.btn,.button){min-height:48px;border-radius:5px;font-size:13px;font-weight:500;padding:13px 22px;gap:24px;letter-spacing:0;box-shadow:none}
+.avela-v2.customer-experience .btn-primary{background:var(--accent);border:1px solid var(--accent);color:#fff}
+.avela-v2.customer-experience .btn-primary:hover{background:var(--ink);border-color:var(--ink)}
+.avela-v2.customer-experience .btn-secondary{background:transparent;border:1px solid #aa9e91;color:var(--ink)}
+.avela-v2.customer-experience .btn-secondary:hover{background:var(--surface)}
+.avela-v2.customer-experience :is(input:not([type=checkbox]):not([type=radio]):not([type=hidden]),select,textarea){border-color:#a79b8e;border-radius:5px;color:var(--ink);background:transparent;font-size:15px}
+.avela-v2.customer-experience :is(input[type=radio],input[type=checkbox]){accent-color:var(--accent)}
+.avela-v2.customer-experience .eyebrow{font-size:11px;letter-spacing:1.5px;font-weight:600;line-height:1.7}
+.avela-v2.customer-experience :is(.field-error,.muted,.small){font-size:13px}
+.avela-v2.customer-experience .field-error{color:#963b31}
+.avela-v2.customer-experience :is(.field>span,.checkout-field>span){font-size:13px;line-height:1.5;margin-bottom:7px}
+.avela-v2.customer-experience .field-error:empty{display:none}
+.avela-v2.customer-experience :is(.page-head h1,.shop-head h1,.product-detail-copy h1){font-weight:400;font-size:clamp(36px,4.3vw,64px);line-height:1.12;letter-spacing:-2.2px}
+.avela-v2 .public-inner{padding-top:0}
+.avela-v2 .site-header{position:fixed;inset:0 0 auto;z-index:60;height:88px;min-height:0;padding:0 5%;border:0;border-bottom:1px solid var(--line);border-radius:0;background:var(--paper);color:var(--ink);box-shadow:none;backdrop-filter:none;transition:background .3s,color .3s,top .34s var(--ease),left .34s var(--ease),width .34s var(--ease),height .34s var(--ease),border-radius .34s var(--ease)}
+.avela-v2 .site-header-inner{height:100%;min-height:0;max-width:none;padding:0;display:grid;grid-template-columns:1fr auto 1fr;gap:26px;position:static}
+.avela-v2 .site-header:before,.avela-v2 .site-header:after{display:none;content:none}
+.avela-v2 .site-header-brand{grid-column:2;grid-row:1;justify-self:center;margin:0}
+.avela-v2 .store-nav-links{grid-column:1;grid-row:1;gap:30px;justify-content:flex-start;padding:0;position:static;height:100%;min-height:0}
+.avela-v2 .store-nav-item{height:100%;display:flex;align-items:center}
+.avela-v2 .store-nav-trigger.active{border-bottom:0}
+.avela-v2 .store-nav-links :is(a,button){font-size:12px;font-weight:400;color:inherit}
+.avela-v2.customer-experience .store-nav-links>a,.avela-v2.customer-experience .store-nav-links>a:is(.active,:hover,:focus-visible),.avela-v2.customer-experience .store-nav-trigger,.avela-v2.customer-experience .store-nav-trigger:is(.active,:hover,:focus-visible){position:relative;padding:12px 0;height:48px;min-height:44px;border:0;display:inline-flex;align-items:center}
+.avela-v2 .store-nav-links>a:after,.avela-v2 .store-nav-trigger:after{content:'';position:absolute;bottom:9px;left:0;right:0;height:1px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .22s}
+.avela-v2 .store-nav-links>a:hover:after,.avela-v2 .store-nav-links>a.active:after,.avela-v2 .store-nav-trigger:hover:after,.avela-v2 .store-nav-trigger[aria-expanded=true]:after{transform:scaleX(1)}
+.avela-v2 .site-header-actions{grid-column:3;grid-row:1;justify-self:end;gap:4px}
+.avela-v2 .header-icon-link{width:44px;height:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;color:inherit;background:transparent;border:0;padding:10px;text-decoration:none;position:relative}
+.avela-v2 .header-icon-link svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round}
+.avela-v2 .header-icon-link:hover{background:#51453d0b}
+.avela-v2 .site-header-actions>[data-global-search-open]{order:2}
+.avela-v2 .site-header-actions>a{order:1}
+.avela-v2 .site-header-actions>.header-favorite-link,.avela-v2 .site-header-actions>a[title=Favorites]{order:3}
+.avela-v2 .site-header-actions>a[title="Shopping bag"]{order:4}
+.avela-v2 .site-header-actions>.mobile-nav-menu{order:5}
+.avela-v2 .header-count-badge{min-width:15px;height:15px;font-size:9px;top:4px;right:2px;background:var(--ink);color:var(--paper);border:0}
+.avela-v2.public-home .site-header--overlay:not(.is-solid):not(.is-overlay-surface){top:26px;left:4%;right:auto;width:92%;height:65px;padding:0 25px;border:1px solid #ffffff70;border-radius:13px;background:#ffffff12;backdrop-filter:blur(16px);color:#fff}
+.avela-v2.public-home .site-header--overlay:not(.is-solid):not(.is-overlay-surface) .header-icon-link:hover{background:#ffffff24}
+.avela-v2.public-home .site-header--overlay:not(.is-solid):not(.is-overlay-surface) .header-count-badge{background:#fff;color:var(--ink)}
+.avela-v2 .site-header.is-overlay-surface{background:var(--paper);color:var(--ink)}
+.avela-v2 :is(.customer-main,.store-page,.about-page){padding-top:142px}
+.avela-v2 .customer-main{max-width:1440px;padding-inline:6%;padding-bottom:90px;min-height:70svh}
+.avela-v2 .store-page{width:auto;max-width:1800px;margin:auto;padding-inline:6.25%;padding-bottom:90px}
+.avela-v2.public-inner>.v2-reference{padding-top:88px}
+.avela-v2 .shop-head{padding:30px 0 55px;border:0;text-align:left}
+.avela-v2 .shop-head h1{margin:15px 0 17px}
+.avela-v2 .shop-head>p{font-size:15px;color:var(--muted)}
+.avela-v2 .shop-results-toolbar{border-block:1px solid var(--line);padding:12px 0;margin-bottom:32px;min-height:66px}
+.avela-v2 .product-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:40px 20px}
+.avela-v2 .product-card{background:none;border:0;border-radius:0;box-shadow:none;overflow:visible;min-width:0;padding:0;transform:none}
+.avela-v2 .product-card:hover{transform:none;box-shadow:none}
+.avela-v2 .product-card-media{aspect-ratio:4/5;background:#eeebe5;border-radius:4px;position:relative;overflow:hidden}
+.avela-v2 .product-card-image{height:100%;display:block;background:none;border-radius:0}
+.avela-v2 .product-card .product-art{display:flex;align-items:center;justify-content:center;height:100%;width:100%;aspect-ratio:auto;border-radius:0;background:transparent}
+.avela-v2 .product-card .product-image{display:block;width:100%;height:100%;object-fit:contain;transition:transform .5s var(--ease);mix-blend-mode:multiply}
+.avela-v2 .product-card:hover .product-image{transform:scale(1.035)}
+.avela-v2 .product-card-body{display:flex;flex-direction:column;padding:16px 0 0;gap:5px}
+.avela-v2 .product-card-body>small{font-size:11px;color:var(--muted)}
+.avela-v2 .product-card-title{font-weight:500;font-size:17px;letter-spacing:-.3px;line-height:1.5}
+.avela-v2 .product-card-footer{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:8px;font-size:13px}
+.avela-v2 .product-card-footer strong{font-weight:500;font-variant-numeric:tabular-nums}
+.avela-v2 .stock-label{font-size:11px;color:var(--muted)}
+.avela-v2 .stock-label.in-stock{background:transparent;border:0;padding:0;color:var(--muted)}
+.avela-v2 .product-card-favorite{position:absolute;top:10px;right:10px}
+.avela-v2 .product-quick-add{position:absolute;bottom:12px;right:12px}
+.avela-v2 .product-quick-add :is(a,button){display:grid;place-items:center;width:44px;height:44px;background:var(--paper);border:1px solid #b9b0a4;border-radius:50%;color:var(--ink)}
+.avela-v2 .product-detail-shell{gap:7%;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:start}
+.avela-v2 .product-detail-art{background:var(--surface);border-radius:4px;aspect-ratio:4/5;padding:0;min-height:0}
+.avela-v2 .product-detail-image{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply}
+.avela-v2 .product-detail-copy{padding:30px 0}
+.avela-v2 .product-detail-copy h1{font-size:clamp(32px,3.5vw,54px);margin-bottom:18px}
+.avela-v2 .product-price{font-weight:400;font-size:20px}
+.avela-v2 .product-summary{font-size:15px;line-height:1.9;color:var(--muted);margin-block:24px}
+.avela-v2 .product-information{margin-top:70px;border-color:var(--line)}
+.avela-v2 .product-tab{font-size:13px;text-transform:none;letter-spacing:0;min-height:48px}
+.avela-v2 .detail-meta{font-size:13px}
+.avela-v2 .suitability-chips>span{background:var(--surface);border-radius:3px;font-size:12px}
+.avela-v2 .shop-mega-menu{position:absolute;top:100%;left:0;right:0;width:auto;transform:none;max-height:calc(100svh - 100px);overflow:auto;background:var(--paper);color:var(--ink);border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:0 30px 40px #211a1712}
+.avela-v2 .shop-mega-menu-inner{display:grid;grid-template-columns:1fr 1fr 1.2fr 1fr 2fr;gap:28px;max-width:1800px;margin:auto;padding:35px 5% 40px}
+.avela-v2 .shop-mega-menu section{display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+.avela-v2 .shop-mega-menu section a{min-height:34px;font-size:13px}
+.avela-v2 .mega-kicker{font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:13px}
+.avela-v2 .v2-menu-editorials{display:grid;grid-template-columns:1fr 1fr;gap:12px;pointer-events:none}
+.avela-v2 .v2-menu-editorials img{width:100%;height:210px;object-fit:cover;border-radius:3px}
+.avela-v2 .global-search-drawer{position:fixed;z-index:59;top:88px;left:0;right:0;max-height:calc(100svh - 88px);background:var(--paper);color:var(--ink);border-radius:0;overflow:auto}
+.avela-v2 .global-search-inner{max-width:1500px;margin:auto;padding:30px 5% 40px}
+.avela-v2 .global-search-form input{font-size:20px!important;min-height:54px}
+.avela-v2 .global-search-backdrop{position:fixed;inset:0;z-index:58;background:#211a1755;backdrop-filter:blur(5px)}
+.avela-v2.v2-menu-open:before{content:'';position:fixed;inset:0;z-index:58;background:#211a1755;backdrop-filter:blur(5px);pointer-events:none}
+.avela-v2 .global-search-form{border-bottom:1px solid #9d9184}
+.avela-v2 .store-footer{padding:55px 6.25% 25px;background:var(--paper);border-top:1px solid var(--line);color:var(--ink)}
+.avela-v2 .editorial-footer-top{grid-template-columns:1.7fr 1fr 1fr;max-width:none;gap:50px;padding-bottom:35px}
+.avela-v2 .store-footer .avela-wordmark{width:154px;height:54px}
+.avela-v2 .store-footer :is(p,a){font-size:13px}
+.avela-v2 .editorial-footer-top>div>p{color:var(--muted);margin-top:17px}
+.avela-v2 .editorial-footer-top nav{gap:12px}
+.avela-v2 .editorial-footer-bottom{padding-top:22px;border-color:var(--line);font-size:12px}
+.avela-v2.auth-body{padding:88px 0 0;background:var(--paper)}
+.avela-v2 .auth-logo{position:absolute;inset:0 0 auto;height:88px;display:flex;align-items:center;justify-content:center;margin:0;width:auto;border-bottom:1px solid var(--line)}
+.avela-v2 .auth-shell{display:grid;grid-template-columns:1fr 1fr;max-width:none;margin:0;min-height:calc(100svh - 88px);padding:0;gap:0;background:transparent;border:0;border-radius:0;box-shadow:none}
+.avela-v2 .auth-panel{grid-column:1;grid-row:1;align-self:center;justify-self:center;width:100%;max-width:640px;padding:48px clamp(28px,5vw,80px);background:none;border:0;border-radius:0;box-shadow:none}
+.avela-v2 .auth-art{grid-column:2;grid-row:1;align-self:start;position:sticky;top:0;height:calc(100svh - 88px);min-height:650px;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(30px,4vw,70px);isolation:isolate;background:#352b23;border-radius:0;color:#fff;overflow:hidden}
+.avela-v2 .auth-editorial{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 42%;z-index:-2;opacity:1;mix-blend-mode:normal;filter:none;border:0}
+.avela-v2 .auth-art:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,#211a1700 30%,#211a17cf);z-index:-1}
+.avela-v2 .auth-art .eyebrow{color:#fff;font-size:11px}
+.avela-v2 .auth-art h2{font-size:clamp(38px,4.1vw,66px);font-weight:400;letter-spacing:-2.3px;line-height:1.12;max-width:500px;margin-block:20px;color:#fff}
+.avela-v2 .auth-art p{color:#fff;font-size:14px;max-width:400px;line-height:1.8}
+.avela-v2 .form-head h1{font-size:clamp(34px,3.2vw,48px);font-weight:400;letter-spacing:-1.8px;line-height:1.15;margin:0 0 30px}
+.avela-v2 .auth-panel .form-stack{gap:18px}
+.avela-v2 .auth-panel .auth-switch{font-size:13px;padding-top:22px;margin-top:22px;border-top:1px solid var(--line)}
+.avela-v2 .account-layout{grid-template-columns:210px minmax(0,1fr);max-width:1160px;gap:clamp(30px,6vw,100px)}
+.avela-v2 .account-overview{background:none;border:0;padding:0;box-shadow:none}
+.avela-v2 .account-overview h2{font-weight:500;font-size:21px}
+.avela-v2 .account-links{border-top:1px solid var(--line);padding-top:12px;margin-top:24px}
+.avela-v2 .account-links a{min-height:48px;padding:12px 0;border-color:var(--line);font-size:14px}
+.avela-v2 .account-details{max-width:none}
+.avela-v2 .account-detail-list>div{padding:22px 0;border-color:var(--line)}
+.avela-v2.customer-experience .account-detail-list{gap:0}
+.avela-v2.customer-experience .account-detail-list>div{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none}
+.avela-v2 .account-overview p,.avela-v2 .account-detail-list dd{overflow-wrap:anywhere}
+.avela-v2 .account-detail-list dt{font-size:12px;color:var(--muted)}
+.avela-v2 .account-detail-list dd{font-size:15px;margin-top:7px}
+.avela-v2 .account-section-heading h2{font-size:25px;letter-spacing:-.8px;font-weight:400}
+.avela-v2 .profile-address-card{background:var(--oat);border:1px solid var(--line);border-radius:5px;padding:24px;font-size:14px}
+.avela-v2 .account-dialog{background:var(--paper);border-radius:12px;padding:30px;max-height:calc(100dvh - 36px)}
+.avela-v2 .account-dialog-heading h2{font-size:28px;letter-spacing:-1px;font-weight:400}
+.avela-v2 .avela-select-trigger{background:transparent;border-color:#a79b8e;border-radius:5px;min-height:50px;font-size:15px}
+.avela-v2 .hair-profile-form{background:transparent;border:1px solid var(--line);border-radius:8px;box-shadow:none;padding:32px}
+.avela-v2 .hair-choice{background:transparent;border-color:#b6aa9b;border-radius:6px;min-height:56px;font-size:14px}
+.avela-v2 .hair-choice:has(input:checked){background:var(--surface);border-color:var(--accent)}
+.avela-v2 .hair-choice:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:3px}
+.avela-v2 .hair-profile-summary{background:var(--oat);border:0;border-radius:6px;box-shadow:none}
+.avela-v2 .assessment-editorial{object-fit:cover;border-radius:4px}
+.avela-v2 .saved-hair-profile{border:0;box-shadow:none;background:var(--oat);border-radius:6px;overflow:hidden}
+.avela-v2 .saved-profile-heading h1{font-weight:400;letter-spacing:-2px}
+.avela-v2 .match-studio-layout,.avela-v2 .routine-studio{gap:48px}
+.avela-v2 :is(.routine-guide,.routine-item,.matching-product,.order-history-card,.settings-card){border-radius:6px;box-shadow:none;border-color:var(--line);background:transparent}
+.avela-v2 .matching-product{padding-block:28px;border-inline:0;border-top:0;border-radius:0}
+.avela-v2 .order-history-card{padding:28px;background:var(--oat)}
+.avela-v2 .checkout-header{height:88px;background:var(--paper);border-color:var(--line)}
+.avela-v2 .checkout-header-inner{height:88px}
+.avela-v2.checkout-body{background:var(--paper)}
+.avela-v2 .checkout-page{max-width:1600px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(360px,.85fr);margin:auto;gap:0;padding:0;align-items:start}
+.avela-v2 .checkout-details{padding:50px clamp(28px,6vw,92px);min-width:0;max-width:none;justify-self:stretch}
+.avela-v2 #checkout-title{font-size:clamp(34px,3vw,50px);font-weight:400;letter-spacing:-2px;line-height:1.15;margin-block:22px 32px}
+.avela-v2.customer-experience .checkout-summary{padding:48px clamp(24px,4vw,62px);background:#efebe4;border:0;border-left:1px solid var(--line);border-radius:0;box-shadow:none;position:sticky;top:0;min-width:0;min-height:calc(100svh - 88px);align-self:start}
+.avela-v2.customer-experience .checkout-details{background:var(--paper)}
+.avela-v2 [data-use-default]{border:0;background:transparent;color:var(--ink);text-decoration:underline;text-underline-offset:4px;font-size:13px;min-height:44px;padding:6px 0}
+.avela-v2 .checkout-summary h2{font-size:26px;font-weight:400;letter-spacing:-1px;margin-bottom:25px}
+.avela-v2 .checkout-summary-items{gap:22px}
+.avela-v2 .checkout-summary-copy{font-size:13px}
+.avela-v2 .checkout-summary-copy>strong{font-size:13px;font-weight:500}
+.avela-v2 .checkout-summary-price{font-size:14px;font-weight:500}
+.avela-v2 .checkout-summary-grand{font-weight:400}
+.avela-v2 .checkout-field input,.avela-v2 .checkout-field select{min-height:50px}
+.avela-v2 .checkout-policy-links{font-size:12px;gap:20px}
+.avela-v2 .v2-summary-jump{display:none}
+.avela-v2 .v2-bag{inset:0 0 0 auto;margin:0;width:min(560px,100%);max-width:100%;height:100dvh;max-height:100dvh;border:0;border-radius:0;padding:0;background:var(--paper);color:var(--ink);box-shadow:-20px 0 70px #211a1725;overflow:auto}
+.avela-v2 .v2-bag::backdrop{background:#211a1766;backdrop-filter:blur(5px)}
+.avela-v2 .v2-bag-heading{display:flex;align-items:center;justify-content:space-between;padding:22px 28px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--paper);z-index:2}
+.avela-v2 .v2-bag-heading h2{font-size:30px;letter-spacing:-1px;font-weight:400;margin:0}
+.avela-v2 .v2-bag-content{padding:28px;min-height:160px}
+.avela-v2 .v2-bag-content .page-head{display:none}
+.avela-v2 .v2-bag-content .cart-layout{display:flex;flex-direction:column;gap:25px}
+.avela-v2 .v2-bag-content .cart-item{grid-template-columns:85px minmax(0,1fr);gap:18px;padding:22px 0}
+.avela-v2 .v2-bag-content .cart-item-art{width:85px;height:105px}
+.avela-v2 .v2-bag-content .cart-item-controls{grid-column:2;align-items:flex-start}
+.avela-v2 .v2-bag-content .cart-summary{position:static;padding:24px;background:var(--oat);width:100%;border:1px solid var(--line);border-radius:5px}
+.avela-v2 .v2-bag-content .cart-item-name{font-size:15px}
+.avela-v2 .v2-bag-continue{display:block;text-align:center;font-size:13px;text-decoration:underline;text-underline-offset:4px;margin:0 24px 26px}
+.avela-v2 .v2-bag[open]{animation:v2-bag-enter .3s var(--ease)}
+@keyframes v2-bag-enter{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:none}}
+.avela-v2 .v2-reference{--muted:#6d6359;--line:#dcd7cf}
+.avela-v2 .v2-home .campaign.editorial-hero{margin:0;border-radius:0;display:block;max-width:none;height:100svh;min-height:740px;padding:0}
+.avela-v2 .v2-home .campaign-photo{margin:0}
+.avela-v2 .v2-home .campaign h1{color:#fff;max-width:1100px;font-weight:400;font-size:clamp(78px,8.6vw,150px);letter-spacing:-6.5px;line-height:.99}
+.avela-v2 .v2-home .campaign-headline{top:clamp(145px,17svh,190px)}
+.avela-v2 .v2-reference .section{max-width:1800px}
+.avela-v2 .v2-reference .section h2{font-size:clamp(34px,3.5vw,52px);font-weight:400;line-height:1.15;letter-spacing:-1.7px}
+.avela-v2 .v2-reference :is(p,.routine-panel-copy){font-size:14px;line-height:1.85}
+.avela-v2 .v2-reference .eyebrow{font-size:11px;letter-spacing:1.5px}
+.avela-v2 .v2-reference .campaign .eyebrow{font-size:10px;color:white}
+.avela-v2 .v2-reference .campaign-story>p{font-size:14px}
+.avela-v2 .v2-reference :is(.text-link,.button){font-size:13px;min-height:44px}
+.avela-v2 .v2-reference .button.primary{background:var(--accent);color:#fff}
+.avela-v2 .v2-reference .campaign .button{color:white;background:transparent}
+.avela-v2 .v2-reference .campaign .button:hover{background:var(--paper);color:var(--ink)}
+.avela-v2 .v2-reference .intro-strip{font-size:13px}
+.avela-v2 .v2-reference .texture-label{flex-wrap:wrap;gap:5px}
+.avela-v2 .v2-reference .texture-label span{font-size:12px}
+.avela-v2 .v2-reference .texture-art>svg{height:200px;width:100px;color:#67574b}
+.avela-v2 .v2-reference .home-editorial{display:grid;grid-template-columns:1fr 1fr;gap:10%;padding:50px 6.25% 90px;max-width:1800px;margin:auto;align-items:center}
+.avela-v2 .v2-reference .home-editorial-portrait img{width:100%;aspect-ratio:4/5;object-fit:cover}
+.avela-v2 .v2-reference .home-editorial-copy h2{font-size:clamp(36px,4vw,58px);margin:22px 0}
+.avela-v2 .v2-reference .home-editorial-copy>p:not(.eyebrow){max-width:420px;color:var(--muted)}
+.avela-v2 .v2-reference .home-editorial-copy>.text-link{margin-top:20px}
+.avela-v2 .v2-reference .home-editorial-still{width:50%;aspect-ratio:1;object-fit:cover;margin:40px 0 0 auto}
+.avela-v2 .v2-reference .home-guide-art img{width:100%;height:100%;aspect-ratio:1;object-fit:cover}
+.avela-v2 .v2-reference .faqs :is(summary,p){font-size:14px}
+.avela-v2 .v2-reference .article-copy p{font-size:15px;line-height:1.95}
+.avela-v2 .v2-reference .v2-care-card{display:block;min-width:0}
+.avela-v2 .v2-reference .v2-care-card img{width:100%;aspect-ratio:4/3;object-fit:cover;margin-bottom:22px}
+.avela-v2 .v2-reference .v2-care-card h2{font-size:27px;letter-spacing:-.8px;margin:14px 0}
+.avela-v2 .v2-reference .v2-care-card .text-link{margin-top:15px}
+.avela-v2.avela-staff{--staff-paper:var(--paper);background:var(--oat)}
+.avela-v2.avela-staff .staff-sidebar{background:var(--oat)}
+.avela-v2.avela-staff .staff-main{background:var(--paper)}
+.avela-v2.avela-staff .avela-wordmark{width:112px;height:40px}
+@media(max-width:1100px){
+ .avela-v2 .store-nav-links{gap:18px}.avela-v2 .site-header-inner{gap:15px}
+ .avela-v2 .shop-mega-menu-inner{grid-template-columns:1fr 1fr 1.1fr 1fr}.avela-v2 .v2-menu-editorials{grid-column:1/-1}.avela-v2 .v2-menu-editorials img{height:140px}
+ .avela-v2 .product-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .avela-v2 .checkout-page{grid-template-columns:minmax(0,1.1fr) minmax(330px,.85fr)}
+ .avela-v2 .checkout-details,.avela-v2.customer-experience .checkout-summary{padding:35px 6%}
+}
+@media(max-width:760px){
+ html{scroll-padding-top:90px}
+ .avela-v2 .site-header{height:76px;padding:0 5%}
+ .avela-v2 .site-header-inner{grid-template-columns:auto 1fr;gap:8px}
+ .avela-v2 .site-header-brand{grid-column:1;justify-self:start}
+ .avela-v2 .avela-wordmark{width:97px;height:34px}
+ .avela-v2 .store-nav-links{display:none}.avela-v2 .site-header-actions{grid-column:2;gap:0}
+ .avela-v2 .header-icon-link{width:40px;height:44px;padding:9px}
+ .avela-v2 .mobile-nav-menu{display:block;position:static;inset:auto;margin:0;width:40px;flex:0 0 40px}
+ .avela-v2 .mobile-nav-panel{position:absolute;top:100%;left:0;right:0;background:var(--paper);color:var(--ink);max-height:calc(100svh - 90px);overflow:auto;border:1px solid var(--line);border-radius:0;padding:20px}
+ .avela-v2 .mobile-nav-panel a{min-height:44px;display:flex;align-items:center}
+ .avela-v2.public-home .site-header--overlay:not(.is-solid):not(.is-overlay-surface){top:17px;height:58px;padding:0 12px}
+ .avela-v2 .global-search-drawer{top:76px;max-height:calc(100svh - 76px)}
+ .avela-v2 .global-search-inner{padding:24px 6%}
+ .avela-v2 :is(.customer-main,.store-page){padding:112px 6% 55px}
+ .avela-v2.public-inner>.v2-reference{padding-top:76px}
+ .avela-v2 .shop-head{padding:16px 0 32px}
+ .avela-v2 .shop-head h1{font-size:44px}
+ .avela-v2 .product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:30px 13px}
+ .avela-v2 .product-card-title{font-size:14px}.avela-v2 .product-card-footer{flex-wrap:wrap;font-size:13px;margin-top:5px}
+ .avela-v2 .product-card-body{padding-top:12px}.avela-v2 .product-card-body>small{font-size:11px}
+ .avela-v2 .product-detail-shell{grid-template-columns:1fr;gap:28px}.avela-v2 .product-detail-copy{padding:0}
+ .avela-v2 .product-detail-copy h1{font-size:37px}.avela-v2 .product-information{margin-top:40px}
+ .avela-v2 .account-layout{grid-template-columns:1fr;gap:30px}
+ .avela-v2 .account-overview{padding-bottom:20px;border-bottom:1px solid var(--line)}
+ .avela-v2 .account-links{display:flex;flex-wrap:wrap;gap:4px 18px}.avela-v2 .account-links a{border:0;font-size:13px}
+ .avela-v2 .account-dialog{padding:24px 20px}
+ .avela-v2 .hair-profile-form{padding:22px 18px}
+ .avela-v2.auth-body{padding-top:76px}.avela-v2 .auth-logo{height:76px}
+ .avela-v2 .auth-shell{display:flex;flex-direction:column;min-height:calc(100svh - 76px)}
+ .avela-v2 .auth-panel{max-width:540px;padding:36px 7%;order:0}
+ .avela-v2 .auth-art{position:relative;inset:auto;width:100%;min-height:0;height:340px;padding:30px 7%;order:1}
+ .avela-v2 .auth-art h2{font-size:38px;max-width:360px;letter-spacing:-1.5px}
+ .avela-v2 .auth-art p{font-size:13px}.avela-v2 .auth-art .eyebrow{font-size:10px}
+ .avela-v2 .form-head h1{font-size:38px}
+ .avela-v2 .checkout-header,.avela-v2 .checkout-header-inner{height:76px}
+ .avela-v2 .checkout-page{display:flex;flex-direction:column}
+ .avela-v2 .checkout-details{width:100%;padding:26px 6% 35px}
+ .avela-v2.customer-experience .checkout-summary{position:static;min-height:0;width:100%;padding:32px 6%;border-left:0;border-top:1px solid var(--line)}
+ .avela-v2 .v2-summary-jump{display:flex;min-height:44px;align-items:center;text-decoration:underline;font-size:13px;scroll-margin-top:95px}
+ .avela-v2 .checkout-summary h2{scroll-margin-top:20px}
+ .avela-v2 .editorial-footer-top{grid-template-columns:1fr 1fr;gap:28px}.avela-v2 .editorial-footer-top>div{grid-column:1/-1}
+ .avela-v2 .editorial-footer-bottom{gap:18px;flex-wrap:wrap}.avela-v2 .store-footer :is(p,a){font-size:12px}
+ .avela-v2 .v2-home .campaign.editorial-hero{min-height:740px;max-height:none}
+ .avela-v2 .v2-home .campaign h1{font-size:clamp(54px,12vw,84px);line-height:1.03;letter-spacing:-3px}
+ .avela-v2 .v2-home .campaign-headline{top:128px}
+ .avela-v2 .v2-reference .campaign-story>p{font-size:13px;max-width:235px}
+ .avela-v2 .v2-reference .campaign-card .eyebrow{display:none}
+ .avela-v2 .v2-reference .campaign-card{width:160px;flex:0 0 160px;min-height:115px}
+ .avela-v2 .v2-reference .campaign-card h2{font-size:16px}
+ .avela-v2 .v2-reference .campaign-story .button{font-size:12px;gap:15px;padding:12px 14px}
+ .avela-v2 .v2-reference .campaign-story .text-link{font-size:12px}
+ .avela-v2 .v2-reference .home-editorial{grid-template-columns:1fr;gap:35px;padding:30px 6% 55px}
+ .avela-v2 .v2-reference .home-editorial-portrait img{aspect-ratio:1}.avela-v2 .v2-reference .home-editorial-still{width:45%;margin-top:25px}
+ .avela-v2 .v2-reference .texture-label strong{font-size:17px}.avela-v2 .v2-reference .texture-label span{font-size:11px}
+ .avela-v2 .v2-reference .texture-art>svg{height:160px}
+}
+@media(max-width:375px){.avela-v2 .header-icon-link{width:35px}.avela-v2 .avela-wordmark{width:87px}.avela-v2 .v2-reference .campaign-card{width:138px;flex-basis:138px}.avela-v2 .v2-reference .campaign-card h2{font-size:16px}}
+@media(prefers-reduced-motion:reduce){
+ html{scroll-behavior:auto}.avela-v2 *, .avela-v2 *:before,.avela-v2 *:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+ .avela-v2 .v2-reference .reveal{opacity:1;transform:none}
+}

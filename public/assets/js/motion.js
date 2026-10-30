@@ -30,13 +30,19 @@
   if (typeof module !== 'undefined' && module.exports) module.exports={createAnimator,timings};
   if (typeof window === 'undefined') return;
 
-  // Automatic site-wide motion, with short finite effects and no settings UI.
+  // This approved version keeps brief, finite motion enabled on every layout.
+  const customerLayout=Boolean(document.body?.classList.contains('avela-v3'));
+  // Capture the page geometry before an auto-open dialog removes the root gutter.
+  if(customerLayout)document.documentElement.style.setProperty('--layout-width',document.body.clientWidth+'px');
+  const motionPreference=window.matchMedia?.('(prefers-reduced-motion: reduce)');
   const reduced=()=>false;
-  const duration=kind=>timings[kind]??timings.base;
+  const duration=kind=>reduced()?0:(timings[kind]??timings.base);
   const animator=createAnimator(duration), dialogJobs=new WeakMap(), detailJobs=new WeakMap();
-  document.documentElement.dataset.avelaMotion='full';
+  const syncPreference=()=>{document.documentElement.dataset.avelaMotion=reduced()?'reduced':'full';if(reduced())animator.settleAll();};
+  syncPreference();
+  motionPreference?.addEventListener?.('change',syncPreference);
   const reveal=(element,kind='base')=>element&&!element.hidden
-    ? animator.run(element,[{opacity:.25,transform:'translateY(7px)'},{opacity:1,transform:'translateY(0)'}],kind)
+    ? animator.run(element,element.matches('.notification-stack > .alert') ? [{opacity:0},{opacity:1}] : [{opacity:.25,transform:'translateY(7px)'},{opacity:1,transform:'translateY(0)'}],kind)
     : Promise.resolve(true);
   function pulse(element) {
     if (element && !element.closest('dialog')) animator.run(element,[{transform:'scale(1)'},{transform:'scale(1.12)',offset:.45},{transform:'scale(1)'}],'base');
@@ -156,8 +162,8 @@
       if(!reduced()&&line.getTotalLength){const length=line.getTotalLength();animator.run(line,[{strokeDasharray:length,strokeDashoffset:length},{strokeDasharray:length,strokeDashoffset:0}],'page');}
     });
     document.querySelectorAll('.analytics-bars meter').forEach(meter=>animator.run(meter,[{transform:'scaleX(.05)'},{transform:'scaleX(1)'}],'slow'));
-    const badgeObserver=new MutationObserver(records=>{for(const record of records){const badge=record.target.nodeType===1?record.target:record.target.parentElement;if(badge?.matches('[data-cart-count],[data-favorite-count]'))pulse(badge);}});
-    document.querySelectorAll('[data-cart-count],[data-favorite-count]').forEach(badge=>badgeObserver.observe(badge,{childList:true,characterData:true,subtree:true}));
+    const badgeObserver=new MutationObserver(records=>{for(const record of records){const badge=record.target.nodeType===1?record.target:record.target.parentElement;if(badge?.matches('[data-cart-count]'))pulse(badge);}});
+    document.querySelectorAll('[data-cart-count]').forEach(badge=>badgeObserver.observe(badge,{childList:true,characterData:true,subtree:true}));
     // Animate actual state changes, without adding a second favorite/cart request handler.
     const feedbackObserver=new MutationObserver(records=>records.forEach(record=>{
       if(record.attributeName==='aria-pressed'&&record.oldValue!==record.target.getAttribute('aria-pressed'))pulse(record.target);

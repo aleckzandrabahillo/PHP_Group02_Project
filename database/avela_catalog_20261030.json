@@ -1,0 +1,1531 @@
+{
+  "catalog_id": "avela-fictional-20261030",
+  "version": 1,
+  "currency": "PHP",
+  "notice": "Fictional coursework catalog. Reference prices and 20 units per product approved by the owner for demonstration. Images are supplied fictional packaging; no borrowed ingredient list is a fictional formula.",
+  "products": [
+    {
+      "sku": "AVE-26-0001",
+      "name": "AirVolume Keragold Hair Olive Oil and Macadamia Oil Serum Frizz Control",
+      "category": "Serum",
+      "description": "A finishing step with frizz in mind. 65 ml.",
+      "price": "189.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:frizz"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/airvolume_serum.webp",
+      "image_sha256": "7ce86ebce6ba50b4e35be1243cec9248cccb1b1ea352731300856988ebbce766"
+    },
+    {
+      "sku": "AVE-26-0002",
+      "name": "AirVolume Keratin Treatment Argan Oil",
+      "category": "Treatment",
+      "description": "An extra care step with damage, dryness, frizz in mind. 250 ml.",
+      "price": "259.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [
+        "concern:damage",
+        "concern:dryness",
+        "concern:frizz"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/airvolume_treatment.webp",
+      "image_sha256": "e61c3be0c049aad700ea2221110b0f993ff379b3e749e7582a458bc8e8fd308b"
+    },
+    {
+      "sku": "AVE-26-0003",
+      "name": "AirVolume Scalp Therapy Anti-Hair Fall Strengthening Conditioner",
+      "category": "Conditioner",
+      "description": "Conditioning care with frizz, tangling in mind. 250 ml.",
+      "price": "199.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "concern:frizz",
+        "concern:tangling"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/airvolume_conditioner_1.webp",
+      "image_sha256": "0fa29663d6c9969aaeaa43a149eb02fa6518414c6dbb59d774e9381d3976639b"
+    },
+    {
+      "sku": "AVE-26-0004",
+      "name": "AirVolume Shampoo Volume",
+      "category": "Shampoo",
+      "description": "A wash-day cleanse with oiliness in mind. 354 ml.",
+      "price": "299.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "concern:oiliness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/airvolume_shampoo.webp",
+      "image_sha256": "3946d8645f14f6ab0ed778a1b0b67e5141c4ad646ae0b884c5c7c5471d2ed1f9"
+    },
+    {
+      "sku": "AVE-26-0005",
+      "name": "AirVolume Supercurl With Keratin Conditioner",
+      "category": "Conditioner",
+      "description": "Conditioning care with frizz in mind. 400 ml.",
+      "price": "149.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "texture:curly",
+        "concern:frizz"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/airvolume_conditioner_2.webp",
+      "image_sha256": "0c6b1d27066d7d83d2d42c574e363d199d2678dcc85523db02c86491b817a904"
+    },
+    {
+      "sku": "AVE-26-0006",
+      "name": "ArganAura Keratin Smooth Shampoo",
+      "category": "Shampoo",
+      "description": "A wash-day cleanse with frizz in mind. 330 ml.",
+      "price": "340.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "texture:straight",
+        "concern:frizz"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/arganaura_shampoo.webp",
+      "image_sha256": "9eb820a7bb39f87784aa5af3d7c6f80741e4c98fd94536e44051d6dfaf2c93ee"
+    },
+    {
+      "sku": "AVE-26-0007",
+      "name": "ArganAura Straight & Smooth Serum Hair Oil",
+      "category": "Hair Oil",
+      "description": "A hair oil with frizz in mind. 60 ml.",
+      "price": "219.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "texture:straight",
+        "concern:frizz"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/arganaura_hair-oil.webp",
+      "image_sha256": "552c9adab0f8f0cfa3669fc52cd02d44df2048c6bf92440354da4f687d9e797a"
+    },
+    {
+      "sku": "AVE-26-0008",
+      "name": "ArganAura Style Shiny & Smooth Hair Serum",
+      "category": "Serum",
+      "description": "A finishing step with frizz in mind. 50 ml.",
+      "price": "89.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:frizz"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/arganaura_serum.webp",
+      "image_sha256": "a2ac6bbc9ce7ce45e6152d1513216e4575c51774f12d107a5be1b6488f1efabc"
+    },
+    {
+      "sku": "AVE-26-0009",
+      "name": "ArganAura Hairlab Watermelon Double Boost Collagen 2 in 1 Serum Conditioner Treatment",
+      "category": "Treatment",
+      "description": "An extra care step with tangling, damage in mind. 200 ml.",
+      "price": "259.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [
+        "concern:tangling",
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/arganaura_treatment.webp",
+      "image_sha256": "a7ae8636a3f8d8f1d6d14296da9985bf59fb518a8260495b32140d0716d9389c"
+    },
+    {
+      "sku": "AVE-26-0010",
+      "name": "ArganAura Premium Moist & Repair Conditioner",
+      "category": "Conditioner",
+      "description": "Conditioning care with dryness, damage in mind. 450 ml.",
+      "price": "549.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/arganaura_conditioner.webp",
+      "image_sha256": "459660791228a91c645d6447b72f8b56fb4c1e17c06e25dc6185fe47bebdaaf6"
+    },
+    {
+      "sku": "AVE-26-0011",
+      "name": "BondBloom Keragold Hair Rosemary Oil and Horse Oil Serum Ultimate Straight",
+      "category": "Serum",
+      "description": "A considered finishing step for your lengths. 65 ml.",
+      "price": "189.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "texture:straight"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/bondbloom_serum.webp",
+      "image_sha256": "5bcd2beae3a2deb752b9cde6e7e3b9fb32deb6c8bd25ec07319e8960205f064b"
+    },
+    {
+      "sku": "AVE-26-0012",
+      "name": "BondBloom Anti-Frizz Treatment Wax Argan Oil",
+      "category": "Treatment",
+      "description": "An extra care step with frizz, dryness in mind. 500 ml.",
+      "price": "265.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [
+        "concern:frizz",
+        "concern:dryness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/bondbloom_treatment.webp",
+      "image_sha256": "60bdae3bf29e964b266bbdd01b2c4f2f725944bae1bbe8882b29824a375386f7"
+    },
+    {
+      "sku": "AVE-26-0013",
+      "name": "BondBloom Ultimate Reborn Hairfall Defense Conditioner",
+      "category": "Conditioner",
+      "description": "A little care for your lengths after washing. 350 ml.",
+      "price": "299.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/bondbloom_conditioner_1.webp",
+      "image_sha256": "2165e2bb10fa6099b22ddd2238f1715f6e0261dca79e46faa888a6ab0a45f80f"
+    },
+    {
+      "sku": "AVE-26-0014",
+      "name": "BondBloom Conditioner Smooth",
+      "category": "Conditioner",
+      "description": "Conditioning care with frizz in mind. 354 ml.",
+      "price": "299.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "concern:frizz"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/bondbloom_conditioner_2.webp",
+      "image_sha256": "41c300ea167031cce463ae29d06c4722b6ce8109a8efdb1064d443c39a4a6519"
+    },
+    {
+      "sku": "AVE-26-0015",
+      "name": "BondBloom Dermacare Scalp Soothing Moisture Shampoo Anti-Dandruff",
+      "category": "Shampoo",
+      "description": "An everyday cleanse, starting at the scalp. 185 ml.",
+      "price": "250.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/bondbloom_shampoo.webp",
+      "image_sha256": "44a25e4754f49726d475fb81484c337e1016b4ea7f13163546c9f3ae1575a05c"
+    },
+    {
+      "sku": "AVE-26-0016",
+      "name": "Chromaluxe Premium Touch Hair Oil",
+      "category": "Hair Oil",
+      "description": "A hair oil with dryness, frizz in mind. 70 ml.",
+      "price": "629.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:dryness",
+        "concern:frizz"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/chromaluxe_hair-oil.webp",
+      "image_sha256": "4ecba4c0193520e61019883ac52c37ccc11bd9c833a6e7da226ad43bd30f62ee"
+    },
+    {
+      "sku": "AVE-26-0017",
+      "name": "Chromaluxe Keratin Smooth Bond Building Treatment Mask",
+      "category": "Treatment",
+      "description": "An extra step for your wash-day care. 180 ml.",
+      "price": "319.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/chromaluxe_treatment.webp",
+      "image_sha256": "123183d6519186bbb1a9f16ba37f7551878bcd23ac4af82c11940b512130ffd7"
+    },
+    {
+      "sku": "AVE-26-0018",
+      "name": "Chromaluxe Argan Oil Conditioner",
+      "category": "Conditioner",
+      "description": "Conditioning care with damage, dryness in mind. 400 ml.",
+      "price": "399.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "concern:damage",
+        "concern:dryness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/chromaluxe_conditioner_1.webp",
+      "image_sha256": "0a42e5b1aa24f504646264b61712bef30912283d10baa635521808c19eb7e11b"
+    },
+    {
+      "sku": "AVE-26-0019",
+      "name": "Chromaluxe Professional Power Curls Shampoo",
+      "category": "Shampoo",
+      "description": "An everyday cleanse, starting at the scalp. 250 ml.",
+      "price": "179.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "texture:curly"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/chromaluxe_shampoo.webp",
+      "image_sha256": "ab7d5174fe2642a2e0ad109b55906c5c7777dbc55e167c50ca5cdbd583877d9b"
+    },
+    {
+      "sku": "AVE-26-0020",
+      "name": "Chromaluxe Leave On Conditioner",
+      "category": "Conditioner",
+      "description": "Conditioning care with dryness in mind. 125 g.",
+      "price": "173.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "concern:dryness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/chromaluxe_conditioner_2.webp",
+      "image_sha256": "3b0f8b092b64dc8cbcad7df8bfc0cd35338d779d728091d83d4e11f2937074a2"
+    },
+    {
+      "sku": "AVE-26-0021",
+      "name": "CocoSilk Scalptech Dermo Repair & Recover Intensive Treatment",
+      "category": "Treatment",
+      "description": "An extra step for your wash-day care. 200 ml.",
+      "price": "169.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/cocosilk_treatment_1.webp",
+      "image_sha256": "e82893b710c959b3aad6e5e14e3de554e0574a64e90cb09ecef9495bf4ef46ff"
+    },
+    {
+      "sku": "AVE-26-0022",
+      "name": "CocoSilk Perfect Serum Super Rich",
+      "category": "Serum",
+      "description": "A finishing step with damage, frizz, dryness in mind. 80 ml.",
+      "price": "645.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:damage",
+        "concern:frizz",
+        "concern:dryness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/cocosilk_serum.webp",
+      "image_sha256": "9be87a4fda9afdde340532fad680cee57d2a6fa96e7e738fbdf90fd5e1567cca"
+    },
+    {
+      "sku": "AVE-26-0023",
+      "name": "CocoSilk One Minute Hot Oil Treatment Milk",
+      "category": "Treatment",
+      "description": "An extra step for your wash-day care. 350 g.",
+      "price": "189.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/cocosilk_treatment_2.webp",
+      "image_sha256": "645b88dd1fd46e8df3ded4b3a93164fab3592ce467d6bd1c8261c5db20b10976"
+    },
+    {
+      "sku": "AVE-26-0024",
+      "name": "CocoSilk Curl and Define Volumizing Hair Mousse",
+      "category": "Styling",
+      "description": "A styling step with frizz in mind. 250 ml.",
+      "price": "275.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "texture:curly",
+        "concern:frizz"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/cocosilk_styling.webp",
+      "image_sha256": "5e9f1539859a2d0a9f6cc4ba8df8a90c4d3e9b67e70875a0b6e7f2c596b041f2"
+    },
+    {
+      "sku": "AVE-26-0025",
+      "name": "CocoSilk Premium Volume & Repair Shampoo",
+      "category": "Shampoo",
+      "description": "A wash-day cleanse with damage, oiliness in mind. 450 ml.",
+      "price": "549.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "concern:damage",
+        "concern:oiliness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/cocosilk_shampoo.webp",
+      "image_sha256": "3ec7c7b57d15385fca9daf1d25c9867d9ea38b6feb0ab914c7fdd9c1490cb5fc"
+    },
+    {
+      "sku": "AVE-26-0026",
+      "name": "Clairéve Glossing Salon Serum Hair Treatment 5X Keratin Serum",
+      "category": "Treatment",
+      "description": "An extra step for your wash-day care. 600 g.",
+      "price": "239.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/claireve_treatment_1.webp",
+      "image_sha256": "6f5f48dde6144f21ff0e08b06cde047f3ac697a74734072677d0ca439815eefc"
+    },
+    {
+      "sku": "AVE-26-0027",
+      "name": "Clairéve Premium Touch Hair Mask",
+      "category": "Treatment",
+      "description": "An extra care step with dryness, damage, tangling in mind. 230 g.",
+      "price": "599.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [
+        "concern:dryness",
+        "concern:damage",
+        "concern:tangling"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/claireve_treatment_2.webp",
+      "image_sha256": "fe676f49b79fbce6becff25acf42e5f68c51a626ec822581e20ea6e48bf5f49d"
+    },
+    {
+      "sku": "AVE-26-0028",
+      "name": "Clairéve Protein-Free Leave-In Conditioner with Avocado & Tea Tree",
+      "category": "Conditioner",
+      "description": "Conditioning care with frizz, dryness, damage, tangling in mind. 200 ml.",
+      "price": "345.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "texture:curly",
+        "concern:frizz",
+        "concern:dryness",
+        "concern:damage",
+        "concern:tangling"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/claireve_conditioner_1.webp",
+      "image_sha256": "04b0b6952377699013f36aed54a03790175150a679cef29ff65992dd273f29b8"
+    },
+    {
+      "sku": "AVE-26-0029",
+      "name": "Clairéve Shampoo Smooth",
+      "category": "Shampoo",
+      "description": "A wash-day cleanse with frizz in mind. 354 ml.",
+      "price": "299.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "texture:wavy",
+        "texture:curly",
+        "concern:frizz"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/claireve_shampoo.webp",
+      "image_sha256": "91a506a2770d1933d16a2db8bd74da7a2f8acf382146550248203625e7a38b3f"
+    },
+    {
+      "sku": "AVE-26-0030",
+      "name": "Clairéve Full Resist Anti Hair Fall Conditioner",
+      "category": "Conditioner",
+      "description": "A little care for your lengths after washing. 440 ml.",
+      "price": "599.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/claireve_conditioner_2.webp",
+      "image_sha256": "c4acdba66a71756d63be6936191c50d33af3ed6c5bb121d5421b0c02463730b1"
+    },
+    {
+      "sku": "AVE-26-0031",
+      "name": "Dawnstrand Herbal Anti-Hairfall Conditioner with Argan Oil",
+      "category": "Conditioner",
+      "description": "A little care for your lengths after washing. 200 ml.",
+      "price": "234.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/dawnstrand_conditioner_1.webp",
+      "image_sha256": "4fc05940b00c3702545178c696b09c9506ab4c16f1ed2cece3abe92d6686f3f8"
+    },
+    {
+      "sku": "AVE-26-0032",
+      "name": "Dawnstrand Biotin Hairfall Rescue 1 Minute Conditioner",
+      "category": "Conditioner",
+      "description": "A little care for your lengths after washing. 150 ml.",
+      "price": "220.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/dawnstrand_conditioner_2.webp",
+      "image_sha256": "71a113d2c40f80d8fc874de045b55ddbd2000bf6022f2407bce6af1ed0b83f46"
+    },
+    {
+      "sku": "AVE-26-0033",
+      "name": "Dawnstrand Argan Shampoo Refill",
+      "category": "Shampoo",
+      "description": "An everyday cleanse, starting at the scalp. 450 ml.",
+      "price": "199.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/dawnstrand_shampoo_1.webp",
+      "image_sha256": "58afeba98b8469266054fec65c2b5b14acc2baf0b8c18634c8f3c5d929a3ee22"
+    },
+    {
+      "sku": "AVE-26-0034",
+      "name": "Dawnstrand Shampoo Moisture",
+      "category": "Shampoo",
+      "description": "A wash-day cleanse with dryness, damage in mind. 354 ml.",
+      "price": "299.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "texture:coily",
+        "texture:curly",
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/dawnstrand_shampoo_2.webp",
+      "image_sha256": "71f32a38ed06ef967e0b9193c05d40bae3b919e73462e9aab6a8b359613a85e4"
+    },
+    {
+      "sku": "AVE-26-0035",
+      "name": "Dawnstrand Revitalizing Conditioner",
+      "category": "Conditioner",
+      "description": "A little care for your lengths after washing. 400 ml.",
+      "price": "429.75",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/dawnstrand_conditioner_3.webp",
+      "image_sha256": "e9e383755db25af121051cc865a004978d04e864115f2c84c829348a807a90b9"
+    },
+    {
+      "sku": "AVE-26-0036",
+      "name": "Floréa Dermacare Scalp Anti-dandruff Shampoo Hairfall Recovery",
+      "category": "Shampoo",
+      "description": "An everyday cleanse, starting at the scalp. 300 ml.",
+      "price": "357.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/florea_shampoo_1.webp",
+      "image_sha256": "c2c3746ea4b1d48484396c3d45eac4282eeecd2e673dd5ee4211cdeb31dcf5b5"
+    },
+    {
+      "sku": "AVE-26-0037",
+      "name": "Floréa Cool Menthol Shampoo",
+      "category": "Shampoo",
+      "description": "An everyday cleanse, starting at the scalp. 450 ml.",
+      "price": "299.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/florea_shampoo_2.webp",
+      "image_sha256": "6fb16d1376332faf26d223f3563106ce2a114da79e5ac4a1f7cc5ec6386bba70"
+    },
+    {
+      "sku": "AVE-26-0038",
+      "name": "Floréa Keragold Hair Avocado Oil and Bioten Serum Damage Repair",
+      "category": "Serum",
+      "description": "A finishing step with damage, dryness in mind. 65 ml.",
+      "price": "189.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:damage",
+        "concern:dryness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/florea_serum.webp",
+      "image_sha256": "89ea935534804e6aa72d6c499f3d599ebea0aca92d84647f05b82b86a6e923e3"
+    },
+    {
+      "sku": "AVE-26-0039",
+      "name": "Floréa Complete Scalp Care 72H Oil Control Shampoo",
+      "category": "Shampoo",
+      "description": "An everyday cleanse, starting at the scalp. 290 ml.",
+      "price": "199.50",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/florea_shampoo_3.webp",
+      "image_sha256": "e42ca0152e4a24c8f1be96204d930b58346698a37306112c12b47f65cfdda389"
+    },
+    {
+      "sku": "AVE-26-0040",
+      "name": "Floréa Perfect Beauty Extra Damage Repair Shampoo",
+      "category": "Shampoo",
+      "description": "A wash-day cleanse with damage, dryness in mind. 450 ml.",
+      "price": "599.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "concern:damage",
+        "concern:dryness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/florea_shampoo_4.webp",
+      "image_sha256": "3d357f02311c457019624e0418581e20f8d89d24aafef4f789e9de24a8ab822d"
+    },
+    {
+      "sku": "AVE-26-0041",
+      "name": "Forma Hair Herbal Conditioner Leech Lime and Centella",
+      "category": "Conditioner",
+      "description": "A little care for your lengths after washing. 330 ml.",
+      "price": "399.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/forma-hair_conditioner_1.webp",
+      "image_sha256": "b4571b5c8f08220c4d02a58889b3c773b631c7351eb0d1b8195dad12d2a70ffe"
+    },
+    {
+      "sku": "AVE-26-0042",
+      "name": "Forma Hair Ultimate Reborn Standout Straight Conditioner",
+      "category": "Conditioner",
+      "description": "Conditioning care with frizz in mind. 350 ml.",
+      "price": "299.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "texture:straight",
+        "concern:frizz"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/forma-hair_conditioner_2.webp",
+      "image_sha256": "e8afaf8155ec2e8a6e28ec4cbb441bbea37237eeb2bd3e9f49a2ff1671203ebc"
+    },
+    {
+      "sku": "AVE-26-0043",
+      "name": "Forma Hair Argan Oil Hair Conditioner",
+      "category": "Conditioner",
+      "description": "Conditioning care with dryness, damage in mind. 490 ml.",
+      "price": "142.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/forma-hair_conditioner_3.webp",
+      "image_sha256": "bbadbf72da2312a9de6aad307cfbb3763223c67d35d1f6f32f3e9f7ccfb12397"
+    },
+    {
+      "sku": "AVE-26-0044",
+      "name": "Forma Hair Conditioner Moisture",
+      "category": "Conditioner",
+      "description": "Conditioning care with dryness, damage in mind. 354 ml.",
+      "price": "299.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "texture:coily",
+        "texture:curly",
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/forma-hair_conditioner_4.webp",
+      "image_sha256": "fd95ebf254f25353aee15761297ed77db9d88b2bcb7f14c025199e94307e7595"
+    },
+    {
+      "sku": "AVE-26-0045",
+      "name": "Forma Hair Clarifying Shampoo",
+      "category": "Shampoo",
+      "description": "A wash-day cleanse with oiliness in mind. 400 ml.",
+      "price": "359.75",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "concern:oiliness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/forma-hair_shampoo.webp",
+      "image_sha256": "9a726d2f0771a5aaef3c4d4a0aa36ee8ef836ccf052f70235532ee22a275f9f3"
+    },
+    {
+      "sku": "AVE-26-0046",
+      "name": "Gleam & Grow Extraordinary Oil Leave-In Hair Serum",
+      "category": "Hair Oil",
+      "description": "A hair oil with frizz in mind. 100 ml.",
+      "price": "899.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:frizz"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/gleam-and-grow_hair-oil.webp",
+      "image_sha256": "be73f2ebace7f297a6967a68bdfae1d380e39e53b6849bb2ad7cf633a9b0d16a"
+    },
+    {
+      "sku": "AVE-26-0047",
+      "name": "Gleam & Grow Style Damage Control Hair Serum",
+      "category": "Serum",
+      "description": "A finishing step with dryness, damage in mind. 50 ml.",
+      "price": "99.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/gleam-and-grow_serum.webp",
+      "image_sha256": "93ed307cf84af4abeb8b7baae68414ed41cceaf5bcfce0d1bb0c417d8c6dc76a"
+    },
+    {
+      "sku": "AVE-26-0048",
+      "name": "Gleam & Grow Peptide Bond Repair Treatment Creme Mask",
+      "category": "Treatment",
+      "description": "An extra care step with damage in mind. 250 ml.",
+      "price": "382.50",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/gleam-and-grow_treatment.webp",
+      "image_sha256": "2cba39a8e7977f8fadb1b94ca0c634319f3da1f37d314b93f8a558a775deab1c"
+    },
+    {
+      "sku": "AVE-26-0049",
+      "name": "Gleam & Grow Professional Power Curls Conditioner",
+      "category": "Conditioner",
+      "description": "A little care for your lengths after washing. 250 ml.",
+      "price": "179.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "texture:curly"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/gleam-and-grow_conditioner.webp",
+      "image_sha256": "ab8a09bf63b48d48e88a9297710ac292343b018dcfdc82c2d8deebf495ef2e88"
+    },
+    {
+      "sku": "AVE-26-0050",
+      "name": "Gleam & Grow Hairlab 6 in 1 Hya+Keratin Volumizing Hair Mousse",
+      "category": "Styling",
+      "description": "A styling step to make your routine your own. 250 ml.",
+      "price": "299.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "texture:curly"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/gleam-and-grow_styling.webp",
+      "image_sha256": "bbbc12cdea4a909cd68a4eeb9f7478c6ba5fd62ea11e562af85480d1d170ab76"
+    },
+    {
+      "sku": "AVE-26-0051",
+      "name": "Hairluxe Coconut Milk Conditioner",
+      "category": "Conditioner",
+      "description": "Conditioning care with dryness in mind. 400 ml.",
+      "price": "399.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "concern:dryness"
+      ],
+      "image_path": null,
+      "image_sha256": null
+    },
+    {
+      "sku": "AVE-26-0052",
+      "name": "Hairluxe Derma Scalp + Hair Fall Recovery Conditioner",
+      "category": "Conditioner",
+      "description": "A little care for your lengths after washing. 170 ml.",
+      "price": "226.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [],
+      "image_path": null,
+      "image_sha256": null
+    },
+    {
+      "sku": "AVE-26-0053",
+      "name": "Hairluxe Total Damage Care Pro Vitamin Shampoo",
+      "category": "Shampoo",
+      "description": "A wash-day cleanse with damage, frizz in mind. 450 ml.",
+      "price": "309.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "concern:damage",
+        "concern:frizz"
+      ],
+      "image_path": null,
+      "image_sha256": null
+    },
+    {
+      "sku": "AVE-26-0054",
+      "name": "Hairluxe Argan Rich Oil Hair Treatment Oil Rich Moisture",
+      "category": "Hair Oil",
+      "description": "A hair oil with dryness, damage in mind. 60 ml.",
+      "price": "389.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "image_path": null,
+      "image_sha256": null
+    },
+    {
+      "sku": "AVE-26-0055",
+      "name": "Hairluxe Revitalizing Shampoo",
+      "category": "Shampoo",
+      "description": "An everyday cleanse, starting at the scalp. 400 ml.",
+      "price": "399.75",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "scalp:dry_scalp",
+        "scalp:oily_scalp"
+      ],
+      "image_path": null,
+      "image_sha256": null
+    },
+    {
+      "sku": "AVE-26-0056",
+      "name": "ManeCraft Balancing Serum & Smooth Repair Hair Oil",
+      "category": "Hair Oil",
+      "description": "A hair oil with damage in mind. 100 ml.",
+      "price": "999.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/manecraft_hair-oil.png",
+      "image_sha256": "af335896e9ac95f937313651aa90f46ea8045360b32ab45cff5f1208824ddf23"
+    },
+    {
+      "sku": "AVE-26-0057",
+      "name": "ManeCraft Hair Serum",
+      "category": "Serum",
+      "description": "A finishing step with frizz, tangling in mind. 50 ml.",
+      "price": "229.75",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:frizz",
+        "concern:tangling"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/manecraft_serum.jpg",
+      "image_sha256": "f266b487503ca127160f7e520bbbd65a938a9fa622bd506e5e3bd7954685cfe9"
+    },
+    {
+      "sku": "AVE-26-0058",
+      "name": "ManeCraft Premium EX Repair Mask",
+      "category": "Treatment",
+      "description": "An extra care step with damage in mind. 180 g.",
+      "price": "711.55",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/manecraft_treatment_1.png",
+      "image_sha256": "936f874d48d9e6ad3097fab45313fcf00981796d5eedd04151ee54f1422924d4"
+    },
+    {
+      "sku": "AVE-26-0059",
+      "name": "ManeCraft Professional Power Curls Defining Spray",
+      "category": "Styling",
+      "description": "A styling step to make your routine your own. 200 ml.",
+      "price": "199.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "texture:curly"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/manecraft_styling.png",
+      "image_sha256": "18ab7556a3ac54e61b2443a6037ffbd5219526210feda76c182ee24699922dd5"
+    },
+    {
+      "sku": "AVE-26-0060",
+      "name": "ManeCraft Perfect Beauty Extra Smooth & Straight Treatment",
+      "category": "Treatment",
+      "description": "An extra step for your wash-day care. 450 ml.",
+      "price": "599.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/manecraft_treatment_2.jpg",
+      "image_sha256": "ea195939e363f7f591dacd76a2cf60b29a0d2c6062733b789c8b2f0ea6e4c833"
+    },
+    {
+      "sku": "AVE-26-0061",
+      "name": "Orelisse Protein-Free Shampoo with Avocado & Tea Tree",
+      "category": "Shampoo",
+      "description": "An everyday cleanse, starting at the scalp. 250 ml.",
+      "price": "249.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "texture:curly"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/orelisse_shampoo_1.png",
+      "image_sha256": "d373b0af2b35466c219feb960413bb3aba26794f4ce2eb330fedbf98bb5dbc62"
+    },
+    {
+      "sku": "AVE-26-0062",
+      "name": "Orelisse Deep Moist Hair Oil 3.0",
+      "category": "Hair Oil",
+      "description": "A hair oil with dryness in mind. 100 ml.",
+      "price": "999.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:dryness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/orelisse_hair-oil.png",
+      "image_sha256": "e4e984d1434647807fc87946fd3af19eb85382114a7e79c50d16bc82bc434e84"
+    },
+    {
+      "sku": "AVE-26-0063",
+      "name": "Orelisse Style Straightening Hair Serum",
+      "category": "Serum",
+      "description": "A considered finishing step for your lengths. 50 ml.",
+      "price": "99.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "texture:straight"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/orelisse_serum.jpg",
+      "image_sha256": "a4aa5387b774168d6df86bc0f90492244fa9a83d8864e02eac5850c34458519f"
+    },
+    {
+      "sku": "AVE-26-0064",
+      "name": "Orelisse Keratin Smooth KERA10 Conditioner",
+      "category": "Conditioner",
+      "description": "Conditioning care with dryness, frizz, tangling in mind. 170 ml.",
+      "price": "194.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "concern:dryness",
+        "concern:frizz",
+        "concern:tangling"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/orelisse_conditioner.jpg",
+      "image_sha256": "770486cee7bcb63441da463e79cf60caa43b093ac5d45b9b858025707dda832c"
+    },
+    {
+      "sku": "AVE-26-0065",
+      "name": "Orelisse Premium EX Intensive Repair Shampoo",
+      "category": "Shampoo",
+      "description": "A wash-day cleanse with damage in mind. 490 ml.",
+      "price": "619.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/orelisse_shampoo_2.jpg",
+      "image_sha256": "fb63d52032993e1314170474e7542b62b87db75ffa9d53e03c921d81d3ea34f6"
+    },
+    {
+      "sku": "AVE-26-0066",
+      "name": "Paloma Ceramide Intense Repair Shampoo",
+      "category": "Shampoo",
+      "description": "A wash-day cleanse with damage, dryness in mind. 170 ml.",
+      "price": "224.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "concern:damage",
+        "concern:dryness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/paloma_shampoo.png",
+      "image_sha256": "fb5d45037a0f62db43a3a62bc98b6da122f6d3da948cbb6a839dc91fc34f3dee"
+    },
+    {
+      "sku": "AVE-26-0067",
+      "name": "Paloma Premium Keratin Hair Serum Cuticle Coat Deep Repair",
+      "category": "Serum",
+      "description": "A finishing step with dryness, damage in mind. 50 ml.",
+      "price": "149.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/paloma_serum_1.png",
+      "image_sha256": "53ffa154f8511a19bcb175df0b77779356aabe23fdb70eb2d4fa6d8998808a00"
+    },
+    {
+      "sku": "AVE-26-0068",
+      "name": "Paloma Hair Fall Control Hair Spa Aloe Vera",
+      "category": "Treatment",
+      "description": "An extra step for your wash-day care. 650 g.",
+      "price": "235.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/paloma_treatment.png",
+      "image_sha256": "0845bf8a7f5f49f0feceb20078446208419c5bea6c59b61d811a360704c02a53"
+    },
+    {
+      "sku": "AVE-26-0069",
+      "name": "Paloma Premium Keratin Curl & Define Essence",
+      "category": "Serum",
+      "description": "A finishing step with dryness, damage in mind. 120 ml.",
+      "price": "129.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "texture:curly",
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/paloma_serum_2.jpg",
+      "image_sha256": "e1e5cb3dbaf36dcee569973799f973c23eef1a64003f577a9dfda6385ddc6ee1"
+    },
+    {
+      "sku": "AVE-26-0070",
+      "name": "Paloma Premium Volume & Repair Conditioner",
+      "category": "Conditioner",
+      "description": "Conditioning care with damage in mind. 450 ml.",
+      "price": "549.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/paloma_conditioner.png",
+      "image_sha256": "230ef3f766160787711058c68517d17248ebdf9a36f69f987cb2f4128a58e308"
+    },
+    {
+      "sku": "AVE-26-0071",
+      "name": "Rootelle Moisturizing Conditioner Mandarin Fresh",
+      "category": "Conditioner",
+      "description": "Conditioning care with dryness in mind. 200 ml.",
+      "price": "199.75",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "concern:dryness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/rootelle_conditioner_1.png",
+      "image_sha256": "a20f46c3c34d3367ad68e24c30c8658cd39a33e8697825a7d1c00f6fe7acc78d"
+    },
+    {
+      "sku": "AVE-26-0072",
+      "name": "Rootelle Triple Keratin Rescue Conditioner Ultimate Straight",
+      "category": "Conditioner",
+      "description": "Conditioning care with frizz, damage in mind. 340 ml.",
+      "price": "385.50",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "texture:straight",
+        "concern:frizz",
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/rootelle_conditioner_2.png",
+      "image_sha256": "56dcf7ac0a9b4ee72a0d704667e19e2aa81ae91ee1c2526e803c8334f1b58abc"
+    },
+    {
+      "sku": "AVE-26-0073",
+      "name": "Rootelle Curl Define Intensive Hydration Daily Shampoo",
+      "category": "Shampoo",
+      "description": "A wash-day cleanse with frizz, tangling, dryness in mind. 220 ml.",
+      "price": "199.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "texture:curly",
+        "concern:frizz",
+        "concern:tangling",
+        "concern:dryness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/rootelle_shampoo_1.jpg",
+      "image_sha256": "a2591231164a559bc3fbf42c3e48c57472ed61d34032ab7286786535602055b9"
+    },
+    {
+      "sku": "AVE-26-0074",
+      "name": "Rootelle Argan Oil Repairing Hair Oil Pump",
+      "category": "Hair Oil",
+      "description": "A hair oil with dryness, damage, frizz in mind. 100 ml.",
+      "price": "999.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:dryness",
+        "concern:damage",
+        "concern:frizz"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/rootelle_hair-oil.png",
+      "image_sha256": "00d3691bf5c26d3a628e3b6e02b91950a650d1c256287304185334f575ec1989"
+    },
+    {
+      "sku": "AVE-26-0075",
+      "name": "Rootelle Derma Scalp+ Oil Control Shampoo",
+      "category": "Shampoo",
+      "description": "An everyday cleanse, starting at the scalp. 185 ml.",
+      "price": "225.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "scalp:oily_scalp"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/rootelle_shampoo_2.png",
+      "image_sha256": "47c9baaf4970d69b4a6f4964ac489ef4d6d36fbc11fad7cdc1ed2ad616439bd9"
+    },
+    {
+      "sku": "AVE-26-0076",
+      "name": "Still, Haircare 100% Natural Rosemary Oil",
+      "category": "Hair Oil",
+      "description": "A finishing oil for your everyday routine. 10 ml.",
+      "price": "299.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/still-haircare_hair-oil.webp",
+      "image_sha256": "5d5669b275f4efe8753fc3115dbfd7b26975eb1fae896cef37163937c67c9884"
+    },
+    {
+      "sku": "AVE-26-0077",
+      "name": "Still, Haircare Hya+Ceramide Intense Repair Treatment Mask",
+      "category": "Treatment",
+      "description": "An extra care step with dryness, damage in mind. 300 ml.",
+      "price": "330.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/still-haircare_treatment.webp",
+      "image_sha256": "240b04cb48d20961847179bf2fd55f4f3c3b74f3c6f777c65e3d2a98aaa08236"
+    },
+    {
+      "sku": "AVE-26-0078",
+      "name": "Still, Haircare 3 Minute Miracle Keratin Silky Smooth Conditioner",
+      "category": "Conditioner",
+      "description": "Conditioning care with frizz, dryness, damage in mind. 300 ml.",
+      "price": "345.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "concern:frizz",
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/still-haircare_conditioner_1.webp",
+      "image_sha256": "99e354ad7f8953148308ecf5e4014f360a2e441b4f1211623e9347e80d289c3b"
+    },
+    {
+      "sku": "AVE-26-0079",
+      "name": "Still, Haircare Conditioner Volume",
+      "category": "Conditioner",
+      "description": "Conditioning care with oiliness in mind. 354 ml.",
+      "price": "299.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "concern:oiliness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/still-haircare_conditioner_2.webp",
+      "image_sha256": "ecab21e654dbc36bb29ffa45474e994516a50d14d071cc1dad96a497b89ce175"
+    },
+    {
+      "sku": "AVE-26-0080",
+      "name": "Still, Haircare Protein-Free Conditioner with Avocado & Tea Tree",
+      "category": "Conditioner",
+      "description": "A little care for your lengths after washing. 250 ml.",
+      "price": "309.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "texture:curly"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/still-haircare_conditioner_3.webp",
+      "image_sha256": "c6e154dd3dc68badfb0aa8954c7726fe6e86827a6adab7f8ce062c5f17d06220"
+    },
+    {
+      "sku": "AVE-26-0081",
+      "name": "The Tress Co. Biotin Hairfall Rescue Shampoo",
+      "category": "Shampoo",
+      "description": "An everyday cleanse, starting at the scalp. 170 ml.",
+      "price": "224.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/the-tress-co_shampoo.webp",
+      "image_sha256": "a54d6d45b90e3e11899d2abfe0fbf3369b09c92dc4070c79291370236f7b4b78"
+    },
+    {
+      "sku": "AVE-26-0082",
+      "name": "The Tress Co. Argan Rich Oil Hair Treatment Oil Frizz Care",
+      "category": "Hair Oil",
+      "description": "A hair oil with frizz, dryness in mind. 60 ml.",
+      "price": "489.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:frizz",
+        "concern:dryness",
+        "texture:straight"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/the-tress-co_hair-oil.webp",
+      "image_sha256": "181126313e95d55ada111611ae0a33a78a9574afb471ce2d6eeee789a2d151d2"
+    },
+    {
+      "sku": "AVE-26-0083",
+      "name": "The Tress Co. Keratin Shine Hair Serum",
+      "category": "Serum",
+      "description": "A considered finishing step for your lengths. 30 ml.",
+      "price": "129.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/the-tress-co_serum_1.webp",
+      "image_sha256": "7fed656ec2f0293af5abd0e4215260f4b1c8501347c5a56892869c649937c481"
+    },
+    {
+      "sku": "AVE-26-0084",
+      "name": "The Tress Co. Herbal Hair Relaxing Serum with Argan Oil (Leave-on Conditioner)",
+      "category": "Serum",
+      "description": "A finishing step with dryness, frizz, tangling, damage in mind. 55 ml.",
+      "price": "246.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:dryness",
+        "concern:frizz",
+        "concern:tangling",
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/the-tress-co_serum_2.webp",
+      "image_sha256": "e082d9afd162c0a2f80a2d72818bf28c598004e97035870794a125b813b44778"
+    },
+    {
+      "sku": "AVE-26-0085",
+      "name": "The Tress Co. Premium EX Intensive Repair Conditioner",
+      "category": "Conditioner",
+      "description": "Conditioning care with damage in mind. 490 ml.",
+      "price": "619.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/the-tress-co_conditioner.webp",
+      "image_sha256": "981aaba14f585468735dd8253bb9a4a39fb7a0c0d94d52acf5fcb399ede2e9b3"
+    },
+    {
+      "sku": "AVE-26-0086",
+      "name": "Ulo Curl Define Intensive Hydration Daily Conditioner",
+      "category": "Conditioner",
+      "description": "Conditioning care with frizz, dryness, tangling in mind. 210 ml.",
+      "price": "199.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "texture:curly",
+        "concern:frizz",
+        "concern:dryness",
+        "concern:tangling"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/ulo_conditioner.webp",
+      "image_sha256": "70e4e10607f53e20fc3366e6342e80222f655eed3817be274a30dd0d6d4d24c9"
+    },
+    {
+      "sku": "AVE-26-0087",
+      "name": "Ulo Smooth and Silky Shampoo",
+      "category": "Shampoo",
+      "description": "An everyday cleanse, starting at the scalp. 450 ml.",
+      "price": "299.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/ulo_shampoo_1.webp",
+      "image_sha256": "325104eeb013364e84a1c0dcefc3e4748c72eecdc8e27dae5478d8bd6499adcf"
+    },
+    {
+      "sku": "AVE-26-0088",
+      "name": "Ulo Olive Hair Oil",
+      "category": "Hair Oil",
+      "description": "A hair oil with dryness, damage in mind. 100 ml.",
+      "price": "200.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/ulo_hair-oil.webp",
+      "image_sha256": "43b529f5ecc07a8ddf7828598c24a7747363bbe08e4f246e2c90847fbaf45324"
+    },
+    {
+      "sku": "AVE-26-0089",
+      "name": "Ulo Scalp Derma Shampoo Sebum Control",
+      "category": "Shampoo",
+      "description": "An everyday cleanse, starting at the scalp. 300 g.",
+      "price": "499.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "scalp:oily_scalp"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/ulo_shampoo_2.webp",
+      "image_sha256": "3c26cb1e9841537160e4c6c41a398350a552685f505ff151b7fed2aab2464163"
+    },
+    {
+      "sku": "AVE-26-0090",
+      "name": "Ulo Fresh & Hydrate Shampoo",
+      "category": "Shampoo",
+      "description": "A wash-day cleanse with damage in mind. 450 ml.",
+      "price": "599.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "scalp:oily_scalp",
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/ulo_shampoo_3.webp",
+      "image_sha256": "880f66a03d817bfdfba5e2b354a66284c1bd305d101aa0c23bbda529af3ddb87"
+    },
+    {
+      "sku": "AVE-26-0091",
+      "name": "TeaTree Theory Bio-Keratin Straight and Silky Shampoo",
+      "category": "Shampoo",
+      "description": "A wash-day cleanse with damage in mind. 170 ml.",
+      "price": "224.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "texture:straight",
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/teatree-theory_shampoo_1.webp",
+      "image_sha256": "7ba6b0d165e20e882e7996e0d74d52ccab9590927f03bfeb10d56e4f3e7beedf"
+    },
+    {
+      "sku": "AVE-26-0092",
+      "name": "TeaTree Theory Argan Oil Hair Oil",
+      "category": "Hair Oil",
+      "description": "A hair oil with dryness in mind. 100 ml.",
+      "price": "225.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:dryness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/teatree-theory_hair-oil.webp",
+      "image_sha256": "0b614e8f08a60bb3f14358f08465f44b3c214778aa0f000dee640b27e4d6f0fb"
+    },
+    {
+      "sku": "AVE-26-0093",
+      "name": "TeaTree Theory Treatment Deep Repair",
+      "category": "Treatment",
+      "description": "An extra care step with damage in mind. 650 ml.",
+      "price": "249.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/teatree-theory_treatment_1.webp",
+      "image_sha256": "4fa32a1347e76ad006de849a1bbb54ac1ea06901cd69de973cf18fefd50b16bb"
+    },
+    {
+      "sku": "AVE-26-0094",
+      "name": "TeaTree Theory Hairlab Milk Boost Argan 2 in 1 Serum Conditioner Treatment",
+      "category": "Treatment",
+      "description": "An extra care step with tangling, dryness in mind. 200 ml.",
+      "price": "259.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "treat",
+      "tags": [
+        "concern:tangling",
+        "concern:dryness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/teatree-theory_treatment_2.webp",
+      "image_sha256": "ecab812c68d32dc76f48bc8d32b40f7a2034477ac3f6188762f28ad693326922"
+    },
+    {
+      "sku": "AVE-26-0095",
+      "name": "TeaTree Theory Premium Moist & Repair Shampoo",
+      "category": "Shampoo",
+      "description": "A wash-day cleanse with dryness, damage in mind. 450 ml.",
+      "price": "549.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "concern:dryness",
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/teatree-theory_shampoo_2.webp",
+      "image_sha256": "39e1b8f601966781feb0d6862ec67f38d730a834e615be108b4074919767fc95"
+    },
+    {
+      "sku": "AVE-26-0096",
+      "name": "Veloura Hair Strengthening Conditioner Soothing Aloe",
+      "category": "Conditioner",
+      "description": "A little care for your lengths after washing. 200 ml.",
+      "price": "199.75",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/veloura-hair_conditioner_1.webp",
+      "image_sha256": "20f6a3872a56119ed362ef62e35f502570985c683e9037294f2ff7b85a560740"
+    },
+    {
+      "sku": "AVE-26-0097",
+      "name": "Veloura Hair Treatment Amino Collagen Damage Repair",
+      "category": "Conditioner",
+      "description": "Conditioning care with damage in mind. 500 ml.",
+      "price": "299.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "condition",
+      "tags": [
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/veloura-hair_conditioner_2.webp",
+      "image_sha256": "b0023634a80e1b211c156a79fdd2ba807624d5de2d0f5984e26f12039ed7b1a9"
+    },
+    {
+      "sku": "AVE-26-0098",
+      "name": "Veloura Hair Argan Oil of Morocco Hair Shampoo",
+      "category": "Shampoo",
+      "description": "A wash-day cleanse with damage in mind. 400 ml.",
+      "price": "399.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [
+        "concern:damage"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/veloura-hair_shampoo_1.webp",
+      "image_sha256": "a9c2a157e5d5d497e4181def2f95db7eb52c866f8ed108b928abd160cb10acec"
+    },
+    {
+      "sku": "AVE-26-0099",
+      "name": "Veloura Hair Restore & Revive Serum Hair Oil Argan Oil + Keratin + Murumuru Oil",
+      "category": "Hair Oil",
+      "description": "A hair oil with dryness in mind. 60 ml.",
+      "price": "219.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "finish",
+      "tags": [
+        "concern:dryness"
+      ],
+      "image_path": "assets/images/products/catalog-20261030/veloura-hair_hair-oil.webp",
+      "image_sha256": "6cb074e07572cad187171018ed3b367e06211a50d7111e05061c56fb2167da57"
+    },
+    {
+      "sku": "AVE-26-0100",
+      "name": "Veloura Hair Gugo and Aloe Vera Shampoo",
+      "category": "Shampoo",
+      "description": "An everyday cleanse, starting at the scalp. 250 ml.",
+      "price": "199.00",
+      "stock_qty": 20,
+      "status": "active",
+      "routine_step": "cleanse",
+      "tags": [],
+      "image_path": "assets/images/products/catalog-20261030/veloura-hair_shampoo_2.webp",
+      "image_sha256": "e6302b22488eb9cd25b820ef7540afac5d64a143bdcefe2a6f3f2b9ab75e2d4b"
+    }
+  ]
+}

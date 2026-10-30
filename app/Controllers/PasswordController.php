@@ -18,7 +18,7 @@ final class PasswordController
     {
         AuthGuard::auth();
         header('Cache-Control: no-store, private');
-        View::render('account/password',['pageTitle'=>'Change password','passwordPolicy'=>SecurityPolicy::values()]);
+        View::render('account/password',['pageTitle'=>'Change password','passwordPolicy'=>SecurityPolicy::values(),'passwordDeadline'=>PasswordService::expiresAt((new \App\Models\User())->findById((int)auth_user()['id']))]);
     }
 
     public function change(): void

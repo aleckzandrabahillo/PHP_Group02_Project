@@ -13,6 +13,12 @@ final class View
         if (!is_file($viewFile) || !is_file($layoutFile)) {
             throw new RuntimeException('View template not found.');
         }
+        if ($layout === 'app' && (auth_user()['role'] ?? '') === 'customer') {
+            // Shared presentation identity, separate from assessment/routine data.
+            $candidate = $data['profile'] ?? [];
+            $data['accountProfile'] = ($candidate['role'] ?? '') === 'customer' && (int)($candidate['id'] ?? 0) === (int)auth_user()['id']
+                ? $candidate : (new \App\Models\User())->profileFor((int)auth_user()['id']);
+        }
         extract($data, EXTR_SKIP);
         ob_start();
         require $viewFile;
@@ -22,7 +28,7 @@ final class View
             preg_match_all('~<script\b[^>]*src="([^"]+)"[^>]*>~i',$content,$assets);
             ob_start();require dirname(__DIR__).'/Views/partials/flashes.php';$notices=ob_get_clean();
             Session::clearOld();
-            Response::json(['html'=>$notices.$content,'scripts'=>array_map(static fn($src)=>html_entity_decode($src,ENT_QUOTES,'UTF-8'),$assets[1]),'title'=>($pageTitle??'Avela').' · Avela','pageTitle'=>$pageTitle??'Avela'],http_response_code()?:200);
+            Response::json(['html'=>$notices.$content,'scripts'=>array_map(static fn($src)=>html_entity_decode($src,ENT_QUOTES,'UTF-8'),$assets[1]),'title'=>'Avela','pageTitle'=>$pageTitle??'Avela'],http_response_code()?:200);
         }
         require $layoutFile;
         Session::clearOld();

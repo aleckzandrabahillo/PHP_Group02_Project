@@ -72,11 +72,13 @@ final class CustomerController
     {
         $user = AuthGuard::roles(['customer']);
         $userId = (int) $user['id'];
-        View::render('customer/cart', [
-            'pageTitle' => 'Shopping Bag',
-            'cart' => $this->cart->contentsForUser($userId),
-            ...$this->commonData($userId),
-        ]);
+        header('Cache-Control: no-store, private');
+        if (($_GET['panel'] ?? '') === '1') {
+            View::render('partials/bag_contents', ['cart' => $this->cart->contentsForUser($userId)], 'fragment');
+            return;
+        }
+        // Keep existing cart URLs compatible; the bag is presented in one drawer.
+        Response::redirect('/?bag=open');
     }
 
     public function checkout(): void
@@ -149,6 +151,7 @@ final class CustomerController
                 Session::flash('warning', 'Your order is awaiting payment confirmation. Check its status before trying another checkout.');
                 http_response_code(303);Response::redirect('/orders/view?id='.$id);
             }
+            \App\Services\OrderNotification::deliver(\App\Core\Database::connection(),$id);
             Session::flash('success', 'Your order has been received.');
             http_response_code(303);
             Response::redirect('/orders/view?id=' . $id);
@@ -159,6 +162,20 @@ final class CustomerController
             http_response_code(503);
             $this->renderCheckout($userId, $checked['values'], ['form' => 'We could not place your order. Your bag was preserved; please try again later.']);
         }
+    }
+
+    public function sendConfirmation(): void
+    {
+        header('Cache-Control: no-store, private');$user=AuthGuard::roles(['customer']);
+        Csrf::enforce(is_string($_POST['_token']??null)?$_POST['_token']:null);
+        $id=is_string($_POST['order_id']??null)&&preg_match('/^[1-9][0-9]{0,17}$/D',$_POST['order_id'])?(int)$_POST['order_id']:0;
+        if(!$this->orders->owned($id,(int)$user['id'])){http_response_code(404);return;}
+        \App\Core\Database::transaction(static function($pdo)use($user,$id):void{
+            \App\Services\AuditService::record($pdo,(int)$user['id'],'order.email_requested','order',$id,['channel'=>'account']);
+        });
+        $result=\App\Services\OrderNotification::deliver(\App\Core\Database::connection(),$id);
+        Session::flash(($result['status']??'')==='sent'?'success':'warning',($result['status']??'')==='sent'?'Your order email has been sent.':'Check the email update on your order. A second copy has not been sent.');
+        http_response_code(303);Response::redirect('/orders/view?id='.$id);
     }
 
     public function orders(): void
@@ -394,6 +411,12 @@ final class CustomerController
             'itemCount' => (int) $cart['item_count'],
             'subtotal' => (float) $cart['subtotal'],
             'checkoutReady' => (bool) $cart['checkout_ready'],
+            'availability' => array_map(static fn(array $candidate): array => [
+                'productId'=>(int)$candidate['product_id'],
+                'stock'=>(int)$candidate['stock_qty'],
+                'canAdjust'=>(bool)$candidate['can_adjust'],
+                'message'=>$candidate['availability_message'],
+            ],$cart['items']),
         ];
     }
 
@@ -473,12 +496,14 @@ final class CustomerController
 
         $input = [];
         $errors = [];
-        foreach (['full_name', 'email', 'contact_no', 'delivery_address'] as $field) {
-            $raw = $_POST[$field] ?? ($field==='delivery_address'?($this->users->profileFor($userId)['delivery_address']??''):'');
+        foreach (['full_name', 'username', 'email', 'contact_no', 'delivery_address'] as $field) {
+            $raw = $_POST[$field] ?? (in_array($field,['delivery_address','username'],true)?($this->users->profileFor($userId)[$field]??''):'');
             if (!is_string($raw)) $errors[$field] = 'Enter a valid text value.';
             $input[$field] = is_string($raw) ? trim($raw) : '';
         }
         $fullName = $input['full_name'];
+        $username = $input['username'];
+        if(!preg_match('/^[A-Za-z0-9._-]{4,40}$/D',$username))$errors['username']='Use 4–40 letters, numbers, dots, underscores, or hyphens.';
         $email = strtolower($input['email']);
         $contactNo = $input['contact_no'];
         $deliveryAddress = $input['delivery_address'];
@@ -496,13 +521,25 @@ final class CustomerController
 
         $currentProfile = $this->users->profileFor($userId);
 
+        $currentUsername=(string)($currentProfile['username']??'');
+        $expectedUsername=$_POST['expected_username']??$currentUsername;
+        if(!is_string($expectedUsername)||$expectedUsername!==$currentUsername){
+            Session::flash('warning','Your account changed. Reload your profile and try again.');
+            Response::redirect('/profile');
+        }
+        $existing=$this->users->findByIdentifier($username);
+        if($existing&&(int)$existing['id']!==$userId){
+            Session::keepOld($input);Session::put('errors',['username'=>'That username is already in use.']);
+            Response::redirect('/profile?edit=1');
+        }
         $currentFullName = trim((string) ($currentProfile['full_name'] ?? ''));
         $currentEmail = strtolower(trim((string) ($currentProfile['email'] ?? '')));
         $currentContactNo = trim((string) ($currentProfile['contact_no'] ?? ''));
         $currentDeliveryAddress = trim((string) ($currentProfile['delivery_address'] ?? ''));
 
         $hasChanges =
-            $fullName !== $currentFullName
+            $username !== $currentUsername
+            || $fullName !== $currentFullName
             || $email !== $currentEmail
             || $contactNo !== $currentContactNo
             || $deliveryAddress !== $currentDeliveryAddress;
@@ -520,14 +557,16 @@ final class CustomerController
 
         if ($email === $currentEmail) {
             try {
-                \App\Core\Database::transaction(function()use($userId,$fullName,$email,$contactNo,$deliveryAddress):void{
+                \App\Core\Database::transaction(function()use($userId,$fullName,$email,$contactNo,$deliveryAddress,$username,$expectedUsername):void{
                     $current=$this->users->findById($userId,true);
-                    if(strtolower($current['email']??'')!==$email)throw new \DomainException('Your account changed. Reload your profile.');
+                    if(strtolower($current['email']??'')!==$email||($current['username']??'')!==$expectedUsername)throw new \DomainException('Your account changed. Reload your profile.');
                     $saved=(new \App\Services\CustomerAddress())->find(\App\Core\Database::connection(),$userId);
                     $latest=$this->users->profileFor($userId);
                     if($saved&&$deliveryAddress!==trim((string)($latest['delivery_address']??'')))throw new \DomainException('Use the address form to change your delivery address.');
-                    $this->users->updateCustomerProfile($userId,$fullName,$email,$contactNo,$saved?($latest['delivery_address']??null):($deliveryAddress?:null));
+                    $this->users->updateCustomerProfile($userId,$fullName,$email,$contactNo,$saved?($latest['delivery_address']??null):($deliveryAddress?:null),$username);
                 });
+                $signedIn=Session::get('auth_user');
+                if(is_array($signedIn)){$signedIn['username']=$username;Session::put('auth_user',$signedIn);}
                 Session::flash('success','Your profile has been updated.');
             } catch (\Throwable) { Session::flash('warning','Your profile could not be saved. Reload and try again.'); }
             Response::redirect('/profile');
@@ -536,6 +575,7 @@ final class CustomerController
         Session::put('profile_update_flow', [
             'user_id' => $userId,
             'current_email' => $currentEmail,
+            'before_username'=>$currentUsername,'username'=>$username,
             'before_full_name'=>$currentFullName,'before_contact_no'=>$currentContactNo,'before_delivery_address'=>$currentDeliveryAddress,
             'full_name' => $fullName,
             'email' => $email,
@@ -618,7 +658,7 @@ final class CustomerController
             Response::redirect('/profile/verify-otp');
         }
         $current=Session::get('auth_user');
-        if(is_array($current)){$current['email']=$flow['email'];Session::put('auth_user',$current);}
+        if(is_array($current)){$current['email']=$flow['email'];$current['username']=$this->users->findById($id)['username'];Session::put('auth_user',$current);}
         Session::forget('profile_update_flow');Session::put('errors',[]);
         Session::flash('success','Your profile has been updated successfully.');
         Response::redirect('/profile');

@@ -7,38 +7,28 @@ use PHPMailer\PHPMailer\PHPMailer;
 
 final class MailService
 {
-    public function sendOtp(string $email, #[\SensitiveParameter] string $code, string $purpose): void
+    public function sendOtp(string $email, #[\SensitiveParameter] string $code, string $purpose, ?int $accountId = null): void
     {
         if (!preg_match('/^[0-9]{6}$/D', $code) || !in_array($purpose, ['activation','login','profile_update'], true)) throw new \InvalidArgumentException('Invalid verification message.');
         $subject = match ($purpose) {
-            'activation' => 'Activate your Avela account',
+            'activation' => 'Verify your Avela email',
             'profile_update' => 'Confirm your Avela profile update',
             default => 'Your Avela sign-in code',
         };
-        $this->deliver($email, $subject, "Your Avela verification code is {$code}. It expires in " . max(1, (int) env('OTP_EXPIRY_MINUTES', 5)) . ' minutes. If you did not request it, ignore this message.', $purpose, $code);
+        $this->deliver($email, $subject, "Your Avela verification code is {$code}. It expires in " . max(1, (int) env('OTP_EXPIRY_MINUTES', 5)) . ' minutes. If you did not request it, ignore this message.', $purpose, $code, $accountId !== null && LocalStaffOtp::allows($accountId,$email,$purpose));
     }
 
-    public function sendActivation(string $email, #[\SensitiveParameter] string $link, #[\SensitiveParameter] string $code): void
+    public function sendActivation(string $email, #[\SensitiveParameter] string $link): void
     {
         $this->deliver($email, 'Activate your Avela account',
-            "Open this link and choose Activate account:\n{$link}\n\nThe link expires in 30 minutes and works once. You can instead enter the six-digit code {$code} in your pending Avela activation session. The code expires in " . max(1, (int) env('OTP_EXPIRY_MINUTES', 5)) . " minutes. Either method activates the same account. If you did not register, ignore this message.",
-            'activation_link', $code);
+            "Your email is verified. Open this link and choose Activate account to finish creating your account:\n{$link}\n\nThis link expires in 30 minutes and works once. If you did not register, ignore this message.",
+            'activation_link', '');
     }
 
     public function sendOrderConfirmation(#[\SensitiveParameter] array $order, array $items): void
     {
-        $id=OrderReference::display($order);
-        $lines=['Your Avela order '.$id.' is confirmed.',''];
-        foreach($items as $item)$lines[]=$item['quantity'].' × '.$item['product_name_snapshot'].' — PHP '.number_format((float)$item['unit_price_snapshot'],2);
-        $subtotal=0;foreach($items as $item)$subtotal+=(int)$item['quantity']*(int)round((float)$item['unit_price_snapshot']*100);
-        $lines[]='';$lines[]='Subtotal: PHP '.ShippingService::decimal($subtotal);
-        if(!empty($order['discount']))$lines[]='Discount ('.$order['discount']['code_snapshot'].'): -PHP '.ShippingService::decimal((int)$order['discount']['amount_cents']);
-        $lines[]='Shipping: PHP '.number_format((float)($order['shipping_fee']??0),2);$lines[]='Total: PHP '.number_format((float)$order['total'],2);
-        $lines[]=($order['payment_method']??'cod')==='maya_sandbox'
-            ? 'Debit/Credit Card payment confirmed for this test checkout. No real money was charged.'
-            : 'Cash on delivery. This confirmation is not a payment receipt.';
-        $lines[]='Sign in to your Avela account to view order updates.';
-        $this->deliver($order['contact_email_snapshot'],'Avela order '.$id.' confirmation',implode("\n",$lines),'order_confirmation','');
+        $receipt=OrderReceipt::build($order,$items);
+        $this->deliver($order['contact_email_snapshot'],$receipt['subject'],$receipt['text'],'order_confirmation','',false,$receipt['html']);
     }
 
     /** Strict transport configuration; no SMTP debugging or certificate-validation overrides. */
@@ -74,17 +64,18 @@ final class MailService
         return $mail;
     }
 
-    private function deliver(string $email, string $subject, #[\SensitiveParameter] string $body, string $purpose, #[\SensitiveParameter] string $code): void
+    private function deliver(string $email, string $subject, #[\SensitiveParameter] string $body, string $purpose, #[\SensitiveParameter] string $code, bool $localStaff = false, ?string $html = null): void
     {
         if (!PHPMailer::validateAddress($email)) throw new MailDeliveryException('The verification email address is invalid.');
-        $driver = (string) env('MAIL_DRIVER', 'smtp');
+        $driver = $localStaff ? 'log' : (string) env('MAIL_DRIVER', 'smtp');
         if ($driver === 'smtp') {
             try {
                 $mail = $this->smtpMailer();
                 $mail->addAddress($email);
                 $mail->Subject = $subject;
-                $mail->Body = $body;
-                $mail->isHTML(false);
+                $mail->isHTML($html!==null);
+                $mail->Body = $html??$body;
+                if($html!==null){$mail->AltBody=$body;$this->receiptBrand($mail,$html);}
                 $mail->send();
                 return;
             } catch (\Throwable) {
@@ -102,7 +93,15 @@ final class MailService
             if (!$dir || !is_writable($dir) || str_starts_with(strtolower($normal . '/'), strtolower($root . '/'))) throw new MailDeliveryException('Configure a private development outbox outside the project before testing activation links.');
             if (PHP_OS_FAMILY !== 'Windows' && (fileperms($dir) & 0077) !== 0) throw new MailDeliveryException('The development outbox must be private.');
             $delivery = $dir . '/' . ($purpose === 'activation_link' ? 'activation' : 'order') . '-' . bin2hex(random_bytes(16)) . '.eml';
-            if (@file_put_contents($delivery, "To: {$email}\nSubject: {$subject}\n\n{$body}\n", LOCK_EX) === false) throw new MailDeliveryException('The local development message could not be saved.');
+            $message="To: {$email}\nSubject: {$subject}\n\n{$body}\n";
+            if($html!==null){
+                $mime=new PHPMailer();$mime->CharSet=PHPMailer::CHARSET_UTF8;
+                $mime->setFrom('no-reply@avela.invalid','Avela');$mime->addAddress($email);$mime->Subject=$subject;
+                $mime->isHTML(true);$mime->Body=$html;$mime->AltBody=$body;$this->receiptBrand($mime,$html);
+                if(!$mime->preSend())throw new MailDeliveryException('The confirmation could not be prepared.');
+                $message=$mime->getSentMIMEMessage();
+            }
+            if (@file_put_contents($delivery, $message, LOCK_EX) === false) throw new MailDeliveryException('The local development message could not be saved.');
             @chmod($delivery, 0600);
             $line = '[' . date('c') . "] TO: {$email} | PURPOSE: {$purpose} | Private outbox delivery prepared\n";
         } else {
@@ -113,4 +112,11 @@ final class MailService
             throw new MailDeliveryException('Avela could not record local test delivery. Check private storage permissions.');
         }
     }
+    private function receiptBrand(PHPMailer $mail,string $html):void
+    {
+        if(!str_contains($html,'cid:avela-wordmark'))return;
+        $image=dirname(__DIR__,2).'/public/assets/images/brand/avela-email-wordmark.png';
+        if(!is_file($image)||!$mail->addEmbeddedImage($image,'avela-wordmark','avela.png','base64','image/png'))throw new MailDeliveryException('Receipt branding could not be prepared.');
+    }
+
 }

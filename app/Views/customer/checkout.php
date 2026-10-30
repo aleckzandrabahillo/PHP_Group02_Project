@@ -3,7 +3,7 @@ $profile=$profile??[];$shippingQuote=null;
 $eligibleSubtotal=(int)round((float)$cart['subtotal']*100)-(int)($discountPreview['amount_cents']??0);
 try{$shippingQuote=\App\Services\ShippingService::quote($values['postal_code']??'',$values['shipping_method']??'standard',$values['city']??'',$values['region']??'',$eligibleSubtotal);}catch(\InvalidArgumentException){}
 ?>
-<div class="checkout-page">
+<div class="checkout-shell">
   <section class="checkout-details" aria-labelledby="checkout-title">
     <div class="checkout-section checkout-contact-section">
 
@@ -13,6 +13,7 @@ try{$shippingQuote=\App\Services\ShippingService::quote($values['postal_code']??
         </details>
       </div>
     </div>
+    <a class="v2-summary-jump" href="#order-summary-title">View order summary ↓</a>
     <h1 id="checkout-title">Contact and delivery.</h1>
     <form id="checkout-form" method="post" action="<?= e(url('/checkout')) ?>" data-checkout-ready="<?= $cart['checkout_ready']?'true':'false' ?>" data-pricing-url="<?= e(url('/checkout/pricing')) ?>" data-checkout-delivery data-shipping-url="<?= e(url('/checkout/shipping')) ?>">
       <?= csrf_field() ?><input type="hidden" name="checkout_key" value="<?= e($checkoutKey) ?>">
@@ -22,7 +23,7 @@ try{$shippingQuote=\App\Services\ShippingService::quote($values['postal_code']??
       </ul></div><?php endif; ?>
       <div class="checkout-section"><div class="checkout-section-heading"><h2>Delivery</h2><?php if($savedDelivery): ?><button type="button" class="text-link" data-use-default data-default-delivery="<?= e(json_encode(array_intersect_key($savedDelivery,array_flip(['country','first_name','last_name','address_line','barangay','postal_code','city','region','province','contact_no'])),JSON_THROW_ON_ERROR)) ?>">Use saved address</button><?php endif; ?></div>
         <div class="checkout-field-grid">
-          <label class="checkout-field checkout-field--full"><span>Country / Region</span><select id="checkout-country" name="country" autocomplete="country" required><option value="PH" selected>Philippines</option></select>
+          <label class="checkout-field checkout-field--full"><span>Country</span><select id="checkout-country" name="country" autocomplete="country" required><option value="PH" selected>Philippines</option></select>
             <?php if(isset($errors['country'])): ?><small class="field-error"><?= e($errors['country']) ?></small><?php endif; ?></label>
           <?php foreach(['first_name'=>['First name','given-name',60],'last_name'=>['Last name','family-name',60],
               'address_line'=>['Address','address-line1',200],'barangay'=>['Barangay','address-line2',100],

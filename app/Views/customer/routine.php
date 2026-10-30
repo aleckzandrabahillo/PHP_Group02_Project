@@ -1,9 +1,11 @@
 <?php $state=$routineState['state']; ?>
-<link rel="stylesheet" href="<?= e(asset('css/routine-guide.css')) ?>">
-<div class="saved-care-page">
-<section class="saved-care-heading"><div><h1>Your saved routine</h1><p>Your care steps and the products you saved.</p></div>
+<section class="account-shell"><?php require dirname(__DIR__).'/partials/account_navigation.php'; ?><div class="account-main"><div class="saved-care-page page-shell routine-page-main">
+<section class="routine-page-heading"><div><p class="eyebrow">ROOTED IN YOU</p><h1 class="account-page-title">Saved Routine</h1><p>Your saved care steps and the products you chose.</p></div>
   <a class="btn btn-secondary" href="<?= e(url('/recommendations')) ?>">Review current matches</a>
 </section>
+<?php if(!empty($routineState['profile'])):$summary=$routineState['profile'];$profileChoices=\App\Core\HairProfileValidator::CHOICES; ?>
+<div class="routine-profile-strip"><div><strong><?= e($profileChoices['hair_texture'][$summary['hair_texture']]??'Your hair profile') ?></strong><p><?= e($profileChoices['scalp_type'][$summary['scalp_type']]??'') ?> · <?= e($profileChoices['hair_condition'][$summary['hair_condition']]??'') ?></p></div><a class="text-link" href="<?= e(url('/assessment')) ?>">View Hair Profile</a></div>
+<?php endif; ?>
 <?php if ($state==='assessment_needed'): ?>
   <section class="empty-state"><h2>Begin with your hair profile.</h2><p>Tell us about your scalp, lengths and cosmetic concerns.</p><a class="btn btn-primary" href="<?= e(url('/assessment')) ?>">Create hair profile</a></section>
 <?php elseif ($state==='profile_ready'): ?>
@@ -33,4 +35,4 @@
     </li>
   <?php endforeach; ?></ol></section>
 <?php endif; ?>
-</div><script src="<?= e(asset('js/routine-guide.js')) ?>" defer></script>
+</div><script src="<?= e(asset('js/routine-guide.js')) ?>" defer></script></div></section>

@@ -41,9 +41,9 @@ try {
     $response=hairRequest('/assessment',$client,$form);
     verifyHair('Assessment redirects to current results',$response['code']===303&&(bool)array_filter($response['headers'],static fn($h)=>strtolower(trim($h))==='location: /recommendations'));
     $results=hairRequest('/recommendations',$client);
-    foreach(['Your hair, at a glance','Your priorities','From your description','Wavy','Oily roots / scalp','Dry lengths or ends','Why it matches','Your suggested routine'] as $text)verifyHair('Results display saved evidence: '.$text,$results['code']===200&&str_contains($results['body'],$text));
+    foreach(['Your saved hair profile','Priorities:','From your description','Wavy','Oily roots / scalp','Dry lengths or ends','Matching details','Your suggested routine'] as $text)verifyHair('Results display saved evidence: '.$text,$results['code']===200&&str_contains($results['body'],$text));
     verifyHair('Results do not echo raw concern text',!str_contains($results['body'],$form['concern_text']));
-    verifyHair('Other customer cannot view owner results',!str_contains(hairRequest('/recommendations?user_id='.$a,$other)['body'],'Your hair, at a glance'));
+    verifyHair('Other customer cannot view owner results',!str_contains(hairRequest('/recommendations?user_id='.$a,$other)['body'],'Your saved hair profile'));
     $plan=(new App\Services\RecommendationService())->forUser($a);
     verifyHair('Actual catalog produces available routine',count($plan['routine']['items'])>=2&&count($plan['ranked'])>=2);
     $post=['_token'=>$client['csrf'],'plan_fingerprint'=>$plan['fingerprint']];
@@ -55,8 +55,15 @@ try {
     verifyHair('Product details show real match product',str_contains(hairRequest('/product?id='.$productId,$client)['body'],htmlspecialchars($product['name'],ENT_QUOTES,'UTF-8')));
     $add=hairRequest('/cart/add',$client,['_token'=>$client['csrf'],'product_id'=>$productId,'quantity'=>1,'return_to'=>'/routine']);
     verifyHair('Routine product can be added to bag',in_array($add['code'],[302,303],true)&&(new App\Models\Cart())->countForUser($a)===1);
-    verifyHair('Bag displays actual matched product',str_contains(hairRequest('/cart',$client)['body'],htmlspecialchars($product['name'],ENT_QUOTES,'UTF-8')));
+    verifyHair('Bag drawer displays actual matched product',str_contains(hairRequest('/cart?panel=1',$client)['body'],htmlspecialchars($product['name'],ENT_QUOTES,'UTF-8')));
     verifyHair('Other customer bag remains empty',(new App\Models\Cart())->countForUser($b)===0);
+    $drawer=hairRequest('/cart?panel=1',$client);
+    verifyHair('Bag fragment contains owner items and working CSRF forms',$drawer['code']===200&&str_contains($drawer['body'],'data-bag-fragment')&&str_contains($drawer['body'],'data-cart-item')&&str_contains($drawer['body'],'name="_token"')&&str_contains($drawer['body'],'name="product_id"'));
+    verifyHair('Bag fragment is private and not cacheable',(bool)array_filter($drawer['headers'],static fn($header)=>str_starts_with(strtolower($header),'cache-control:')&&str_contains(strtolower($header),'no-store')&&str_contains(strtolower($header),'private')));
+    $otherDrawer=hairRequest('/cart?panel=1&user_id='.$a,$other);
+    verifyHair('Bag fragment ignores foreign user selector',$otherDrawer['code']===200&&str_contains($otherDrawer['body'],'data-item-count="0"')&&!str_contains($otherDrawer['body'],'data-cart-item'));
+    verifyHair('Bag fragment requires authentication',in_array(hairRequest('/cart?panel=1')['code'],[302,303],true));
+    foreach(['image_admin','image_catalog_manager'] as $staffName){$staffUser=$users->findByIdentifier($staffName);verifyHair('Bag fragment rejects staff: '.$staffName,$staffUser&&hairRequest('/cart?panel=1',hairClient((int)$staffUser['id']))['code']===403);}
     $checkout=hairRequest('/checkout',$client);
     verifyHair('Checkout provides structured delivery and quoted shipping',$checkout['code']===200&&str_contains($checkout['body'],'name="postal_code"')&&str_contains($checkout['body'],'name="region"')&&str_contains($checkout['body'],'Cash on delivery')&&!str_contains($checkout['body'],'does not arrange delivery'));
     $fresh=hairForm($client);$fresh['treatments']=[];$fresh['hair_texture']='straight';$fresh['scalp_type']='normal_scalp';$fresh['concern_text']='curly hair with oily scalp';
@@ -72,27 +79,38 @@ try {
     $none=hairRequest('/recommendations',$other)['body'];
     verifyHair('Incomplete characteristics are explained',str_contains($none,'Some details are still “Not sure”'));
     verifyHair('No match state offers catalog without invented products',str_contains($none,'No supported matches yet.')&&str_contains($none,'Browse all products')&&!str_contains($none,'class="matching-product"'));
-    $sorts=['newest'=>'p.created_at DESC,p.id DESC','name_asc'=>'p.name ASC,p.id DESC','price_asc'=>'p.price ASC,p.name ASC','price_desc'=>'p.price DESC,p.name ASC'];
+    $sorts=['newest'=>'p.created_at DESC,p.id DESC','name_asc'=>'p.name ASC,p.id DESC','price_asc'=>'p.price ASC,p.name ASC,p.id DESC','price_desc'=>'p.price DESC,p.name ASC,p.id DESC'];
     foreach($sorts as $sort=>$order){
         $expected=array_map('intval',$pdo->query('SELECT p.id FROM products p JOIN categories c ON c.id=p.category_id WHERE p.status="active" AND c.status="active" ORDER BY '.$order)->fetchAll(PDO::FETCH_COLUMN));
         $page=hairRequest('/shop?sort='.$sort);
-        $next=hairRequest('/shop?sort='.$sort.'&page=2');
-        verifyHair('Database-backed catalog ordering across pages: '.$sort,$page['code']===200&&$next['code']===200&&array_merge(journeyProductIds($page['body']),journeyProductIds($next['body']))===$expected&&count(journeyProductIds($page['body']))===12);
+        $seen=journeyProductIds($page['body']);$allPagesOk=$page['code']===200;
+        for($number=2;$number<=max(1,(int)ceil(count($expected)/12));$number++){
+            $next=hairRequest('/shop?sort='.$sort.'&page='.$number);$allPagesOk=$allPagesOk&&$next['code']===200;
+            $seen=array_merge($seen,journeyProductIds($next['body']));
+        }
+        verifyHair('Database-backed catalog ordering across all actual pages: '.$sort,$allPagesOk&&$seen===$expected&&count(journeyProductIds($page['body']))===min(12,count($expected)));
         verifyHair('Filter/search form retains sort: '.$sort,str_contains($page['body'],'name="sort" value="'.$sort.'"'));
     }
     $default=journeyProductIds(hairRequest('/shop')['body']);
     foreach(['sort=not_allowed','sort%5B%5D=price_desc','sort=price_desc%3BDROP+TABLE+products'] as $query)verifyHair('Invalid sort safely defaults: '.$query,journeyProductIds(hairRequest('/shop?'.$query)['body'])===$default);
     $filtered=hairRequest('/shop?sort=price_desc&q=shampoo')['body'];
-    $category=journeyLink($filtered,'Shampoo');
-    parse_str(parse_url($category,PHP_URL_QUERY)??'', $params);
-    verifyHair('Category links preserve search and sort',($params['sort']??'')==='price_desc'&&($params['q']??'')==='shampoo'&&isset($params['category']));
-    verifyHair('Category and search retain database ordering',journeyProductIds(hairRequest($category)['body'])===array_map('intval',array_column((new App\Models\Product())->catalog('shampoo',['categories'=>$params['category']??[]],'price_desc'),'id')));
+    $categoryId=(int)$pdo->query("SELECT id FROM categories WHERE name='Shampoo'")->fetchColumn();
+    verifyHair('Filter drawer preserves category controls, search and sort',str_contains($filtered,'name="category[]" value="'.$categoryId.'"')&&str_contains($filtered,'name="q" value="shampoo"')&&str_contains($filtered,'name="sort" value="price_desc"'));
+    $category='/shop?'.http_build_query(['sort'=>'price_desc','q'=>'shampoo','category'=>[$categoryId]]);
+    verifyHair('Applied category and search retain database ordering',journeyProductIds(hairRequest($category)['body'])===array_map('intval',array_column((new App\Models\Product())->catalog('shampoo',['categories'=>[$categoryId]],'price_desc'),'id')));
     $empty=hairRequest('/shop?sort=price_asc&q=not-a-product-'.bin2hex(random_bytes(4)));
     verifyHair('Empty sorted search remains valid',$empty['code']===200&&journeyProductIds($empty['body'])===[]&&str_contains($empty['body'],'name="sort" value="price_asc"'));
     $suggestions=json_decode(hairRequest('/search/suggest?q=shampoo&sort=price_desc')['body'],true);
     parse_str(parse_url($suggestions['allResultsUrl']??'',PHP_URL_QUERY)??'', $suggestionParams);
-    verifyHair('Search drawer result action retains selected sort',($suggestionParams['sort']??'')==='price_desc'&&($suggestionParams['q']??'')==='shampoo');
+    verifyHair('Explicit catalog suggestion API remains compatible with selected sort',($suggestionParams['sort']??'')==='price_desc'&&($suggestionParams['q']??'')==='shampoo');
     $home=hairRequest('/')['body'];
+    foreach(['home'=>$home,'filtered shop'=>$filtered] as $label=>$html){
+        preg_match('~<form[^>]*class="nav-search-field"[^>]*>(.*?)</form>~s',$html,$headerForm);
+        verifyHair('Header search stays general on '.$label,preg_match('~<form[^>]*action="/search"[^>]*class="nav-search-field"~',$html)&&!str_contains($headerForm[1]??'','type="hidden"')&&!str_contains($html,'data-catalog-filters='));
+        verifyHair('Header search has a real no-script destination on '.$label,preg_match('~<a[^>]*href="/search"[^>]*data-nav-open="search"~',$html)===1);
+    }
+    $general=json_decode(hairRequest('/search/suggest?q=shampoo')['body'],true);
+    verifyHair('General suggestions use full search and genuine product prices',str_starts_with($general['allResultsUrl']??'','/search?')&&count($general['products'])>0&&str_starts_with($general['products'][0]['priceLabel']??'','₱'));
     verifyHair('Homepage category strip removed',!str_contains($home,'class="category-tabs"'));
     verifyHair('Homepage requested verbose copy removed',!str_contains($home,'Selected from our demonstration collection.')&&!str_contains($home,'in English or Taglish'));
     verifyHair('Homepage hero and real product links preserved',str_contains($home,'editorial-hero')&&count(journeyProductIds($home))===4);

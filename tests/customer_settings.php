@@ -23,8 +23,10 @@ try {
     ini_set('session.save_path', $sessions);
     $checks = [];
     $users = new App\Models\User();
-    $customer = $pdo->query('SELECT id FROM users WHERE role="customer" AND status="active" AND mfa_enabled=0 ORDER BY id LIMIT 1')->fetchColumn();
-    if (!$customer) throw new RuntimeException('Active synthetic customer required.');
+    $fixtureName='settings_'.bin2hex(random_bytes(6));
+    $customer=$users->createCustomer(['username'=>$fixtureName,'email'=>$fixtureName.'@example.invalid','full_name'=>'Synthetic settings customer','contact_no'=>'+639123456789','password_hash'=>password_hash(bin2hex(random_bytes(24)),PASSWORD_DEFAULT)]);
+    $users->activate($customer);
+    (new App\Models\HairProfile())->save($customer,['hair_texture'=>'wavy','scalp_type'=>'oily_scalp','hair_condition'=>'dry','concerns'=>['frizz'],'treatments'=>[],'concern_text'=>'Dry ends.'],[],App\Models\HairProfile::version(null));
     $client = hairClient((int) $customer);
     foreach (['/settings', '/settings/security'] as $path) {
         verifyHair('Guest settings denied: ' . $path, hairRequest($path)['code'] === 302);
@@ -49,13 +51,18 @@ try {
     $assessment = hairRequest('/assessment?edit=1', $client)['body'];
     verifyHair('Verbose instructional example removed', !str_contains($assessment, 'English or Taglish is fine'));
     verifyHair('Privacy note retained', str_contains($assessment, 'Leave out names, contact details and medical information.'));
-    verifyHair('Four concise assessment groups', substr_count($assessment, 'class="assessment-group"') === 4);
+    verifyHair('Five handoff assessment steps including review', substr_count($assessment, 'data-quiz-step') === 5);
     foreach (['hair_texture', 'scalp_type', 'hair_condition', 'concerns[]', 'treatments[]', 'concern_text', 'profile_version'] as $field) {
         verifyHair('Assessment input preserved: ' . $field, str_contains($assessment, 'name="' . $field . '"'));
     }
-    foreach (['/profile', '/favorites', '/cart', '/orders', '/recommendations', '/routine', '/assessment', '/settings', '/settings/security'] as $path) {
+    $bagRoute=hairRequest('/cart',$client);
+    verifyHair('Legacy bag URL opens the shared drawer',in_array($bagRoute['code'],[302,303],true)&&in_array('Location: /?bag=open',$bagRoute['headers'],true));
+    $bagLanding=hairRequest('/?bag=open',$client);
+    verifyHair('Bag landing keeps one primary heading and one native bag drawer',$bagLanding['code']===200&&preg_match_all('/<h1\b/',$bagLanding['body'])===1&&substr_count($bagLanding['body'],'id="avela-bag"')===1);
+    foreach (['/profile', '/favorites', '/orders', '/recommendations', '/routine', '/assessment', '/settings', '/settings/security'] as $path) {
         $page = hairRequest($path, $client);
         verifyHair('One primary heading: ' . $path, $page['code'] === 200 && preg_match_all('/<h1\b/', $page['body']) === 1);
+        verifyHair('Focused account page omits the marketing footer: ' . $path, !str_contains($page['body'], '<footer class="site-footer"'));
     }
     foreach (['/login', '/register', '/activate'] as $path) {
         $page = hairRequest($path);

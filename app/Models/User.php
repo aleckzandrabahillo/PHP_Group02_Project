@@ -70,6 +70,7 @@ final class User
                 'full_name' => $data['full_name'],
                 'contact_no' => $data['contact_no'] ?: null,
             ]);
+            \App\Services\PiiStorage::write($pdo,'customer_profiles',$id,['contact_no'=>$data['contact_no']?:null,'delivery_address'=>null]);
             \App\Services\AuditService::record($pdo,null,'account.registered','user',$id,['role'=>'customer','verification'=>'pending']);
             return $id;
         };
@@ -145,11 +146,13 @@ final class User
     {
         $pdo = Database::connection();
         $staff=\App\Services\StaffProfileMigration::installed($pdo);
+        $protected=\App\Services\PiiMigration::installed($pdo,'customer_profiles')?', cp.contact_no_encrypted, cp.delivery_address_encrypted, cp.pii_encrypted':'';
         $contact=$staff?'COALESCE(cp.contact_no,sp.contact_no) AS contact_no':'cp.contact_no';
         $image=$staff?'COALESCE(cp.profile_image,sp.profile_image) AS profile_image':'cp.profile_image';
-        $stmt = $pdo->prepare('SELECT u.id, u.email, u.username, u.role, u.status, u.created_at, COALESCE(cp.full_name, sp.full_name, u.username) AS full_name, '.$contact.', cp.delivery_address, '.$image.' FROM users u LEFT JOIN customer_profiles cp ON cp.user_id = u.id LEFT JOIN staff_profiles sp ON sp.user_id = u.id WHERE u.id = :id LIMIT 1');
+        $stmt = $pdo->prepare('SELECT u.id, u.email, u.username, u.role, u.status, u.created_at, COALESCE(cp.full_name, sp.full_name, u.username) AS full_name, '.$contact.', cp.delivery_address, '.$image.$protected.' FROM users u LEFT JOIN customer_profiles cp ON cp.user_id = u.id LEFT JOIN staff_profiles sp ON sp.user_id = u.id WHERE u.id = :id LIMIT 1');
         $stmt->execute(['id' => $id]);
-        return $stmt->fetch() ?: [];
+        $profile=$stmt->fetch() ?: [];
+        return $profile&&$profile['role']==='customer'?\App\Services\PiiStorage::read('customer_profiles',$id,$profile):$profile;
     }
 
     public function emailExistsForOtherUser(string $email, int $userId): bool
@@ -175,25 +178,35 @@ public function updateCustomerProfile(
     string $fullName,
     string $email,
     string $contactNo,
-    ?string $deliveryAddress
+    ?string $deliveryAddress,
+    ?string $username = null
 ): void {
     $update = function (PDO $pdo) use (
         $userId,
         $fullName,
         $email,
         $contactNo,
-        $deliveryAddress
+        $deliveryAddress,
+        $username
     ): void {
         $user=$this->findById($userId,true);
         if(!self::canAuthenticate($user)||$user['role']!=='customer')throw new \DomainException('An active customer account is required.');
         if(trim($fullName)===''||mb_strlen($fullName)>120||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($email)>190
             ||trim($contactNo)===''||strlen($contactNo)>25||mb_strlen($deliveryAddress??'')>500)throw new \DomainException('Profile values exceed the supported limits.');
         $before=$this->profileFor($userId);$fields=[];
+        $username=$username??$user['username'];
+        if(!preg_match('/^[A-Za-z0-9._-]{4,40}$/D',$username))throw new \DomainException('Use 4–40 letters, numbers, dots, underscores, or hyphens.');
+        if($username!==$user['username']){
+            $duplicate=$pdo->prepare('SELECT id FROM users WHERE username=:username AND id<>:id LIMIT 1');
+            $duplicate->execute(['username'=>$username,'id'=>$userId]);
+            if($duplicate->fetchColumn())throw new \DomainException('That username is already in use.');
+            $fields[]='username';
+        }
         foreach(['full_name'=>$fullName,'email'=>strtolower(trim($email)),'contact_no'=>$contactNo,'delivery_address'=>$deliveryAddress] as $field=>$value)if((string)($before[$field]??'')!==(string)$value)$fields[]=$field;
         if(!$fields)return;
         $userStmt = $pdo->prepare(
             'UPDATE users
-             SET email = :email,
+             SET email = :email, username = :username,
                  updated_at = NOW()
              WHERE id = :user_id
                AND role = "customer"'
@@ -201,6 +214,7 @@ public function updateCustomerProfile(
 
         $userStmt->execute([
             'email' => strtolower(trim($email)),
+            'username' => $username,
             'user_id' => $userId,
         ]);
 
@@ -221,6 +235,7 @@ public function updateCustomerProfile(
                 : null,
             'user_id' => $userId,
         ]);
+        \App\Services\PiiStorage::write($pdo,'customer_profiles',$userId,['contact_no'=>trim($contactNo)?:null,'delivery_address'=>trim($deliveryAddress??'')?:null]);
         \App\Services\AuditService::record($pdo,$userId,'profile.updated','user',$userId,['fields'=>$fields]);
     };
     $pdo=Database::connection();

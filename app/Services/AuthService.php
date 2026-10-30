@@ -68,12 +68,40 @@ final class AuthService
         }
 
         if ($user['status'] === 'pending') {
+            $waiting=Session::get('pending_flow');
+            if($user['role']==='customer'&&is_array($waiting)&&($waiting['purpose']??'')==='activation_link'
+                &&($waiting['user_id']??0)===(int)$user['id']&&($waiting['email']??'')===$user['email']
+                &&($waiting['expires_at']??0)>=time()
+                &&hash_equals((string)($user['password_version']??''),(string)($waiting['password_version']??'')))return ['ok'=>true,'next'=>'activation_link'];
             $issued = $user['role'] === 'customer' ? $this->activation->issue((int) $user['id'])
                 : $this->otp->issue((int) $user['id'], (string) $user['email'], 'activation');
             if (!$issued['issued'] && !$issued['reusable']) return $this->cooldownResult($issued);
             Session::put('pending_flow', ['user_id' => (int) $user['id'], 'purpose' => 'activation', 'email' => $user['email'], 'sent_at' => time()]);
             if (!$issued['issued']) Session::flash('warning', 'Use the verification code already sent to your email. ' . $this->cooldownResult($issued)['message']);
             return ['ok' => true, 'next' => 'otp'];
+        }
+
+        // Customer MFA is opt-in Authenticator only; staff retain their email challenge.
+        if($user['role']==='customer'){
+            $challenge=Database::transaction(function()use($user):array|false|null{
+                $current=$this->users->findById((int)$user['id'],true);
+                if(!User::canAuthenticate($current)||$current['role']!=='customer'
+                    ||!hash_equals((string)$current['password_hash'],(string)$user['password_hash']))return false;
+                $factor=$this->mfa->factor((int)$current['id'],true);
+                if(!$factor)return null;
+                $existing=Session::get('pending_totp');
+                if(is_array($existing)&&($existing['user_id']??0)===(int)$current['id']&&($existing['expires_at']??0)>=time()
+                    &&hash_equals($factor['credential_version'],(string)($existing['version']??''))
+                    &&hash_equals((string)($current['password_version']??''),(string)($existing['password_version']??'')))return $existing;
+                return $this->mfa->loginChallenge((int)$current['id']);
+            });
+            if($challenge===false)return $this->unavailableResult();
+            if(is_array($challenge)){
+                Session::forget('pending_flow');Session::put('pending_totp',$challenge);session_regenerate_id(true);
+                return ['ok'=>true,'next'=>'totp'];
+            }
+            if(!$this->finalizeLogin($user))return $this->unavailableResult();
+            return ['ok'=>true,'next'=>'dashboard'];
         }
 
         $requiresMfa = (bool) $user['mfa_enabled'] || in_array($user['role'], ['admin', 'catalog_manager'], true)
@@ -112,11 +140,14 @@ final class AuthService
             $eligible = $purpose === 'activation'
                 ? $user && $user['status'] === 'pending' && !User::isLocked($user)
                     && in_array($user['role'], ['customer', 'catalog_manager', 'admin'], true)
-                : $purpose === 'login' && User::canAuthenticate($user)
+                : $purpose === 'login' && User::canAuthenticate($user) && $user['role'] !== 'customer'
                     && hash_equals((string)($user['password_version']??''),(string)($flow['password_version']??''));
             if (!$eligible) {
                 $this->logs->auth($user ? $userId : null, 'otp_verify', 'failure', ['purpose' => $purpose, 'reason' => 'account_unavailable']);
                 return ['ok' => false, 'reason' => 'account_unavailable'];
+            }
+            if($purpose==='activation'&&$user['role']==='customer'){
+                return $this->activation->verifyAndSendLink($userId,$code)+['user'=>$user];
             }
             $result = $this->otp->verify($userId, $purpose, $code);
             if (!$result['ok']) return $result;
@@ -150,6 +181,13 @@ final class AuthService
             };
             return ['ok' => false, 'field' => 'otp', 'message' => $message];
         }
+        if(!empty($verification['activation_link'])){
+            $verified=$verification['user'];
+            Session::put('pending_flow',['user_id'=>$userId,'purpose'=>'activation_link','email'=>$verified['email'],
+                'password_version'=>$verified['password_version']??'','verified_at'=>time(),'expires_at'=>time()+1800,'sent_at'=>time()]);
+            session_regenerate_id(true);
+            return ['ok'=>true,'next'=>'activation_link','message'=>'Email verified. Open the activation link we just sent to finish creating your account.'];
+        }
         if ($purpose === 'activation') {
             Session::forget('pending_flow');
             return ['ok' => true, 'next' => 'login', 'message' => 'Your account is active. You can sign in now.'];
@@ -172,9 +210,14 @@ final class AuthService
         if (!is_array($flow) || empty($flow['user_id'])) return ['ok' => false, 'message' => 'Start the sign-in or activation flow again.'];
         $user = $this->users->findById((int) $flow['user_id']);
         $purpose = (string) ($flow['purpose'] ?? '');
+        if($purpose==='activation_link'){
+            try{$issued=$this->activation->resendLink($flow);}catch(\DomainException){return $this->unavailableResult();}
+            return $issued['issued']?['ok'=>true,'message'=>'A new activation link was sent.']:
+                ['ok'=>false,'message'=>"Please wait {$issued['retry_after']} seconds before requesting another activation link."];
+        }
         $eligible = $purpose === 'activation'
             ? $user && $user['status'] === 'pending' && !User::isLocked($user)
-            : $purpose === 'login' && User::canAuthenticate($user)
+            : $purpose === 'login' && User::canAuthenticate($user) && $user['role'] !== 'customer'
                 && hash_equals((string)($user['password_version']??''),(string)($flow['password_version']??''));
         if (!$eligible) return $this->unavailableResult();
         $issued = $purpose === 'activation' && $user['role'] === 'customer'
@@ -191,15 +234,19 @@ final class AuthService
             $current = $this->users->findById((int) $user['id'], true);
             if (!User::canAuthenticate($current)
                 || !hash_equals((string)$current['password_hash'],(string)($user['password_hash']??''))
-                || (bool) $current['mfa_enabled']
+                || ($current['role'] !== 'customer' && (bool) $current['mfa_enabled'])
                 || in_array($current['role'], ['admin', 'catalog_manager'], true)
                 || $this->mfa->factor((int) $current['id']) !== null) return null;
             $this->users->resetFailures((int) $current['id']);
             $this->logs->auth((int) $current['id'], 'login', 'success');
-            return $current;
+            // Capture the disabled-factor version under the same account lock.
+            // A later enrollment changes that version and revokes this session.
+            return ['user'=>$current,'factor_version'=>MfaService::sessionVersion((int)$current['id']),
+                'first_customer_login'=>$current['role']==='customer' && empty($current['last_login_at'])];
         });
         if (!$current) return false;
-        $this->completeSession($current);
+        $this->completeSession($current['user'],$current['factor_version']);
+        if ($current['first_customer_login']) Session::put('first_login_mfa_offer', (int)$current['user']['id']);
         return true;
     }
 

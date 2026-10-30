@@ -18,10 +18,11 @@ final class OrderWorkflow
         if ($queueEmail) $pdo->prepare('INSERT INTO order_email_outbox (order_id) VALUES (?)')->execute([$orderId]);
     }
 
-    public function advance(PDO $pdo, int $actorId, int $orderId, string $expected, string $next): void
+    public function advance(PDO $pdo, int $actorId, int $orderId, string $expected, string $next, ?int $expectedDeliveryEvent = null): void
     {
+        $dispatch=$expected==='shipped'&&$next==='out_for_delivery';
         $cancel=$next==='cancelled'&&in_array($expected,['pending','processing'],true);
-        if (!$cancel && (self::NEXT[$expected] ?? null) !== $next) throw new InvalidArgumentException('Choose the next available order status.');
+        if (!$cancel && !$dispatch && (self::NEXT[$expected] ?? null) !== $next) throw new InvalidArgumentException('Choose the next available order status.');
         $pdo->beginTransaction();
         try {
             $actor=$pdo->prepare('SELECT id,role,status,locked_until,lock_requires_admin FROM users WHERE id=? FOR UPDATE');$actor->execute([$actorId]);$user=$actor->fetch();
@@ -31,6 +32,14 @@ final class OrderWorkflow
             if($order['payment_method']==='manual' && MayaMigration::installed($pdo)){
                 $payment=$pdo->prepare('SELECT state FROM maya_payments WHERE order_id=? FOR UPDATE');$payment->execute([$orderId]);$state=$payment->fetchColumn();
                 if($state!==false&&($state!=='paid'||$cancel))throw new InvalidArgumentException('This Maya payment must be verified or reconciled before changing the order.');
+            }
+            $marker=$pdo->prepare('SELECT MAX(id) FROM audit_logs WHERE action="order.out_for_delivery" AND target_type="order" AND target_id=?');$marker->execute([$orderId]);$revision=(int)$marker->fetchColumn();
+            if($expectedDeliveryEvent!==null&&$revision!==$expectedDeliveryEvent)throw new InvalidArgumentException('Delivery progress changed. Refresh before updating it.');
+            if($dispatch){
+                if($revision!==0)throw new InvalidArgumentException('Out for delivery was already recorded.');
+                $pdo->prepare('UPDATE orders SET updated_at=NOW() WHERE id=?')->execute([$orderId]);
+                AuditService::record($pdo,$actorId,'order.out_for_delivery','order',$orderId,['from'=>'shipped','delivery_stage'=>'out_for_delivery']);
+                $pdo->commit();return;
             }
             if($cancel){$this->restoreStock($pdo,$actorId,$orderId,$order);DiscountService::settle($pdo,$orderId,true);}
             $pdo->prepare('UPDATE orders SET status=?,updated_at=NOW() WHERE id=?')->execute([$next,$orderId]);

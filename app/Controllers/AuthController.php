@@ -63,8 +63,9 @@ final class AuthController
             Session::flash('error', $result['message']);
             Response::redirect('/login');
         }
-        if (($result['next'] ?? '') === 'otp') Response::redirect('/verify-otp');
+        if (in_array($result['next']??'', ['otp','activation_link'],true)) Response::redirect('/verify-otp');
         if (($result['next'] ?? '') === 'totp') Response::redirect('/verify-authenticator');
+        Session::forget('activation_setup_offer');
         Response::redirect(AuthGuard::dashboardPath());
     }
 
@@ -107,7 +108,7 @@ final class AuthController
             Session::put('errors', [$result['field'] => $result['message']]);
             Response::redirect('/register');
         }
-        Session::flash('success', 'Account created. Open your activation email link or enter its verification code.');
+        Session::flash('success', 'Account created. Enter the code sent to your email. We will then send your activation link.');
         Response::redirect('/verify-otp');
     }
 
@@ -119,8 +120,12 @@ final class AuthController
         if (!is_array($flow)) Response::redirect('/login');
         $email = (string) ($flow['email'] ?? '');
         $masked = $this->maskEmail($email);
+        if(($flow['purpose']??'')==='activation_link'){
+            View::render('auth/activation-sent',['pageTitle'=>'Activate your account','maskedEmail'=>$masked,
+                'expired'=>($flow['expires_at']??0)<time()],'auth');return;
+        }
         View::render('auth/verify-otp', [
-            'pageTitle' => $flow['purpose'] === 'activation' ? 'Activate account' : 'Verify sign in',
+            'pageTitle' => $flow['purpose'] === 'activation' ? 'Verify your email' : 'Verify sign in',
             'maskedEmail' => $masked,
             'purpose' => $flow['purpose'],
         ], 'auth');
@@ -135,10 +140,14 @@ final class AuthController
             Session::put('errors', ['otp' => 'Enter the 6-digit code.']);
             Response::redirect('/verify-otp');
         }
-        $result = $this->auth->verifyPendingOtp($code);
+        try{$result = $this->auth->verifyPendingOtp($code);}
+        catch(\App\Services\MailDeliveryException $e){Session::put('errors',['otp'=>$e->getMessage().' Enter your code again to retry.']);Response::redirect('/verify-otp');}
         if (!$result['ok']) {
             Session::put('errors', ['otp' => $result['message']]);
             Response::redirect('/verify-otp');
+        }
+        if(($result['next']??'')==='activation_link'){
+            Session::flash('success',$result['message']);Response::redirect('/verify-otp');
         }
         if (($result['next'] ?? '') === 'login') {
             Session::flash('success', $result['message']);

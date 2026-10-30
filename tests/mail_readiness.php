@@ -75,22 +75,24 @@ try {
         $cert=openssl_csr_sign($csr,null,$key,1,['config'=>$opensslConfig,'x509_extensions'=>'v3_req','digest_alg'=>'sha256']);
         openssl_x509_export($cert,$certificate);openssl_pkey_export($key,$privateKey,null,['config'=>$opensslConfig]);
         $certPath=$scratch.'/mail-readiness-cert.pem';$keyPath=$scratch.'/mail-readiness-key.pem';file_put_contents($certPath,$certificate);file_put_contents($keyPath,$privateKey);@chmod($keyPath,0600);unset($privateKey,$key);
-        foreach(['success','untrusted','audit-fault'] as $case){
-            $server=mailCheckWorker([PHP_BINARY,__DIR__.'/smtp_fixture.php'],json_encode(['mode'=>'tls','cert'=>$certPath,'key'=>$keyPath,'expected_recipient'=>$prefix.'_admin@example.invalid'])."\n");
+        foreach(['success','sender','untrusted','audit-fault'] as $case){
+            $server=mailCheckWorker([PHP_BINARY,__DIR__.'/smtp_fixture.php'],json_encode(['mode'=>'tls','cert'=>$certPath,'key'=>$keyPath,'expected_recipient'=>$case==='sender'?'synthetic@example.invalid':$prefix.'_admin@example.invalid'])."\n");
             $address=trim((string)fgets($server[1][1]));if(!preg_match('/^127\.0\.0\.1:([0-9]+)$/D',$address,$match))throw new RuntimeException('Loopback SMTP unavailable');
             $set(['MAIL_PORT'=>$match[1]]);
             if($case==='audit-fault')$pdo->exec("CREATE TRIGGER mail_readiness_audit_fault BEFORE INSERT ON audit_logs FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Synthetic fault'");
-            try{$send=mailCheckFinish(mailCheckWorker([PHP_BINARY,'-d','openssl.cafile='.($case==='untrusted'?$opensslConfig:$certPath),...array_slice($command,1),'--send']));}
+            try{$send=mailCheckFinish(mailCheckWorker([PHP_BINARY,'-d','openssl.cafile='.($case==='untrusted'?$opensslConfig:$certPath),...array_slice($command,1),'--send',...($case==='sender'?['--to-sender']:[])]));}
             finally{if($case==='audit-fault')$pdo->exec('DROP TRIGGER mail_readiness_audit_fault');mailCheckFinish($server);}
             $data=json_decode($send['out'],true);
-            if($case==='success'){
+            if($case==='sender'){
+                verifyHair('Explicit sender diagnostic is restricted to configured sender inbox',$send['exit']===0&&$data['message_sent']&&$data['network_contacted']);
+            }elseif($case==='success'){
                 verifyHair('Actual verified-TLS diagnostic sent only to existing Administrator address',$send['exit']===0&&$data['message_sent']&&$data['network_contacted']);
                 verifyHair('Provider acceptance explicitly does not claim inbox receipt',str_contains($data['inbox_receipt'],'owner must verify'));
             }elseif($case==='untrusted')verifyHair('Real untrusted certificate rejected',$send['exit']===1);
             else verifyHair('Audit fault reports possible external acceptance without changing account/OTP rows',$send['exit']===1&&str_contains($send['err'],'may already have accepted')&&mailCheckState($pdo)===$before);
         }
         $q=$pdo->prepare('SELECT details FROM audit_logs WHERE actor_id=? AND action="mail.transport_test"');$q->execute([$admin]);$events=$q->fetchAll(PDO::FETCH_COLUMN);
-        verifyHair('Exactly one successful transport audit without recipient or credential values',count($events)===1&&!str_contains($events[0],$prefix)&&!str_contains($events[0],'SyntheticTransportOnly'));
+        verifyHair('Exactly two successful transport audits without recipient or credential values',count($events)===2&&!str_contains($events[0],$prefix)&&!str_contains($events[0],'SyntheticTransportOnly'));
         verifyHair('Diagnostic leaves passwords, factors, activation, OTP, orders, inventory and carts untouched',mailCheckState($pdo)===$before);
     } finally { file_put_contents($envFile,$original); }
     $report=['checks'=>$checks];if(isset($options['output']))file_put_contents($options['output'],json_encode($report,JSON_PRETTY_PRINT));

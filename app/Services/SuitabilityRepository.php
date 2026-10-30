@@ -11,18 +11,22 @@ final class SuitabilityRepository
     public function candidates(PDO $pdo, bool $lock = false): array
     {
         $root = dirname(__DIR__, 2);
-        $source = file_get_contents($root . '/database/demo_catalog.json');
-        $evidence = json_decode(file_get_contents($root . '/database/suitability_evidence.json'), true, 32, JSON_THROW_ON_ERROR);
-        if (!is_string($evidence['catalog_sha256'] ?? null) || !hash_equals($evidence['catalog_sha256'], hash('sha256', $source))) {
-            throw new RuntimeException('Suitability sources need review.');
-        }
-        $catalog = json_decode($source, true, 32, JSON_THROW_ON_ERROR);
-        $canonical = [];
-        foreach ($catalog['products'] as $item) $canonical[$item['sku']] = $item;
-        $reviewed = [];
-        foreach ($evidence['products'] as $item) {
-            if (isset($reviewed[$item['sku']])) throw new RuntimeException('Duplicate suitability review.');
-            $reviewed[$item['sku']] = $item;
+        $canonical=[];$reviewed=[];$sources=[];
+        foreach ([['database/demo_catalog.json','database/suitability_evidence.json'],
+                  ['database/avela_catalog_20261030.json','database/avela_suitability_20261030.json']] as [$catalogPath,$evidencePath]) {
+            $source=file_get_contents($root.'/'.$catalogPath);
+            $evidence=json_decode(file_get_contents($root.'/'.$evidencePath),true,32,JSON_THROW_ON_ERROR);
+            if(!is_string($evidence['catalog_sha256']??null)||!hash_equals($evidence['catalog_sha256'],hash('sha256',$source)))throw new RuntimeException('Suitability sources need review.');
+            $catalog=json_decode($source,true,32,JSON_THROW_ON_ERROR);
+            foreach($catalog['products'] as $item){
+                if(isset($canonical[$item['sku']]))throw new RuntimeException('Duplicate catalog identity.');
+                $canonical[$item['sku']]=$item;$sources[$item['sku']]=['path'=>$catalogPath,'sha256'=>$evidence['catalog_sha256']];
+            }
+            foreach($evidence['products'] as $item){
+                if(isset($reviewed[$item['sku']]))throw new RuntimeException('Duplicate suitability review.');
+                if(!isset($sources[$item['sku']])||$sources[$item['sku']]['path']!==$catalogPath)throw new RuntimeException('Review belongs to a different catalog.');
+                $reviewed[$item['sku']]=$item;
+            }
         }
         $products = $pdo->query('SELECT p.*,c.name category_name,c.status category_status
             FROM products p JOIN categories c ON c.id=p.category_id ORDER BY p.id' . ($lock ? ' FOR UPDATE' : ''))->fetchAll();
@@ -36,7 +40,7 @@ final class SuitabilityRepository
             $expected = $canonical[$product['sku']] ?? null;
             if (!$entry || !$expected || ($entry['status'] ?? '') !== 'reviewed_demo'
                 || ($entry['source_type'] ?? '') !== 'approved_demonstration_design'
-                || ($entry['source_reference'] ?? '') !== 'database/demo_catalog.json#' . $product['sku']
+                || ($entry['source_reference'] ?? '') !== ($sources[$product['sku']]['path']??'') . '#' . $product['sku']
                 || !preg_match('/^\d{4}-\d{2}-\d{2}$/D', $entry['reviewed_at'] ?? '')
                 || !is_array($entry['tags'] ?? null)) continue;
             // A changed identity/purpose/description needs a new review. Copy never earns a score.
@@ -53,7 +57,7 @@ final class SuitabilityRepository
             $product['accessory_purpose'] = $entry['accessory_purpose'] ?? '';
             $product['metadata_signature'] = hash('sha256', json_encode([
                 $product['sku'], $product['name'], $product['description'], $product['category_name'],
-                $product['routine_step'], $currentTags, $entry, $evidence['catalog_sha256']], JSON_THROW_ON_ERROR));
+                $product['routine_step'], $currentTags, $entry, $sources[$product['sku']]['sha256']], JSON_THROW_ON_ERROR));
             $out[] = $product;
         }
         return $out;

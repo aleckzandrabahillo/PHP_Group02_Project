@@ -8,9 +8,10 @@
 </div>
 <div class="staff-list-summary" data-staff-tools hidden>
   <p class="muted small" data-staff-count role="status" aria-live="polite"></p>
-  <nav aria-label="<?= e(ucfirst($staffListLabel)) ?> pages">
+  <nav class="staff-pagination" aria-label="<?= e(ucfirst($staffListLabel)) ?> pages">
     <button class="btn btn-secondary btn-sm" type="button" data-staff-previous>Previous</button>
-    <span data-staff-page></span>
+    <span data-staff-numbers class="staff-page-numbers"></span>
+    <span data-staff-page class="page-summary"></span>
     <button class="btn btn-secondary btn-sm" type="button" data-staff-next>Next</button>
   </nav>
 </div>
