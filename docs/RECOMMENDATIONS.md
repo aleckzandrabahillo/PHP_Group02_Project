@@ -1,4 +1,4 @@
-# Product matches and saved routines
+# Product matches and My Routine
 
 Customers use /assessment → /recommendations → /routine → the existing bag and Checkout. All profile/routine access is owner-bound; mutations require current customer eligibility and CSRF. Product records and purchasing constraints remain authoritative.
 
@@ -35,3 +35,8 @@ Existing routines/routine_items remain in use. The context table stores the prof
 ## Verification
 
 Run tests/product_matching.php for pure matching rules. tests/matching_integration.php requires explicit disposable database, port, data-directory, loopback HTTP, external session and scratch-directory guards. It covers eligibility, ownership, CSRF, evidence/tag changes, stock separation, stale forms, rollback, repeated/concurrent saves and routine-to-cart/Checkout. Run the existing hair assessment and Checkout suites as regressions. Synthetic HTTP sessions, actual browser interactions and real provider logins are separate evidence.
+
+
+## Current profile-derived routine
+
+`/routine` now presents **My Routine**, derived on read by the same RecommendationService, ProductMatcher and RoutineGuide used for current recommendations. Completing an assessment is sufficient: there is no extra Save Routine button. Current catalog availability, suitability evidence and selected-answer precedence still apply. This read does not create or overwrite historical `routines`/`routine_items`/context records. The legacy transactional save API remains compatible for existing integrations and historical data; its fingerprint and authorization checks are retained.

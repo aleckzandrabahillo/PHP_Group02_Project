@@ -47,7 +47,7 @@ try {
     $profile = hairRequest('/profile', $client)['body'];
     verifyHair('Profile remains details and editing', str_contains($profile, 'Account details') && str_contains($profile, 'data-dialog-open="profile-edit-dialog"') && !str_contains($profile, 'Start authenticator setup'));
     $entry = hairRequest('/assessment', $client)['body'];
-    verifyHair('Saved profile offers results and retake without clearing data', str_contains($entry,'View my results') && str_contains($entry,'Retake assessment') && !str_contains($entry,'data-assessment-form'));
+    verifyHair('Saved profile offers results and retake without clearing data', str_contains($entry,'Explore my recommendations') && str_contains($entry,'Retake assessment') && !str_contains($entry,'data-assessment-form'));
     $assessment = hairRequest('/assessment?edit=1', $client)['body'];
     verifyHair('Verbose instructional example removed', !str_contains($assessment, 'English or Taglish is fine'));
     verifyHair('Privacy note retained', str_contains($assessment, 'Leave out names, contact details and medical information.'));

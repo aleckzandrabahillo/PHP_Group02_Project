@@ -149,7 +149,7 @@ final class MfaService
             $pdo->prepare('UPDATE user_authenticators SET secret_encrypted=NULL,recovery_hashes_json="[]",enabled_at=NULL,last_used_step=-1,credential_version=? WHERE user_id=?')
                 ->execute([bin2hex(random_bytes(32)),$userId]);
             $pdo->prepare('UPDATE users SET failed_attempts=0,locked_until=NULL,lock_requires_admin=0,mfa_enabled=CASE WHEN role="customer" THEN 0 ELSE mfa_enabled END,updated_at=NOW() WHERE id=?')->execute([$userId]);
-            // Removing optional Customer Authenticator disables Customer MFA. Staff retain email MFA.
+            // Disabled-factor versions still revoke sessions. Legacy staff flags do not replace enrollment.
             $this->audit($pdo,$userId,'authenticator_removed');return true;
         });
         if (!$result) throw new DomainException('Your password and app or recovery code could not be confirmed.');

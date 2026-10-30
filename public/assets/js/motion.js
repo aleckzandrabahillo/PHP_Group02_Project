@@ -93,7 +93,7 @@
       details.dataset.motionState=open?'open':'closed';detailJobs.delete(details);
     });
   }
-  window.AvelaMotion={duration,reduced,reveal,pulse,openDialog,closeDialog,setDetails};
+  window.AvelaMotion={duration,reduced,reveal,pulse,openDialog,closeDialog,setDetails,confirmAction};
 
   let confirmation=null;
   async function confirmAction(message,opener) {
@@ -121,7 +121,8 @@
   const mountedDetails=new WeakSet();
   function mountDetails(root=document){
     root.querySelectorAll('details').forEach(details=>{
-      if(mountedDetails.has(details))return;mountedDetails.add(details);
+      // Reading surfaces own their grouped height animation; do not bind a second toggle.
+      if(details.closest('[data-animate-disclosures]')||mountedDetails.has(details))return;mountedDetails.add(details);
       const summary=details.querySelector(':scope > summary');if(!summary)return;
       summary.addEventListener('click',event=>{event.preventDefault();const job=detailJobs.get(details);setDetails(details,!(job?job.open:details.open));});
       if(details.matches('.checkout-account-menu,.header-popover,.mobile-nav-menu,.account-menu,.assessment-sections,[data-sort-menu]')){

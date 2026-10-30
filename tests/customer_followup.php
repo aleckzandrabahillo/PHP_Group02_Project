@@ -22,7 +22,7 @@ try {
  $admin=$users->findByIdentifier('image_admin');$manager=$users->findByIdentifier('image_catalog_manager');if(!$admin||!$manager)throw new RuntimeException('Staff fixtures missing');$staff=hairClient((int)$admin['id']);$catalog=hairClient((int)$manager['id']);
  $form=hairForm($client);$form['treatments']=[];hairRequest('/assessment',$client,$form);
  $profileBefore=(new App\Models\HairProfile())->forUser($uid);$entry=hairRequest('/assessment',$client);$retake=hairRequest('/assessment?edit=1',$client);
- verifyHair('Saved assessment offers results and retake',$entry['code']===200&&str_contains($entry['body'],'View my results')&&str_contains($entry['body'],'Retake assessment')&&!str_contains($entry['body'],'data-assessment-form'));
+ verifyHair('Saved assessment offers results and retake',$entry['code']===200&&str_contains($entry['body'],'Explore my recommendations')&&str_contains($entry['body'],'Retake assessment')&&!str_contains($entry['body'],'data-assessment-form'));
  verifyHair('Saved profile has one clear heading and one primary result action',substr_count($entry['body'],'<h1')===1&&str_contains($entry['body'],'Hair Profile')&&str_contains($entry['body'],'Retake assessment'));
  verifyHair('Saved profile uses handoff texture illustration and recorded facts',str_contains($entry['body'],'class="profile-texture"')&&str_contains($entry['body'],'viewBox="0 0 145 225"')&&str_contains($entry['body'],'Lengths &amp; ends'));
  foreach(['hair_texture','scalp_type','hair_condition'] as $field)verifyHair('Saved profile displays recorded '.$field,str_contains($entry['body'],e(App\Core\HairProfileValidator::CHOICES[$field][$profileBefore[$field]])));

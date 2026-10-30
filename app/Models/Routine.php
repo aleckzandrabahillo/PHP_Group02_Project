@@ -8,6 +8,21 @@ use App\Services\SuitabilityRepository;
 
 final class Routine
 {
+    /** Current derived plan: a read never creates or overwrites a saved historical routine. */
+    public function currentForUser(int $userId): array
+    {
+        $result=(new \App\Services\RecommendationService())->forUser($userId);
+        if(!$result['profile'])return ['state'=>'assessment_needed','profile'=>null,'routine'=>null,'items'=>[],'stale'=>false];
+        $items=[];
+        foreach($result['routine']['items'] as $index=>$item){
+            $product=$item['product'];
+            $items[]=[...$product,'product_id'=>(int)$product['id'],'step_order'=>$index+1,'routine_step'=>$product['role'],
+                'explanation'=>['title'=>$item['title'],'optional'=>$item['optional'],'reasons'=>$product['reasons']]];
+        }
+        return ['state'=>'ready','profile'=>$result['profile'],'routine'=>null,'items'=>$items,'stale'=>false,
+            'warnings'=>$result['routine']['warnings'],'derived'=>true];
+    }
+
     public function stateForUser(int $userId): array
     {
         $pdo = Database::connection();

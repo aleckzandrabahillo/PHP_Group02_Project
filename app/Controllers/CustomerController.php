@@ -32,7 +32,7 @@ final class CustomerController
         private readonly CheckoutService $checkoutService,
         private readonly Order $orders,
         private readonly ?\App\Services\MayaPaymentService $mayaPayments = null,
-    ) {}  
+    ) {}
 
     public function dashboard(): void
     {
@@ -51,6 +51,7 @@ final class CustomerController
         header('Cache-Control: no-store, private');
         View::render('customer/' . $view, [
             'pageTitle' => $title,
+            'addresses'=>$view==='profile'?(new \App\Services\AddressBook())->all(\App\Core\Database::connection(),(int)$user['id']):[],
             'savedAddress'=>$view==='profile'?(new \App\Services\CustomerAddress())->find(\App\Core\Database::connection(),(int)$user['id']):null,
             ...$this->commonData((int) $user['id']),
         ]);
@@ -221,7 +222,9 @@ final class CustomerController
         }
         $profile = $this->users->profileFor($userId);
         if (!$values) {
-            $values=\App\Core\DeliveryValidator::prefill($profile);
+            $deliveryProfile=$profile;
+            if(\App\Services\AddressBook::initialized(\App\Core\Database::connection(),$userId))$deliveryProfile['delivery_address']='';
+            $values=\App\Core\DeliveryValidator::prefill($deliveryProfile);
             $saved=(new \App\Services\CustomerAddress())->find(\App\Core\Database::connection(),$userId);
             if($saved)foreach(['country','first_name','last_name','address_line','barangay','postal_code','city','region','contact_no','province'] as $field)$values[$field]=$saved[$field]??'';
         }
@@ -236,7 +239,7 @@ final class CustomerController
             try{$discountPreview=(new \App\Services\DiscountService())->quote(\App\Core\Database::connection(),$userId,$values['discount_code'],(int)round((float)$cart['subtotal']*100));}
             catch(InvalidArgumentException $e){$errors['discount_code']=$e->getMessage();}
         }
-        View::render('customer/checkout', ['pageTitle' => 'Checkout', 'cart' => $cart, 'profile' => $profile, 'discountPreview'=>$discountPreview,'savedDelivery'=>(new \App\Services\CustomerAddress())->find(\App\Core\Database::connection(),$userId),
+        View::render('customer/checkout', ['pageTitle' => 'Checkout', 'cart' => $cart, 'profile' => $profile, 'discountPreview'=>$discountPreview,'deliveryAddresses'=>(new \App\Services\AddressBook())->all(\App\Core\Database::connection(),$userId),'savedDelivery'=>(new \App\Services\CustomerAddress())->find(\App\Core\Database::connection(),$userId),
             'values' => $values, 'errors' => $errors, 'checkoutKey' => $intent['key'],
             'mayaAvailable' => \App\Services\MayaSandboxConfig::available() && \App\Services\MayaMigration::installed(\App\Core\Database::connection())], 'checkout');
     }
@@ -248,7 +251,7 @@ final class CustomerController
         $userId = (int) $user['id'];
         View::render('customer/routine', [
             'pageTitle' => 'My Routine',
-            'routineState' => $this->routines->stateForUser($userId),
+            'routineState' => $this->routines->currentForUser($userId),
             ...$this->commonData($userId),
         ]);
     }

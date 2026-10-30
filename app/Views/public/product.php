@@ -4,7 +4,6 @@ $currentUser = auth_user();
 $currentRole = $currentUser['role'] ?? null;
 $imageUrl = product_image_url($product['image_path'] ?? null);
 $inStock = (int) $product['stock_qty'] > 0;
-$reviewSummary = $reviewSummary ?? ['count' => 0, 'average' => 0.0];
 ?>
 <main id="main-content" tabindex="-1" class="store-page product-page">
   <div class="product-primary-area">
@@ -31,7 +30,7 @@ $reviewSummary = $reviewSummary ?? ['count' => 0, 'average' => 0.0];
         <?php endif; ?>
 
         <?php if ($currentRole === 'customer'): ?>
-          <form id="add-to-bag-form" class="purchase-form detail-add-row" method="post" action="<?= e(url('/cart/add')) ?>">
+          <form id="add-to-bag-form" class="purchase-form detail-add-row" data-quick-add method="post" action="<?= e(url('/cart/add')) ?>">
             <?= csrf_field() ?>
             <input type="hidden" name="product_id" value="<?= (int) $product['id'] ?>">
             <input type="hidden" name="return_to" value="<?= e(current_relative_uri()) ?>">
@@ -49,87 +48,39 @@ $reviewSummary = $reviewSummary ?? ['count' => 0, 'average' => 0.0];
         <?php elseif ($currentRole === null): ?>
           <a class="btn btn-primary product-signin-cta" href="<?= e(url('/login')) ?>">Sign in to add to bag</a>
         <?php endif; ?>
-        <div class="product-accordions"><details><summary>Product details <span aria-hidden="true">+</span></summary>        <div class="detail-meta">
-          <span>SKU <strong><?= e($product['sku']) ?></strong></span>
-          <span>Routine step <strong><?= e($product['routine_step'] ? ucfirst((string) $product['routine_step']) : 'General care') ?></strong></span>
-          <span>Availability <strong><?= $inStock ? 'In stock' : 'Out of stock' ?></strong></span>
+        <div class="product-accordions" data-animate-disclosures>
+          <details name="product-care"><summary>How to use</summary><div class="disclosure-body"><p><?php
+          $instructions = ['cleanse'=>'Massage into a wet scalp, then rinse thoroughly. Let the rinse pass through the lengths.', 'condition'=>'Apply along the lengths after washing. Detangle gently, then rinse as directed.', 'treat'=>'Use only as directed on the product label, including timing and frequency.', 'finish'=>'Apply only as directed to the lengths or ends. Start with a small amount.'];
+          echo e($instructions[$product['routine_step'] ?? ''] ?? 'Follow the instructions supplied with this product.');
+          ?></p><p class="product-care-note">General care guidance. Follow the packaging for product-specific amounts, timing and treatment compatibility.</p></div></details>
+          <details name="product-care"><summary>What it does</summary><div class="disclosure-body"><p><?= e((string)$product['description']) ?></p>
+            <?php foreach(['concern'=>'Listed concerns','texture'=>'Listed textures','scalp'=>'Listed scalp types'] as $key=>$label): if(!empty($product['suitability_tags'][$key])): ?><p><strong><?= e($label) ?>:</strong> <?= e(implode(', ', $product['suitability_tags'][$key])) ?></p><?php endif; endforeach; ?>
+            <p class="product-care-note">Catalog suitability supports matching. Benefits and treatment compatibility are not independently verified.</p>
+          </div></details>
+          <details name="product-care"><summary>Ingredients</summary><div class="disclosure-body">
+            <?php if(!empty($productReference['ingredients'])): ?>
+              <p class="product-care-note">Reference-based illustrative formula for this fictional academic product. It is not a tested or manufactured Avela formula.</p>
+              <p><?= e($productReference['ingredients']) ?></p>
+              <p class="product-care-note">Reference: <?= e($productReference['reference_product']) ?>. <a class="text-link" href="<?= e($productReference['source_url']) ?>" target="_blank" rel="noopener noreferrer">Ingredient source</a></p>
+            <?php else: ?><p>Ingredient information has not been supplied for this catalog item. Check the product packaging before use, especially if you have sensitivities.</p><?php endif; ?>
+          </div></details>
         </div>
-
-</details><details><summary>Listed suitability <span aria-hidden="true">+</span></summary>        <?php
-        $tagGroups = [
-            'concern' => 'Hair concerns',
-            'texture' => 'Hair texture',
-            'scalp' => 'Scalp type',
-        ];
-        ?>
-        <div class="product-suitability-overview">
-          <?php foreach ($tagGroups as $key => $label): ?>
-            <?php if (!empty($product['suitability_tags'][$key])): ?>
-              <div class="suitability-block">
-                <span><?= e($label) ?></span>
-                <div class="suitability-chips">
-                  <?php foreach ($product['suitability_tags'][$key] as $tag): ?><span><?= e($tag) ?></span><?php endforeach; ?>
-                </div>
-              </div>
-            <?php endif; ?>
-          <?php endforeach; ?>
-        </div>
-
-<p>Suitability reflects the catalog metadata. Ingredient benefits and treatment compatibility are not independently verified.</p></details></div><a class="detail-assessment-link" href="<?= e(url('/assessment')) ?>">Find a little clarity for your hair </a>
+        <p class="product-care-note">SKU <?= e($product['sku']) ?> · <?= $inStock ? 'In stock' : 'Out of stock' ?></p>
+        <a class="detail-assessment-link" href="<?= e(url('/assessment')) ?>">Find a little clarity for your hair </a>
       </div>
     </section>
   </div>
 
   <section class="product-information" data-product-tabs>
-    <div class="product-tabs" role="tablist" aria-label="Product information">
-      <button class="product-tab active" type="button" role="tab" aria-selected="true" aria-controls="product-panel-description" id="product-tab-description" data-product-tab="description">Description</button>
-      <button class="product-tab" type="button" role="tab" aria-selected="false" aria-controls="product-panel-reviews" id="product-tab-reviews" data-product-tab="reviews">Reviews<?= (int) $reviewSummary['count'] > 0 ? ' (' . (int) $reviewSummary['count'] . ')' : '' ?></button>
-      <button class="product-tab" type="button" role="tab" aria-selected="false" aria-controls="product-panel-recommendations" id="product-tab-recommendations" data-product-tab="recommendations">Recommendations</button>
+    <div class="product-tabs" role="tablist" aria-label="Discover more products">
+      <?php foreach(['related'=>'You may also like','recent'=>'Recently viewed'] as $key=>$label): ?><button class="product-tab <?= $key==='related'?'active':'' ?>" type="button" role="tab" aria-selected="<?= $key==='related'?'true':'false' ?>" aria-controls="product-panel-<?= $key ?>" id="product-tab-<?= $key ?>" data-product-tab="<?= $key ?>"><?= e($label) ?></button><?php endforeach; ?>
     </div>
-
-    <div class="product-tab-panel active" id="product-panel-description" role="tabpanel" aria-labelledby="product-tab-description" data-product-panel="description">
-      <div class="product-tab-content product-tab-content--copy">
-        <span class="eyebrow">ABOUT THIS PRODUCT</span>
-        <p class="product-long-description"><?= e((string) $product['description']) ?></p>
+    <?php foreach(['related'=>$recommendations,'recent'=>$recentProducts ?? []] as $key=>$items): ?>
+      <div class="product-tab-panel <?= $key==='related'?'active':'' ?>" id="product-panel-<?= $key ?>" role="tabpanel" aria-labelledby="product-tab-<?= $key ?>" data-product-panel="<?= $key ?>" <?= $key==='recent'?'hidden':'' ?>>
+        <?php if($items): ?><div class="product-grid recommendation-grid"><?php foreach(array_slice($items,0,4) as $productCard): $showExcerpt=true; require dirname(__DIR__).'/partials/product_card.php'; endforeach; unset($productCard); ?></div>
+        <?php else: ?><p class="product-tab-empty-message"><?= $key==='recent'?'Products you visit in this browsing session will appear here.':'No related products are available right now.' ?></p><?php endif; ?>
       </div>
-    </div>
-
-    <div class="product-tab-panel" id="product-panel-reviews" role="tabpanel" aria-labelledby="product-tab-reviews" data-product-panel="reviews" hidden>
-      <div class="product-tab-content">
-        <span class="eyebrow">REVIEWS</span>
-        <?php if (!empty($reviews)): ?>
-          <div class="review-summary-line">
-            <strong><?= e(number_format((float) $reviewSummary['average'], 1)) ?>/5</strong>
-            <span><?= (int) $reviewSummary['count'] ?> review<?= (int) $reviewSummary['count'] === 1 ? '' : 's' ?></span>
-          </div>
-          <div class="review-list">
-            <?php foreach ($reviews as $review): ?>
-              <article class="review-card">
-                <div><strong><?= e($review['reviewer_name']) ?></strong><span><?= (int) $review['rating'] ?>/5</span></div>
-                <?php if (trim((string) $review['review_text']) !== ''): ?><p><?= e($review['review_text']) ?></p><?php endif; ?>
-                <time datetime="<?= e(date('Y-m-d', strtotime((string) $review['created_at']))) ?>"><?= e(date('M j, Y', strtotime((string) $review['created_at']))) ?></time>
-              </article>
-            <?php endforeach; ?>
-          </div>
-        <?php else: ?>
-          <p class="product-tab-empty-message">No reviews yet.</p>
-        <?php endif; ?>
-      </div>
-    </div>
-
-    <div class="product-tab-panel" id="product-panel-recommendations" role="tabpanel" aria-labelledby="product-tab-recommendations" data-product-panel="recommendations" hidden>
-      <div class="product-tab-content">
-        <span class="eyebrow">RELATED CARE</span>
-        <?php if (!empty($recommendations)): ?>
-          <div class="product-grid recommendation-grid">
-            <?php foreach ($recommendations as $recommendation): ?>
-              <?php $productCard = $recommendation; $showExcerpt = true; require dirname(__DIR__) . '/partials/product_card.php'; unset($productCard); ?>
-            <?php endforeach; ?>
-          </div>
-        <?php else: ?>
-          <p class="product-tab-empty-message">No related products found.</p>
-        <?php endif; ?>
-      </div>
-    </div>
+    <?php endforeach; ?>
   </section>
 </main>
+<script src="<?= e(asset('js/reading.js')) ?>" defer></script>

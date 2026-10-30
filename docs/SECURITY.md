@@ -1,6 +1,6 @@
 # Account security
 
-The custom PHP application uses prepared statements, encoded output, CSRF tokens, password hashing and live account/role checks. Staff still complete email OTP. [Optional authenticator enrollment](MFA.md) adds TOTP and one-use recovery codes; mandatory role coverage remains pending. The owner-approved coursework password age is 90 days; rollout to existing accounts remains separate. Selected [PII encryption](PII_ENCRYPTION.md) and [upload scanning](UPLOAD_SCANNING.md) are opt-in and require deployment verification.
+The custom PHP application uses prepared statements, encoded output, CSRF tokens, password hashing and live account/role checks. Enrolled staff complete an authenticator challenge after their password; unenrolled staff can sign in with their email/username and password to set up their own factor. Login email OTP is retired; enrollment and sensitive changes retain email proofs. [Optional authenticator enrollment](MFA.md) adds TOTP and one-use recovery codes; mandatory role coverage remains pending. The owner-approved coursework password age is 90 days; rollout to existing accounts remains separate. Selected [PII encryption](PII_ENCRYPTION.md) and [upload scanning](UPLOAD_SCANNING.md) are opt-in and require deployment verification.
 
 Administrators manage `/admin/security`. Catalog Managers and Customers cannot read or change these controls.
 
@@ -46,7 +46,7 @@ It refuses personal ports 13307/18080 and normal database port 3306. It creates 
 
 ## Deployment controls
 
-Staff setup on Windows uses `pwsh -File scripts/create_staff.ps1` (PowerShell 7) with hidden password confirmation. The PHP helper accepts securely redirected stdin only; password arguments are no longer supported. It validates role/email/username/name and the shared password policy, creates the existing active staff/profile records, and preserves mandatory staff email OTP. Passwords and raw database exceptions are not printed.
+Staff setup on Windows uses `pwsh -File scripts/create_staff.ps1` (PowerShell 7) with hidden password confirmation. The PHP helper accepts securely redirected stdin only; password arguments are no longer supported. It validates role/email/username/name and the shared password policy, creates the existing active staff/profile records, and preserves the staff enrollment transition described in MFA.md; creating staff does not invent or enable an authenticator factor. Passwords and raw database exceptions are not printed.
 
 Reproduce its positive/negative and record-preservation checks only in a disposable development database:
 
@@ -58,7 +58,7 @@ The test refuses database ports 3306/13307, generates synthetic credentials in m
 
 - Serve only `public/`; keep `.env`, sessions, logs, backups and credentials outside public access and Git.
 - Use HTTPS with secure session cookies and a trusted host configuration in production.
-- For named staff access fixtures only, `MAIL_LOCAL_STAFF_OTP=true` plus the explicit `MAIL_LOCAL_STAFF_USERNAMES` list routes eligible staff login/profile OTPs to the existing private local log. This requires a loopback development URL and a verified disposable database; production/personal targets are rejected. Customer messages continue through the selected SMTP transport and never fall back to logging on delivery failure. This exception is local test access, not genuine email MFA evidence.
+- For named staff access fixtures only, `MAIL_LOCAL_STAFF_OTP=true` plus the explicit `MAIL_LOCAL_STAFF_USERNAMES` list routes eligible staff enrollment/recovery/profile OTPs to the existing private local log. This requires a loopback development URL and a verified disposable database; production/personal targets are rejected. Customer messages continue through the selected SMTP transport and never fall back to logging on delivery failure. This exception is local test access, not genuine email MFA evidence.
 - The guarded `scripts/check_mail.php --to-sender` option sends its explicit diagnostic only to the configured sender inbox; it cannot select an arbitrary recipient and does not create or consume account proofs.
 - `MAIL_DRIVER=log` is accepted only with `APP_ENV=development`; configure working SMTP for production. Mail/log write failures must not be presented as delivered OTPs.
 - Configure actual reCAPTCHA v2 keys for the intended hostname. Missing keys fail closed and are shown as a configuration problem.

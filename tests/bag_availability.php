@@ -10,7 +10,8 @@ try {
     if(($o['expect-database']??'')!==$identity['db'] || !preg_match('/^avela_.*test_[A-Za-z0-9_]+$/D',$identity['db'])
         || (int)$identity['port']!==13427 || (int)($o['expect-port']??0)!==13427 || env('DB_HOST')!=='127.0.0.1'
         || $norm($identity['datadir'])!==$norm($o['expect-datadir']??'') || env('APP_ENV')!=='development'
-        || ($target['host']??'')!=='127.0.0.1' || (int)($target['port']??0)!==18427 || !$sessions
+        || env('MAIL_DRIVER')!=='log' || ($target['host']??'')!=='127.0.0.1' || ($target['scheme']??'')!=='http'
+        || in_array((int)($target['port']??0),[0,80,18080],true) || !$sessions
         || str_starts_with($norm($sessions),$norm(dirname(__DIR__)).'/'))throw new RuntimeException('Disposable-only identity guard stopped.');
     ini_set('session.save_path',$sessions);$checks=[];
     $product=$pdo->query('SELECT p.* FROM products p JOIN categories c ON c.id=p.category_id WHERE p.status="active" AND c.status="active" AND p.stock_qty>=2 ORDER BY p.id LIMIT 1')->fetch();

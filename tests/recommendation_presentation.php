@@ -13,12 +13,12 @@ $product=['id'=>1,'sku'=>'AVE-SMP-001','name'=>'A long synthetic product name <s
 $reason=['code'=>'scalp.dry_scalp'];$match=$product+['role'=>'cleanse','reasons'=>[$reason]];
 $result=['profile'=>$profile,'analysis'=>['tags'=>[],'warnings'=>[]],'ranked'=>[$match], 'routine'=>['items'=>[['product'=>$product]],'warnings'=>[]],'fingerprint'=>str_repeat('f',64)];
 $html=renderRecommendations($result);
-checkPresentation('Compact title replaces oversized introduction',str_contains($html,'<h1>Your recommendations</h1>')&&!str_contains($html,'Your kind<br>of care'));
-checkPresentation('Both primary views and legacy direct targets remain',str_contains($html,'data-result-tab="routine"')&&str_contains($html,'data-result-tab="matches"')&&str_contains($html,'id="product-matches-title"')&&str_contains($html,'id="routine-preview-title"'));
-checkPresentation('Save posts the real fingerprint and CSRF to the existing route',preg_match('~<form class="recommendation-actions"[^>]*action="/routine".*?name="_token".*?name="plan_fingerprint" value="'.str_repeat('f',64).'"~s',$html)===1);
-checkPresentation('Profile facts appear once',substr_count($html,'<dt>Texture</dt>')===1&&substr_count($html,'<dt>Scalp</dt>')===1&&!str_contains($html,'match-profile-glance'));
+checkPresentation('Editorial introduction has one page heading',substr_count($html,'<h1>')===1&&str_contains($html,'A little clarity.'));
+checkPresentation('All three reading sections and old direct links remain visible',str_contains($html,'id="assessment-insights"')&&str_contains($html,'id="product-matches-title"')&&str_contains($html,'id="routine-preview-title"')&&!str_contains($html,'data-result-panel'));
+checkPresentation('Current routine needs no extra save and shortcuts use shared reading navigation',!str_contains($html,'plan_fingerprint')&&str_contains($html,'help-navigation recommendation-shortcuts')&&str_contains($html,'data-reading-page'));
+checkPresentation('Profile facts appear once',substr_count($html,'Natural texture</small>')===1&&substr_count($html,'<dt>Scalp</dt>')===1&&!str_contains($html,'match-profile-glance'));
 checkPresentation('Inferred text and user-controlled names stay private or escaped',!str_contains($html,$profile['concern_text'])&&!str_contains($html,'<script>unsafe</script>')&&str_contains($html,'&lt;script&gt;unsafe&lt;/script&gt;'));
-checkPresentation('Full evidence remains available in disclosures',str_contains($html,'Matching details')&&str_contains($html,'Listed for a dry-feeling scalp.')&&str_contains($html,'not independently verified'));
+checkPresentation('Full evidence remains available in disclosures',str_contains($html,'Why this matches')&&str_contains($html,'Listed for a dry-feeling scalp.')&&str_contains($html,'not independently verified'));
 checkPresentation('No large About this guidance block',!str_contains($html,'About this guidance'));
 foreach(['curly','straight','unsure'] as $texture){
     $case=$result; $case['profile']['hair_texture']=$texture;
@@ -37,6 +37,13 @@ checkPresentation('Unavailable state is explicit and has no purchase form',str_c
 $missing=$result;$missing['ranked'][0]['image_path']=null;$missing['routine']['items'][0]['product']['image_path']=null;
 $html=renderRecommendations($missing);
 checkPresentation('Missing photographs use honest existing placeholders',!str_contains($html,'does-not-exist.webp')&&str_contains($html,'product-placeholder'));
+$many=$result;$second=$match;$second['id']=2;$second['role']='condition';$many['ranked'][]=$second;
+$html=renderRecommendations($many);$dom=new DOMDocument();@$dom->loadHTML($html);$xpath=new DOMXPath($dom);
+checkPresentation('Curated products stay on this page; alternatives go to editable Shop filters',$xpath->query('//article[@data-stream-key="product-1"]')->length===1&&$xpath->query('//article[@data-stream-key="product-2"]')->length===0&&str_contains($html,'/shop?concern%5B0%5D=tangling'));
+checkPresentation('Every purchase and favorite keeps its own CSRF token',$xpath->query('//form[@action="/cart/add"]/input[@name="_token"]')->length===1&&$xpath->query('//form[@action="/favorites/toggle"]/input[@name="_token"]')->length===1);
+$conflict=$result;$conflict['analysis']=['tags'=>[['type'=>'scalp','code'=>'oily_scalp']],'warnings'=>['Analysis temporarily limited <unsafe>']];$html=renderRecommendations($conflict);
+checkPresentation('Conflicting wording preserves selected-answer warning and escaped service warnings',str_contains($html,'We kept your selected answer')&&str_contains($html,'Analysis temporarily limited &lt;unsafe&gt;'));
+$before=$result;renderRecommendations($result);checkPresentation('Rendering never mutates its input or fingerprint',$before===$result);
 $empty=['profile'=>null,'ranked'=>[],'routine'=>['items'=>[],'warnings'=>[]],'fingerprint'=>''];
 checkPresentation('No profile offers assessment without fabricated results',str_contains(renderRecommendations($empty),'Create hair profile')&&!str_contains(renderRecommendations($empty),'data-result-panel'));
 $privacyEmail=null;ob_start();require dirname(__DIR__).'/app/Views/public/help.php';$help=ob_get_clean();

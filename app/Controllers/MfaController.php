@@ -65,7 +65,7 @@ final class MfaController
                     Session::forget('mfa_setup_flow');Session::flash('success','2-step verification setup canceled.');break;
                 case 'disable':
                     $this->mfa->disable($id,$this->input('password',256),$this->input('authenticator_code',64));
-                    $this->auth->logout();Session::flash('success',($user['role']==='customer'?'2-step verification turned off. Please sign in again.':'2-step verification turned off. Email verification is still required. Please sign in again.'));
+                    $this->auth->logout();Session::flash('success','2-step verification turned off. Please sign in again.');
                     Response::redirect('/login');
                 default: throw new DomainException('Choose a valid 2-step verification action.');
             }

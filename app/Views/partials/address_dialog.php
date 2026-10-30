@@ -1,8 +1,8 @@
-<?php $addressValues=$savedAddress??\App\Core\DeliveryValidator::prefill($profile); ?>
+<?php $addressValues=\App\Core\DeliveryValidator::prefill([...$profile,'delivery_address'=>'']); ?>
 <dialog class="account-dialog" id="address-dialog" aria-labelledby="address-title">
- <div class="account-dialog-heading"><h2 id="address-title"><?= $savedAddress?'Edit delivery address':'Add delivery address' ?></h2></div>
+ <div class="account-dialog-heading"><h2 id="address-title">Add delivery address</h2></div>
  <form method="post" action="<?= e(url('/profile/address')) ?>" data-address-form>
-  <?= csrf_field() ?><input type="hidden" name="revision" value="<?= e($savedAddress['revision']??'') ?>">
+  <?= csrf_field() ?><input type="hidden" name="address_id" value="-1"><input type="hidden" name="revision" value="">
   <div class="alert alert-error" role="alert" tabindex="-1" data-address-error hidden></div>
   <div class="checkout-field-grid">
    <label class="checkout-field checkout-field--full"><span>Country</span><select name="country" autocomplete="country" required><option value="PH">Philippines</option></select><small class="field-error" data-address-field="country"></small></label>
@@ -12,6 +12,7 @@
    <?php $locationValues=$addressValues;$locationPrefix='address';require __DIR__.'/region_field.php'; ?>
    <label class="checkout-field checkout-field--full"><span>Phone</span><input id="address-contact_no" name="contact_no" type="tel" autocomplete="tel" maxlength="25" value="<?= e($addressValues['contact_no']??'') ?>" required aria-describedby="address-contact_no-error"><small class="field-error" id="address-contact_no-error" data-address-field="contact_no"></small></label>
   </div>
+  <label class="address-default-choice"><input type="checkbox" name="make_default" value="1"> Use as my default address</label>
   <div class="account-form-actions"><button type="button" class="text-link" data-dialog-close>Cancel</button><button type="submit" class="btn btn-primary">Save address</button></div>
  </form>
 </dialog>

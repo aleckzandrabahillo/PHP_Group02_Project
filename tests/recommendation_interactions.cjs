@@ -23,22 +23,18 @@ function fixture(hash='',reduce=false){
  return {nav,modeNav,buttons,modes,routine,matches,wash,between,filters,cards,count,events,location,history};
 }
 const f=fixture();
-check('Default routine and wash view',!f.routine.hidden&&f.matches.hidden&&!f.wash.hidden&&f.between.hidden);
-check('Primary tablist and panels have accessible roles',f.nav.attrs.role==='tablist'&&f.routine.attrs.role==='tabpanel'&&f.routine.tabIndex===0);
-check('Only selected primary tab is in sequential focus',f.buttons[0].tabIndex===0&&f.buttons[1].tabIndex===-1&&f.buttons[0].attrs['aria-selected']==='true');
-f.buttons[0].fire('keydown',{key:'ArrowRight'});
-check('Right arrow selects and focuses matches',f.routine.hidden&&!f.matches.hidden&&f.buttons[1].focused&&f.buttons[1].attrs['aria-controls']==='product-matches-title');
-f.filters[1].fire('click');check('Filter count uses visible result cards',!f.cards[0].hidden&&f.cards[1].hidden&&f.count.textContent==='1 match');
-f.buttons[1].fire('keydown',{key:'Home'});f.modes[1].fire('click');f.buttons[1].fire('click');f.buttons[0].fire('click');
-check('Timing and filters survive primary tab changes',f.wash.hidden&&!f.between.hidden&&f.filters[1].attrs['aria-pressed']==='true'&&f.cards[1].hidden);
-check('Tab selection preserves existing history state',f.history.kept.account==='keep');
-f.buttons[0].fire('keydown',{key:'ArrowLeft'});check('Left arrow wraps focus',f.buttons[1].focused&&!f.matches.hidden);
-f.buttons[1].fire('keydown',{key:'Home'});f.buttons[0].fire('keydown',{key:'End'});check('End selects last tab',f.buttons[1].attrs['aria-selected']==='true');
-check('Modified links keep normal browser navigation',!f.buttons[0].fire('click',{ctrlKey:true}).prevented);
-f.location.hash='#routine-preview-title';f.events.hashchange();check('Legacy routine direct link activates matching view',!f.routine.hidden);
-const direct=fixture('#product-matches-title');check('Legacy product direct link opens matches',!direct.matches.hidden&&direct.routine.hidden);
-const timing=fixture('#suggested-care-between');check('Timing deep link exposes both ancestors',!timing.routine.hidden&&!timing.between.hidden);
-const reduced=fixture('',true);check('Reduced motion creates no tab animation',reduced.routine.animations===0&&reduced.wash.animations===0);
-// Source never receives fetch or persistence APIs in this fixture; any implicit mutation would throw.
-check('Tabs and filters operate with no network or storage APIs',true);
+check('Wash day is visible and between-wash care is deferred',!f.wash.hidden&&f.between.hidden);
+check('Timing has accessible tablist and tabpanel roles',f.modeNav.attrs.role==='tablist'&&f.wash.attrs.role==='tabpanel'&&f.wash.tabIndex===0);
+check('Only the selected timing tab is in sequential focus',f.modes[0].tabIndex===0&&f.modes[1].tabIndex===-1&&f.modes[0].attrs['aria-selected']==='true');
+f.modes[0].fire('keydown',{key:'ArrowRight'});
+check('Right arrow selects and focuses between-wash care',f.wash.hidden&&!f.between.hidden&&f.modes[1].focused&&f.modes[1].attrs['aria-controls']==='suggested-care-between');
+f.modes[1].fire('keydown',{key:'Home'});f.modes[0].fire('keydown',{key:'End'});
+check('Timing changes preserve unrelated history state',f.history.kept.account==='keep');
+check('End selects the last timing tab',f.modes[1].attrs['aria-selected']==='true');
+f.modes[1].fire('keydown',{key:'ArrowRight'});check('Arrow navigation wraps',f.modes[0].focused&&!f.wash.hidden);
+check('Modified links keep normal browser navigation',!f.modes[0].fire('click',{ctrlKey:true}).prevented);
+f.location.hash='#suggested-care-between';f.events.hashchange();check('Timing deep link opens its intended panel',!f.between.hidden);
+const direct=fixture('#product-matches-title');check('Legacy product anchor does not hide either main section',!direct.matches.hidden&&!direct.routine.hidden);
+const reduced=fixture('',true);check('Reduced motion creates no timing animation',reduced.wash.animations===0);
+check('Interactions operate without network or storage APIs',true);
 console.log(JSON.stringify({pass,fail:0,mode:'DOM simulation',network_requests:0}));

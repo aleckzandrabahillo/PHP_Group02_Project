@@ -20,15 +20,8 @@
   });
   return select;
  }
- const primary=tabs('[data-result-tabs]','[data-result-tab]','[data-result-panel]','result');
  const mode=tabs('[data-mode-tabs]','[data-mode-tab]','[data-mode-panel]','mode');
  mode?.('wash');
- const fromHash=()=>{const between=location.hash==='#suggested-care-between';primary?.(location.hash==='#product-matches-title'?'matches':'routine');if(between||location.hash==='#suggested-care-wash')mode?.(between?'between':'wash');};
+ const fromHash=()=>{if(location.hash==='#suggested-care-between'||location.hash==='#suggested-care-wash')mode?.(location.hash==='#suggested-care-between'?'between':'wash');};
  fromHash();addEventListener('hashchange',fromHash);
- root.querySelectorAll('[data-match-filter]').forEach(button=>button.addEventListener('click',()=>{
-  const role=button.dataset.matchFilter,cards=[...root.querySelectorAll('[data-match-role]')];
-  root.querySelectorAll('[data-match-filter]').forEach(control=>control.setAttribute('aria-pressed',String(control===button)));
-  cards.forEach(card=>{card.hidden=role!=='all'&&card.dataset.matchRole!==role;});
-  const count=cards.filter(card=>!card.hidden).length;root.querySelector('[data-match-count]').textContent=count+(count===1?' match':' matches');
- }));
 })();

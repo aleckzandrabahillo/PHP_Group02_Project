@@ -268,16 +268,7 @@ try {
         session_id('');App\Core\Session::start();$oldSession=session_id();
         $mailFile=dirname(__DIR__).'/storage/logs/dev_mail.log';$offset=is_file($mailFile)?filesize($mailFile):0;
         $login=$auth->attempt($username,$password);
-        if($role!=='customer'){
-            verify($role.' password step requires OTP',($login['next']??'')==='otp'&&!App\Core\Session::get('auth_user'));
-            $tail=file_get_contents($mailFile,false,null,$offset);
-            preg_match('/TO: '.preg_quote($email,'/').' \| PURPOSE: login \| OTP: ([0-9]{6})/',$tail,$code);
-            $beforeOtp=(int)$pdo->query('SELECT COUNT(*) FROM otp_codes WHERE user_id='.$uid)->fetchColumn();
-            $restarted=$auth->attempt($username,$password);
-            verify($role.' OTP cooldown recovery preserved',($restarted['next']??'')==='otp'&&(int)$pdo->query('SELECT COUNT(*) FROM otp_codes WHERE user_id='.$uid)->fetchColumn()===$beforeOtp);
-            $login=$auth->verifyPendingOtp($code[1]??'');
-            unset($code,$tail);
-        }
+        verify($role.' unenrolled login does not issue an email challenge',($login['next']??'')==='dashboard'&&(int)$pdo->query('SELECT COUNT(*) FROM otp_codes WHERE user_id='.$uid)->fetchColumn()===0);
         verify('Normal '.$role.' service login completes',($login['ok']??false)&&App\Core\Session::get('auth_user')['id']===$uid&&session_id()!==$oldSession);
         session_write_close();unset($password);
     }

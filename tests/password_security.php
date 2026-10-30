@@ -68,7 +68,7 @@ file_put_contents($envFile,"PASSWORD_EXPIRY_DAYS=90\n");App\Core\Env::load($envF
  $logs=new App\Services\LogService();$otp=new App\Services\OtpService(new App\Services\MailService(),$logs);$auth=new App\Services\AuthService($users,$otp,$logs);
  session_name((string)env('SESSION_NAME'));session_id('');session_start();verifyHair('Stale password snapshot cannot finalize login',!$auth->finalizeLogin($oldLogin));
  verifyHair('Normal login with replacement password succeeds',$auth->attempt($a['name'],$new)['ok']);session_write_close();
- $staff=$make('catalog_manager');session_id('');session_start();$auth->attempt($staff['name'],$staff['password']);$oldFlow=App\Core\Session::get('pending_flow');$service->change($staff['id'],$staff['password'],$new);
+ $staff=$make('catalog_manager');session_id('');session_start();$otp->issue($staff['id'],$staff['email'],'login');$oldFlow=['user_id'=>$staff['id'],'purpose'=>'login','email'=>$staff['email'],'password_version'=>$users->findById($staff['id'])['password_version']??''];$service->change($staff['id'],$staff['password'],$new);
  foreach(array_reverse(file(dirname(__DIR__).'/storage/logs/dev_mail.log')) as $line)if(str_contains($line,'TO: '.$staff['email'].' | PURPOSE: login')&&preg_match('/OTP: ([0-9]{6})/',$line,$m)){$oldCode=$m[1];break;}
  App\Core\Session::put('pending_flow',$oldFlow);verifyHair('Pending email proof cannot survive password change',!$auth->verifyPendingOtp($oldCode)['ok']);session_write_close();
  $factorUser=$make();session_id('');session_start();$mfa=new App\Services\MfaService($users,$otp,$logs);
