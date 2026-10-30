@@ -29,7 +29,7 @@ foreach(['customer','admin','catalog_manager'] as $role){
   $verify('Customer security identity uses the account name rather than the login handle',str_contains($html,'<h2>Synthetic Account Owner</h2>'));
   $verify('Customer security navigation preserves POST and CSRF sign out',str_contains($html,'action="/logout"')&&str_contains($html,'name="_token"'));
  }
- $verify($role.' explains its actual sign-in steps',$role==='customer'?str_contains($html,'After your password, enter the code from your phone.')&&!str_contains($html,'After your password and email code'):str_contains($html,'After your password and email code'));
+ $verify($role.' explains its actual sign-in steps',str_contains($html,'After your password, enter the code from your phone.')&&!str_contains($html,'After your password and email code'));
  $verify($role.' retains the current password and proof fields',str_contains($html,'name="password"')&&str_contains($html,'name="authenticator_code"')&&str_contains($html,'name="_token"'));
  $html=$render('account/mfa',[...$data,'enabledAt'=>null]);
  $verify($role.' setup starts with the familiar name',str_contains($html,'Set up 2-step verification')&&!str_contains($html,'Start authenticator setup'));

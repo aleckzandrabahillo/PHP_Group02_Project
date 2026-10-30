@@ -48,7 +48,7 @@
     document.documentElement.style.setProperty('--nav-panel-top',Math.ceil(rect.bottom+gap)+'px');
     document.documentElement.style.setProperty('--notice-top',Math.ceil(rect.bottom+12)+'px');
     document.documentElement.style.setProperty('--account-sticky-top',Math.ceil(rect.bottom+20)+'px');
-    document.documentElement.style.setProperty('--checkout-sticky-top',Math.ceil(rect.bottom+16)+'px');
+    document.documentElement.style.setProperty('--checkout-sticky-top',Math.ceil(rect.bottom)+'px');
     const searchPanel=panelFor('search');
     if(searchPanel&&!searchPanel.hidden){
       const panelRect=searchPanel.getBoundingClientRect(),panelStyle=getComputedStyle(searchPanel),shop=innerWidth>720?triggers.find(node=>node.dataset.navOpen==='shop'&&node.getClientRects().length):null,bag=header.querySelector('[data-bag-open]');
@@ -139,7 +139,7 @@
     searchResults.replaceChildren();
     const group = document.createElement('section'), heading = document.createElement('h3'), terms = document.createElement('div');
     group.className = 'nav-search-group'; heading.textContent = 'Suggested search terms'; terms.className = 'nav-search-terms';
-    for (const [label, value] of [['Shampoo','shampoo'],['Conditioner','conditioner'],['Hair assessment','hair assessment'],['Hair profile','hair profile'],['Saved routine','routine'],['Care guide','care guide']]) {
+    for (const [label, value] of [['Shampoo','shampoo'],['Conditioner','conditioner'],['Hair assessment','hair assessment'],['Hair profile','hair profile'],['My Routine','routine'],['Care guide','care guide']]) {
       const button = document.createElement('button'); button.type = 'button'; button.textContent = label;
       button.addEventListener('click', () => { search.value = value; search.dispatchEvent(new Event('input')); search.focus(); }); terms.append(button);
     }

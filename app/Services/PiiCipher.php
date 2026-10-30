@@ -12,6 +12,8 @@ final class PiiCipher
         'orders'=>['contact_no_snapshot'=>25,'delivery_address_snapshot'=>500],
     ];
 
+    private const EXTRA_FIELDS = ['customer_address_book'=>['payload'=>2400]];
+
     public function __construct(#[\SensitiveParameter] private readonly array $keys, private readonly string $active)
     {
         if (!extension_loaded('openssl') || !$keys || count($keys)>8 || !isset($keys[$active])) self::fail();
@@ -46,7 +48,7 @@ final class PiiCipher
     public function decrypt(string $table,string $field,int $id, #[\SensitiveParameter] ?string $envelope): ?string
     {
         $this->context($table,$field,$id,$this->active);
-        if ($envelope===null || strlen($envelope)>2800 || !preg_match('/^v1:([a-zA-Z0-9_-]{1,24}):([A-Za-z0-9+\/=]+)$/D',$envelope,$parts) || !isset($this->keys[$parts[1]])) self::fail();
+        if ($envelope===null || strlen($envelope)>($table==='customer_address_book'?16000:2800) || !preg_match('/^v1:([a-zA-Z0-9_-]{1,24}):([A-Za-z0-9+\/=]+)$/D',$envelope,$parts) || !isset($this->keys[$parts[1]])) self::fail();
         $bytes=base64_decode($parts[2],true);
         if ($bytes===false || base64_encode($bytes)!==$parts[2] || strlen($bytes)<28) self::fail();
         $text=openssl_decrypt(substr($bytes,28),'aes-256-gcm',$this->keys[$parts[1]],OPENSSL_RAW_DATA,substr($bytes,0,12),substr($bytes,12,16),$this->context($table,$field,$id,$parts[1]));
@@ -57,12 +59,12 @@ final class PiiCipher
 
     private function context(string $table,string $field,int $id,string $key): string
     {
-        if (!isset(self::FIELDS[$table][$field]) || $id<1) self::fail();
+        if (!isset((self::FIELDS + self::EXTRA_FIELDS)[$table][$field]) || $id<1) self::fail();
         return 'avela:pii:v1:'.$key.':'.$table.':'.$field.':'.$id;
     }
     private function validateText(string $table,string $field, #[\SensitiveParameter] string $text): void
     {
-        if (!mb_check_encoding($text,'UTF-8') || mb_strlen($text,'UTF-8')>self::FIELDS[$table][$field] || str_contains($text,"\0")) self::fail();
+        if (!mb_check_encoding($text,'UTF-8') || mb_strlen($text,'UTF-8')>(self::FIELDS + self::EXTRA_FIELDS)[$table][$field] || str_contains($text,"\0")) self::fail();
     }
     private static function fail(): never {throw new RuntimeException('Protected personal information is unavailable. Contact the account administrator.');}
 }

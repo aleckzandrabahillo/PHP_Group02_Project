@@ -118,6 +118,11 @@ final class AuthController
         AuthGuard::guest();
         $flow = Session::get('pending_flow');
         if (!is_array($flow)) Response::redirect('/login');
+        if (($flow['purpose'] ?? '') === 'login') {
+            Session::forget('pending_flow');
+            Session::flash('warning', 'Please sign in again to use the updated verification flow.');
+            Response::redirect('/login');
+        }
         $email = (string) ($flow['email'] ?? '');
         $masked = $this->maskEmail($email);
         if(($flow['purpose']??'')==='activation_link'){

@@ -48,7 +48,24 @@ try {
     foreach(['catalog_manager','admin','customer'] as $role){$a=['username'=>$prefix.'_'.$role,'email'=>$prefix.'_'.$role.'@example.invalid','password'=>'A1!'.bin2hex(random_bytes(18)),'role'=>$role];
         if($role==='customer'){$id=$users->createCustomer(['username'=>$a['username'],'email'=>$a['email'],'password_hash'=>password_hash($a['password'],PASSWORD_DEFAULT),'full_name'=>'Synthetic MFA Customer','contact_no'=>'+639170000000']);$users->activate($id);}
         else $id=$users->createStaff($role,$a['email'],$a['username'],password_hash($a['password'],PASSWORD_DEFAULT),'Synthetic MFA Staff');$accounts[$role]=$a+['id'=>$id];}
-    $a=$accounts['catalog_manager'];$id=$a['id'];mfaSession();$r=$auth->attempt($a['username'],$a['password']);verifyMfa('Unenrolled staff still require email OTP',$r['next']==='otp');$r=$auth->verifyPendingOtp(otpMfa($a['email']));verifyMfa('Unenrolled staff retain normal login',$r['next']==='dashboard'&&isset($_SESSION['auth_user']));
+    // Exercise the Administrator role with its own verified enrollment.
+    $admin=$accounts['admin'];mfaSession();$mailCount=(int)$pdo->query('SELECT COUNT(*) FROM otp_codes')->fetchColumn();
+    $r=$auth->attempt($admin['email'],$admin['password']);
+    verifyMfa('Administrator email and password allow initial setup',$r['next']==='dashboard'&&($_SESSION['auth_user']['role']??'')==='admin');
+    verifyMfa('Administrator initial login does not issue OTP',(int)$pdo->query('SELECT COUNT(*) FROM otp_codes')->fetchColumn()===$mailCount);
+    $mfa->beginEnrollment($admin['id'],$admin['password']);$adminSecret=$mfa->setupSecret($admin['id']);$adminTotp=OTPHP\TOTP::createFromSecret($adminSecret);
+    $adminCodes=$mfa->confirmEnrollment($admin['id'],otpMfa($admin['email']),$adminTotp->now());$auth->logout();
+    $mailCount=(int)$pdo->query('SELECT COUNT(*) FROM otp_codes')->fetchColumn();$r=$auth->attempt($admin['email'],$admin['password']);
+    verifyMfa('Enrolled Administrator goes directly to authenticator',$r['next']==='totp'&&!isset($_SESSION['auth_user']));
+    verifyMfa('Enrolled Administrator does not receive login email',(int)$pdo->query('SELECT COUNT(*) FROM otp_codes')->fetchColumn()===$mailCount);
+    verifyMfa('Password finalizer cannot bypass Administrator authenticator',!$auth->finalizeLogin($users->findById($admin['id'])));
+    verifyMfa('Administrator recovery proof completes its own challenge',$auth->verifyPendingAuthenticator($adminCodes[0])['ok']&&($_SESSION['auth_user']['role']??'')==='admin');
+    $auth->logout();App\Core\Session::put('pending_flow',['user_id'=>$admin['id'],'purpose'=>'login','password_version'=>$users->findById($admin['id'])['password_version']??'']);
+    verifyMfa('Legacy staff email challenge cannot bypass authenticator',!$auth->verifyPendingOtp('000000')['ok']&&!isset($_SESSION['auth_user']));
+    verifyMfa('Legacy staff email challenge cannot resend',$auth->resendPendingOtp()['ok']===false);
+    mfaSession();App\Core\Session::put('pending_flow',['user_id'=>$admin['id'],'purpose'=>'login']);$legacyClient=mfaClient();session_write_close();
+    verifyMfa('Retired staff email sign-in page redirects to fresh login',mfaRequest('/verify-otp',$legacyClient)['location']==='/login');
+    $a=$accounts['catalog_manager'];$id=$a['id'];mfaSession();$beforeOtp=(int)$pdo->query('SELECT COUNT(*) FROM otp_codes WHERE user_id='.$id)->fetchColumn();$r=$auth->attempt($a['username'],$a['password']);verifyMfa('Unenrolled staff can sign in before setup',$r['next']==='dashboard'&&isset($_SESSION['auth_user']));verifyMfa('Unenrolled staff login sends no email code',(int)$pdo->query('SELECT COUNT(*) FROM otp_codes WHERE user_id='.$id)->fetchColumn()===$beforeOtp);
     $olderState=$_SESSION;$originalId=session_id();session_write_close();session_id('');session_start();$_SESSION=$olderState;$olderClient=mfaClient();session_write_close();session_id($originalId);session_start();
     $denied=false;try{$mfa->beginEnrollment($id,'incorrect');}catch(DomainException){$denied=true;}verifyMfa('Enrollment requires current password',$denied&&$mfa->factor($id)===null);
     $pdo->prepare('UPDATE otp_codes SET created_at=DATE_SUB(NOW(),INTERVAL 61 SECOND) WHERE user_id=?')->execute([$id]);
@@ -102,8 +119,9 @@ try {
     verifyMfa('Recovery does not bypass account lock',!$mfa->verifyLogin($challenge,$codes[2])['ok']);
     (new App\Services\SecurityManagement())->unlock($accounts['admin']['id'],$id,$users->findById($id)['locked_until']);
     verifyMfa('Admin unlock preserves authenticator factor',$mfa->factor($id)!==null&&$mfa->verifyLogin($mfa->loginChallenge($id),$codes[2])['ok']);
-    mfaSession();$pdo->prepare('UPDATE otp_codes SET created_at=DATE_SUB(NOW(),INTERVAL 61 SECOND) WHERE user_id=?')->execute([$id]);$r=$auth->attempt($a['username'],$a['password']);$r=$auth->verifyPendingOtp(otpMfa($a['email']));
-    verifyMfa('Email OTP alone cannot finish enrolled login',$r['next']==='totp'&&!isset($_SESSION['auth_user'])&&isset($_SESSION['pending_totp']));
+    mfaSession();$pdo->prepare('UPDATE otp_codes SET created_at=DATE_SUB(NOW(),INTERVAL 61 SECOND) WHERE user_id=?')->execute([$id]);$beforeOtp=(int)$pdo->query('SELECT COUNT(*) FROM otp_codes WHERE user_id='.$id)->fetchColumn();$r=$auth->attempt($a['username'],$a['password']);
+    verifyMfa('Enrolled staff login requires authenticator without issuing email',(int)$pdo->query('SELECT COUNT(*) FROM otp_codes WHERE user_id='.$id)->fetchColumn()===$beforeOtp);
+    verifyMfa('Password alone cannot finish enrolled login',$r['next']==='totp'&&!isset($_SESSION['auth_user'])&&isset($_SESSION['pending_totp']));
     $otpCount=(int)$pdo->query('SELECT COUNT(*) FROM otp_codes WHERE user_id='.$id)->fetchColumn();$restart=$auth->attempt($a['username'],$a['password']);
     verifyMfa('Restarting login during cooldown retains supported authenticator flow',$restart['next']==='totp'&&(int)$pdo->query('SELECT COUNT(*) FROM otp_codes WHERE user_id='.$id)->fetchColumn()===$otpCount&&!isset($_SESSION['auth_user']));
     $client=mfaClient();session_write_close();verifyMfa('Protected dashboard denied before authenticator',mfaRequest('/catalog',$client)['location']==='/login');
@@ -116,6 +134,7 @@ try {
     mfaSession();$denied=false;try{$mfa->disable($id,'incorrect',$codes[4]);}catch(DomainException){$denied=true;}verifyMfa('Removing authenticator requires password and second factor',$denied&&$mfa->factor($id)!==null);
     $mfa->disable($id,$a['password'],$codes[4]);verifyMfa('Removing authenticator preserves email MFA',$mfa->factor($id)===null&&(int)$users->findById($id)['mfa_enabled']===1);
     verifyMfa('Removing authenticator invalidates older authenticated sessions',mfaRequest('/catalog',$authenticated)['location']==='/login');
+    mfaSession();$r=$auth->attempt($a['username'],$a['password']);verifyMfa('Confirmed removal permits password sign-in before reenrollment',$r['next']==='dashboard');
     $_SESSION['pending_totp']=['synthetic'=>true];$_SESSION['mfa_setup_flow']=['synthetic'=>true];$_SESSION['mfa_recovery_codes']=['synthetic'];$auth->logout();verifyMfa('Logout clears every sensitive MFA flow',array_intersect_key($_SESSION,array_flip(['pending_totp','mfa_setup_flow','mfa_recovery_codes']))===[]);session_write_close();
     verifyMfa('Guest cannot start MFA setup',mfaRequest('/account/mfa',null,['action'=>'begin'])['location']==='/login');
     verifyMfa('Existing products and orders preserved',$products===$pdo->query('SELECT * FROM products ORDER BY id')->fetchAll()&&$orders===$pdo->query('SELECT * FROM orders ORDER BY id')->fetchAll());

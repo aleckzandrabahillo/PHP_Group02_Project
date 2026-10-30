@@ -101,7 +101,9 @@ try {
     verifyHair('Rejected form never reflects password',$r['code']===422&&!preg_match('/name="password"[^>]*value=/',$r['body']));
     $logs=new App\Services\LogService();$otp=new App\Services\OtpService(new App\Services\MailService(),$logs);$auth=new App\Services\AuthService($users,$otp,$logs);
     $login=$auth->attempt($valid['username'],$pass);
-    verifyHair('New staff normal password login still requires OTP',$login['ok']&&$login['next']==='otp');
+    verifyHair('Unenrolled staff can sign in before authenticator setup without email OTP',
+        $login['ok']&&$login['next']==='dashboard'
+        &&(int)$pdo->query('SELECT COUNT(*) FROM otp_codes WHERE user_id='.(int)$new['id'])->fetchColumn()===0);
 
     $state=$users->findById($customer);
     verifyHair('Malformed status target has no write',hairRequest('/admin/users/status',$admin,['_token'=>$admin['csrf'],'id'=>['bad'],'expected'=>'active','status'=>'inactive'])['code']===302&&$users->findById($customer)===$state);

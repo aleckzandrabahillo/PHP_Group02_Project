@@ -2,17 +2,23 @@
 (() => {
  'use strict';
  const reduced=matchMedia('(prefers-reduced-motion: reduce)'),jobs=new Map();
- document.querySelectorAll('[data-animate-disclosures] details').forEach(detail=>{
+ const disclosures=[...document.querySelectorAll('[data-animate-disclosures] details')],groups=new Map();
+ const transition=(detail,expand)=>{
+  const summary=detail.querySelector('summary'),start=detail.getBoundingClientRect().height;
+  jobs.get(detail)?.animation.cancel();jobs.delete(detail);
+  if(reduced.matches||!detail.animate){detail.style.overflow='';detail.open=expand;return;}
+  detail.open=true;detail.style.overflow='hidden';
+  const animation=detail.animate([{height:start+'px'},{height:(expand?detail.scrollHeight:summary.getBoundingClientRect().height)+'px'}],{duration:200,easing:'cubic-bezier(.22,.7,.25,1)'});
+  jobs.set(detail,{animation,expand});animation.onfinish=()=>{if(jobs.get(detail)?.animation!==animation)return;detail.open=expand;detail.style.overflow='';jobs.delete(detail);};
+ };
+ disclosures.forEach(detail=>{
   const summary=detail.querySelector('summary');if(!summary)return;
+  const name=detail.getAttribute?.('name');if(name){groups.set(detail,name);detail.removeAttribute('name');}
   summary.addEventListener('click',event=>{
    if(event.target.closest('a,button,input')||event.button>0)return;
-   const pending=jobs.get(detail),expand=!(pending?pending.expand:detail.open),start=detail.getBoundingClientRect().height;
-   pending?.animation.cancel();jobs.delete(detail);
-   if(reduced.matches||!detail.animate){detail.style.overflow='';detail.open=!expand;return;}
-   event.preventDefault();detail.open=true;detail.style.overflow='hidden';
-   const finish=()=>{if(jobs.get(detail)?.animation!==animation)return;detail.open=expand;detail.style.overflow='';jobs.delete(detail);};
-   const animation=detail.animate([{height:start+'px'},{height:(expand?detail.scrollHeight:summary.getBoundingClientRect().height)+'px'}],{duration:200,easing:'cubic-bezier(.22,.7,.25,1)'});
-   jobs.set(detail,{animation,expand});animation.onfinish=finish;
+   event.preventDefault();const expand=!(jobs.get(detail)?.expand??detail.open);
+   if(expand&&name)disclosures.forEach(other=>{if(other!==detail&&groups.get(other)===name&&(jobs.get(other)?.expand??other.open))transition(other,false);});
+   transition(detail,expand);
   });
  });
  reduced.addEventListener('change',()=>{if(!reduced.matches)return;jobs.forEach(({animation,expand},detail)=>{animation.cancel();detail.open=expand;detail.style.overflow='';});jobs.clear();});

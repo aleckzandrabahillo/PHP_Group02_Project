@@ -2,6 +2,8 @@
 
 A student hair-care demonstration store for Group 02's Open Source Programming and Information Assurance and Security project. Built with native PHP, MySQL/MariaDB, HTML, CSS and vanilla JavaScript; no application framework.
 
+This repository contains the integrated Avela application, current editorial interface, security features and reviewed coursework catalog. Start with [Device setup and transfer](docs/DEVICE_TRANSFER.md). It is a source handoff, not a production deployment.
+
 ## Supported features
 
 - Catalog, filters, sorting, pagination, product details and persistent favorites.
@@ -10,11 +12,11 @@ A student hair-care demonstration store for Group 02's Open Source Programming a
 - Transactional Cash on Delivery Checkout, shipping quotes, guarded discounts, public order references, private history and fulfillment timelines.
 - Maya-hosted **Sandbox-only** card checkout with authenticated payment reconciliation, idempotency and stock reservations. Avela does not collect or store card details; browser redirects do not prove payment.
 - Catalog Manager/Administrator Category and Product CRUD, image uploads, archive/reactivation and guarded inventory updates.
-- Staff email OTP, optional authenticator enrollment/recovery, configurable account locking (default three attempts), Administrator recovery, password changes/expiry and automatic session-expiry navigation.
+- Authenticator enrollment/recovery for customers and staff, configurable account locking (default three attempts), Administrator recovery, password changes/expiry and automatic session-expiry navigation.
 - Administrator users/staff management, actor-attributed audits, filtered activity lists and transactional order cancellation/stock restoration.
 - Responsive customer/staff pages, dashboard reports, native address dialogs, consistent interaction motion and staff list filtering/sorting/paging.
 - Private, editable hair profiles with separate scalp/length characteristics and bounded English/Taglish concern interpretation using Python.
-- Explainable profile-based product matches and saved routines, using reviewed demonstration suitability metadata and existing cart/Checkout paths.
+- Explainable profile-based product matches and personalized routines, using reviewed demonstration suitability metadata and existing cart/Checkout paths.
 
 External SMTP delivery, public HTTPS, genuine Sandbox webhook delivery and worker scheduling require operator configuration and separate acceptance evidence. Selected PII encryption and real upload scanning are opt-in implementations requiring separately verified schema/key/scanner rollout. The Privacy Policy retains its review notice until a monitored contact channel is configured and verified. Source tests do not establish production or legal compliance.
 
@@ -49,7 +51,7 @@ On Windows, use PowerShell 7's secure prompt (set `-PhpBinary` if PHP is not on 
 pwsh -File scripts/create_staff.ps1 -Role catalog_manager -Email catalog@example.test -Username local_catalog -FullName "Local Catalog Manager"
 ```
 
-Choose `admin` for an Administrator. This creates an active account and its staff profile through the existing model; staff email OTP remains required. Passwords must satisfy the configured policy (at least 12 characters with upper/lowercase, number and special character; at most 72 bytes). They are hashed with PHP `password_hash()`.
+Choose `admin` for an Administrator. This creates an active account and its staff profile through the existing model; unenrolled staff may sign in with email/username and password; enrolled staff must complete their authenticator or recovery-code challenge. Email verification remains required for enrollment and sensitive account changes. Passwords must satisfy the configured policy (at least 12 characters with upper/lowercase, number and special character; at most 72 bytes). They are hashed with PHP `password_hash()`.
 
 The underlying PHP helper accepts `<role> <email> <username> <full-name> --password-stdin` for trusted automation with securely redirected input. It refuses interactive plaintext input and the old password argument format. Never put a password in shell history, arguments or a source file. The wrapper cannot guarantee removal of all temporary managed-memory copies; use a trusted local terminal.
 
@@ -60,7 +62,9 @@ The underlying PHP helper accepts `<role> <email> <username> <full-name> --passw
 
 ## Demonstration data and assets
 
-The current owner-approved [fictional catalog](database/avela_catalog_20261030.json) contains 100 products, with 95 supplied images and five honest placeholders. Its [reviewed suitability metadata](database/avela_suitability_20261030.json) supports 76 cosmetic demonstration entries; 24 remain outside recommendations pending review. See the [catalog refresh guide](docs/CATALOG_REFRESH.md) and [team setup guide](docs/TEAM_SETUP.md). Git includes the catalog source and images, not anyone's database, accounts, orders or private settings. Catalog installation requires a separate, guarded local import.
+The owner-approved fictional catalog now contains **213 products with 213 supplied catalog images**: the [initial 100](database/avela_catalog_20261030.json) and [113 additions](database/avela_catalog_expansion_20261031.json). [Product references](database/avela_product_references_20261031.json) include supplied ingredient information for 113 entries; the other 100 explicitly lack supplied ingredient lists. Do not invent missing ingredients or treat academic formulas as verified commercial formulations. Existing stock and prices remain authoritative in the database; approved initial demo stock is not a restocking command.
+
+The [reviewed suitability metadata](database/avela_suitability_20261030.json) supports 76 entries. The other 137 products remain outside matching until evidence is reviewed. See [catalog refresh](docs/CATALOG_REFRESH.md), [catalog expansion](docs/CATALOG_EXPANSION.md) and [device transfer](docs/DEVICE_TRANSFER.md). Git contains the catalog sources and images, not accounts, orders, private settings or the database. Cloning alone does not install the current catalog.
 
 The earlier [twenty-product manifest](database/demo_catalog.json) and [image manifest](database/demo_images.json) remain for historical compatibility and regression fixtures. Source assets alone do not assign database image paths. The current refresh archives older demonstration products rather than deleting their history or relationships.
 
@@ -72,7 +76,7 @@ The earlier [twenty-product manifest](database/demo_catalog.json) and [image man
 
 ## Verification and deployment
 
-For existing installations adopting the latest customer/staff refinements, back up and restore-test the database first. Review `scripts/migrate_delivery_locations.php` (nullable address province/area fields) and `scripts/migrate_staff_profiles.php` (nullable staff contact/photo fields), using each script's complete database identity guards and default dry-run before an authorized apply. Do not rerun the installer on existing data. These updates do not include private configuration, uploaded photos, accounts or database contents.
+For existing installations adopting the latest customer/staff refinements, back up and restore-test the database first. Review `scripts/migrate_delivery_locations.php` (nullable address province/area fields) and `scripts/migrate_staff_profiles.php` (nullable staff contact/photo fields), using each script's complete database identity guards and default dry-run before an authorized apply. Do not rerun the installer on existing data. These updates do not include private configuration, uploaded photos, accounts or database contents. Multiple delivery addresses additionally require the empty-table `scripts/migrate_address_book.php` upgrade and the existing external PII keyring; see [account/address experience](docs/ACCOUNT_EXPERIENCE.md).
 
 For profile-based matching and saved routines, see [matching rules, evidence and the additive routine migration](docs/RECOMMENDATIONS.md). Existing installations need the guarded routine_contexts addition before deploying those routes. tests/product_matching.php covers the pure rules; tests/matching_integration.php requires a disposable database.
 

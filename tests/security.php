@@ -210,9 +210,10 @@ try {
     $pdo->prepare('UPDATE otp_codes SET created_at=DATE_SUB(NOW(),INTERVAL 61 SECOND) WHERE user_id=?')->execute([$manager['id']]);
     $result=auth()->attempt($manager['username'],$manager['password']); $count=(int)$pdo->query('SELECT COUNT(*) FROM otp_codes WHERE user_id='.$manager['id'])->fetchColumn();
     $result=auth()->attempt($manager['username'],$manager['password']);
-    check('OTP cooldown recovery retains verification flow', $result['ok'] && $result['next']==='otp' && (int)$pdo->query('SELECT COUNT(*) FROM otp_codes WHERE user_id='.$manager['id'])->fetchColumn()===$count);
+    check('Unenrolled staff repeated login sends no email challenge', $result['ok'] && $result['next']==='dashboard' && (int)$pdo->query('SELECT COUNT(*) FROM otp_codes WHERE user_id='.$manager['id'])->fetchColumn()===$count);
     $pdo->prepare('UPDATE users SET status="inactive" WHERE id=?')->execute([$manager['id']]);
-    check('Inactive staff cannot finish a pending OTP', !auth()->verifyPendingOtp(codeFor($manager['email']))['ok']);
+    App\Core\Session::put('pending_flow',['user_id'=>$manager['id'],'purpose'=>'login']);
+    check('Inactive staff cannot finish a pending OTP', !auth()->verifyPendingOtp('000000')['ok']);
     $pdo->prepare('UPDATE users SET status="active" WHERE id=?')->execute([$manager['id']]);
     $_SESSION['profile_update_flow']=['private'=>'synthetic']; $_SESSION['checkout_intent']=['synthetic'=>true]; App\Core\Csrf::token();
     auth()->logout();

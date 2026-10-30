@@ -29,15 +29,32 @@ final class ActivationController
             header('Retry-After: 60');
             exit('Too many activation requests. Wait a minute.');
         }
-        $ok = $this->activation->consume($_POST['activation_token'] ?? null);
-        if ($ok) {
-            Session::put('activation_setup_offer', true);
-            $flow = Session::get('pending_flow');
-            // Activation never signs in or changes an existing authenticated session.
-            if (is_array($flow) && ($flow['purpose'] ?? '') === 'activation'
-                && ((new \App\Models\User())->findById((int) ($flow['user_id'] ?? 0))['status'] ?? '') === 'active') Session::forget('pending_flow');
+        $flow = Session::get('pending_flow');
+        $account = $this->activation->consumeAccount($_POST['activation_token'] ?? null);
+        if ($account) {
+            // The registration session already proved both password and email OTP.
+            // A link opened elsewhere cannot silently replace an existing identity or bypass MFA.
+            $verified = is_array($flow) && ($flow['purpose'] ?? '') === 'activation_link'
+                && (int)($flow['user_id'] ?? 0) === (int)$account['id']
+                && ($flow['email'] ?? '') === $account['email']
+                && ($flow['verified_at'] ?? 0) <= time() && ($flow['verified_at'] ?? 0) >= time()-1800
+                && ($flow['expires_at'] ?? 0) >= time()
+                && hash_equals((string)$account['password_version'], (string)($flow['password_version'] ?? ''));
+            $current = Session::get('auth_user');
+            if (!$current && $verified) {
+                $logs = new \App\Services\LogService();
+                $auth = new \App\Services\AuthService(new \App\Models\User(), new \App\Services\OtpService(new \App\Services\MailService(), $logs), $logs);
+                if ($auth->finalizeLogin($account)) {
+                    Session::forget('pending_flow');
+                    Session::flash('success', 'Your account is active. Welcome to Avela.');
+                    Response::redirect('/');
+                }
+            }
+            if ($verified) Session::forget('pending_flow');
+            Session::flash('success', $current ? 'The account is active. Your current sign-in is unchanged.' : 'Your account is active. Sign in on this browser to continue securely.');
+            Response::redirect($current ? '/' : '/login');
         }
-        Session::flash($ok ? 'success' : 'warning', $ok ? 'Your account is active. You can sign in now.' : 'This activation link is invalid, expired or already used. Sign in to request a new verification message.');
+        Session::flash('warning', 'This activation link is invalid, expired or already used. Sign in to request a new verification message.');
         Response::redirect('/login');
     }
 }

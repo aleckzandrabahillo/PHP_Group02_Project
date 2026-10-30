@@ -55,7 +55,7 @@ final class MailService
         $mail->SMTPAutoTLS = true;
         $mail->Port = $port;
         $mail->Timeout = 10;
-        $mail->Timelimit = 15;
+        $mail->getSMTPInstance()->Timelimit = 15;
         $mail->SMTPDebug = 0;
         $mail->Debugoutput = static function (): void {};
         $mail->SMTPOptions = ['ssl' => ['verify_peer' => true, 'verify_peer_name' => true, 'allow_self_signed' => false, 'peer_name' => $host]];

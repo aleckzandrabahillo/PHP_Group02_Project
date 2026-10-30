@@ -15,7 +15,7 @@ body.avela-v3.auth-page{padding-top:88px}
 .avela-v3.auth-page>.focus-header .wordmark{width:118px;height:auto;margin:0}
 .avela-v3 .auth-shell{width:100%;border:0;border-radius:0;box-shadow:none}
 .avela-v3 .auth-art{isolation:isolate}
-.avela-v3 .auth-privacy{margin-top:28px;text-align:center;font-size:12px;line-height:1.7}
+.avela-v3 .auth-privacy{margin-top:28px;text-align:center;font-size:var(--type-label, 14px);line-height:1.7}
 .avela-v3 .auth-privacy a{text-decoration:underline;text-underline-offset:4px}
 .avela-v3 .auth-editorial{z-index:-2}
 .avela-v3 .auth-art:after{content:'';position:absolute;inset:35% 0 0;background:linear-gradient(transparent,#21191090);z-index:-1;pointer-events:none}
@@ -27,17 +27,17 @@ body.avela-v3.auth-page .auth-main .auth-switch{margin:20px 0 0;padding:0;border
 .avela-v3 .password-toggle{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:44px;height:44px;display:grid;place-items:center;padding:0 7px;border:0;background:none;color:var(--ink);font:500 12px/1.2 Manrope,Arial,sans-serif}
 .avela-v3 .password-icon{width:20px;height:20px;stroke:currentColor;stroke-width:1.4;fill:none}
 .avela-v3 .password-fields{align-items:start}
-.avela-v3 .password-fields .password-match{display:flex;align-items:baseline;gap:6px;font-size:11px;line-height:1.7}
+.avela-v3 .password-fields .password-match{display:flex;align-items:baseline;gap:6px;font-size:var(--type-small, 13px);line-height:1.7}
 .avela-v3 .password-fields>.field{align-content:start;grid-template-rows:auto auto;min-width:0}
 .avela-v3 .password-fields .field-error:empty{display:none}
-.avela-v3 .password-requirements{font-size:12px;color:var(--muted);line-height:1.7;margin:0;padding:0}
+.avela-v3 .password-requirements{font-size:var(--type-label, 14px);color:var(--muted);line-height:1.7;margin:0;padding:0}
 .avela-v3 .password-requirements>p{margin:0 0 8px}
 .avela-v3 .password-requirements ul{display:grid;gap:6px;list-style:none;margin:0;padding:0}
 .avela-v3 .password-requirements li{display:flex;align-items:center;gap:9px}
-.avela-v3 .password-requirements li:before{content:'·';display:grid;place-items:center;width:17px;height:17px;flex-shrink:0;border:1px solid var(--line);border-radius:50%;font-size:12px;line-height:1}
+.avela-v3 .password-requirements li:before{content:'·';display:grid;place-items:center;width:17px;height:17px;flex-shrink:0;border:1px solid var(--line);border-radius:50%;font-size:var(--type-label, 14px);line-height:1}
 .avela-v3 .password-requirements li.is-met{color:var(--ink)}
 .avela-v3 .password-requirements li.is-met:before{content:'✓';background:var(--ink);border-color:var(--ink);color:var(--paper)}
-.avela-v3 .checkbox{display:flex;align-items:flex-start;gap:10px;font-size:12px;line-height:1.7}
+.avela-v3 .checkbox{display:flex;align-items:flex-start;gap:10px;font-size:var(--type-label, 14px);line-height:1.7}
 .avela-v3 input:is([type=checkbox],[type=radio]){width:16px;height:16px;min-height:16px;margin:2px 0 0;padding:0;flex-shrink:0}
 .avela-v3 .profile-photo-control{display:block;width:74px;height:74px;line-height:0}
 .avela-v3 .profile-photo-control>form{margin:0;line-height:1.6}
@@ -47,8 +47,8 @@ body.avela-v3.auth-page .auth-main .auth-switch{margin:20px 0 0;padding:0;border
 .avela-v3 .photo-change-row>[data-photo-change]{flex:1;text-align:left;min-width:0}
 .avela-v3 .photo-change-row>.avela-help{flex-shrink:0;margin-left:auto}
 .avela-v3 .avela-help{display:inline-flex;align-items:center;line-height:1;flex-shrink:0}
-.avela-v3 .info-trigger,.avela-v3 .profile-photo-menu .info-trigger{display:inline-grid;place-items:center;min-height:24px;height:24px;width:24px;min-width:24px;padding:0;line-height:1;border:1px solid var(--line);border-radius:50%;font-size:11px}
-.avela-v3 .info-tooltip{line-height:1.7;white-space:normal;font-size:12px;min-width:200px;width:240px;max-width:calc(100vw - 48px);padding:12px 15px;font-weight:400;text-align:left;letter-spacing:0}
+.avela-v3 .info-trigger,.avela-v3 .profile-photo-menu .info-trigger{display:inline-grid;place-items:center;min-height:24px;height:24px;width:24px;min-width:24px;padding:0;line-height:1;border:1px solid var(--line);border-radius:50%;font-size:var(--type-small, 13px)}
+.avela-v3 .info-tooltip{line-height:1.7;white-space:normal;font-size:var(--type-label, 14px);min-width:200px;width:240px;max-width:calc(100vw - 48px);padding:12px 15px;font-weight:400;text-align:left;letter-spacing:0}
 .avela-v3 .info-tooltip[popover]{display:none;position:fixed;inset:auto;margin:0;min-width:0;border:0;overflow-y:auto;overscroll-behavior:contain}
 .avela-v3 .info-tooltip:popover-open{display:block}
 .avela-v3 .profile-photo-menu .info-tooltip:not([popover]){top:calc(100% + 8px);bottom:auto;right:0;min-width:0;width:210px}
@@ -59,13 +59,13 @@ body.avela-v3.auth-page .auth-main .auth-switch{margin:20px 0 0;padding:0;border
 .avela-v3 .nav-search-field input:focus-visible{outline:0}
 .avela-v3 .nav-search-field>svg{width:21px;height:21px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.3}
 .avela-v3 .nav-search-field .icon-button{flex-shrink:0}
-.avela-v3 .search-scroll{font-size:12px;line-height:1.8}
+.avela-v3 .search-scroll{font-size:var(--type-label, 14px);line-height:1.8}
 .avela-v3 .drawer-footer>.button{justify-content:center}
 .avela-v3 .drawer-footer [aria-disabled=true]{opacity:.5;pointer-events:none}
 .avela-v3 .drawer-header .eyebrow{color:var(--muted)}
 .avela-v3 .bag-item-controls{align-items:center}
 .avela-v3 .bag-item-info>span{line-height:1.7}
-.avela-v3 .checkout-account-menu>summary{list-style:none;display:grid;place-items:center;min-width:36px;min-height:36px;cursor:pointer}
+.avela-v3 .checkout-account-menu>summary{list-style:none;display:grid;place-items:center;min-width:44px;min-height:44px;cursor:pointer}
 .avela-v3 .checkout-account-menu>summary::-webkit-details-marker{display:none}
 .avela-v3 .checkout-summary-item .checkout-item-quantity{display:grid;place-items:center;line-height:1}
 .avela-v3 .checkout-summary-items{overflow-y:auto;overscroll-behavior:contain}
@@ -75,8 +75,8 @@ body.avela-v3.auth-page .auth-main .auth-switch{margin:20px 0 0;padding:0;border
 .avela-v3 .notification-stack .alert>span{overflow-wrap:anywhere;min-width:0}
 .avela-v3 .flash-dismiss{font-size:20px;line-height:1;min-height:24px;min-width:24px;flex-shrink:0}
 .avela-v3 .notification-leaving{opacity:0;transition:opacity 180ms ease}
-.avela-v3 .customer-feedback{position:fixed;left:50%;right:auto;top:var(--notice-top,100px);bottom:auto;transform:translateX(-50%);width:min(400px,calc(100% - 32px));padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:6px;z-index:160;font-size:12px;line-height:1.7}
-.avela-v3 .first-login-offer p{font-size:13px;line-height:1.8;color:var(--muted);margin:20px 0}
+.avela-v3 .customer-feedback{position:fixed;left:50%;right:auto;top:var(--notice-top,100px);bottom:auto;transform:translateX(-50%);width:min(400px,calc(100% - 32px));padding:16px 20px;background:var(--paper);border:1px solid var(--line);border-radius:6px;z-index:160;font-size:var(--type-label, 14px);line-height:1.7}
+.avela-v3 .first-login-offer p{font-size:var(--type-body, 15px);line-height:1.8;color:var(--muted);margin:20px 0}
 .avela-v3 .first-login-offer .dialog-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
 .avela-v3 .footer-care-links{margin:0 0 18px;justify-content:flex-start}
 .avela-v3 .site-footer .footer-top{justify-content:initial;align-items:flex-start;gap:28px}

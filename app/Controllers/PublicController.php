@@ -144,13 +144,19 @@ final class PublicController
             return;
         }
 
+        $recentIds = array_slice(array_values(array_filter((array) \App\Core\Session::get('recent_products', []), static fn($value) => is_int($value) && $value > 0 && $value !== $id)), 0, 8);
+        $recentProducts = [];
+        foreach ($recentIds as $recentId) {
+            if ($recent = $this->products->findActive($recentId)) $recentProducts[] = $recent;
+        }
+        \App\Core\Session::put('recent_products', array_slice([$id, ...$recentIds], 0, 8));
         $options = $this->products->filterOptions();
         View::render('public/product', [
             'pageTitle' => $product['name'],
             'product' => $product,
+              'productReference' => (new \App\Services\ProductReference())->forProduct($product),
             'recommendations' => $this->products->recommendationsForProduct((int) $product['id']),
-            'reviews' => $this->reviews->forProduct((int) $product['id']),
-            'reviewSummary' => $this->reviews->summaryForProduct((int) $product['id']),
+            'recentProducts' => $recentProducts,
             'storeNav' => $this->storeNavigation($options),
             ...$this->customerContext(),
         ], 'public');

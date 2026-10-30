@@ -7,10 +7,10 @@
   <?php if ($enabledAt): ?>
     <div class="mfa-status"><span class="mfa-status-dot" aria-hidden="true"></span>2-step verification is on</div>
     <h2 id="mfa-title">Your account, better protected.</h2>
-    <p><?= $customerSecurity?'After your password, enter the code from your phone.':'After your password and email code, enter the code from your phone.' ?></p>
+    <p>After your password, enter the code from your phone.</p>
     <p class="muted small">Enabled <?= e($enabledAt) ?> · <?= (int)$remaining ?> recovery codes remaining.</p>
     <details class="mfa-manual"><summary>Turn off 2-step verification</summary><div class="mfa-manual-content">
-      <p>Confirm your password and a code from your app, or an unused recovery code. <?= $customerSecurity?'You will sign in with your password.':'Email verification is still required.' ?></p>
+      <p>Confirm your password and a code from your app, or an unused recovery code. You will sign in with your password until you set up an authenticator again.</p>
       <form class="form-stack" method="post" action="<?= e(url('/account/mfa')) ?>">
         <?= csrf_field() ?><input type="hidden" name="action" value="disable">
         <label class="field">Current password<input type="password" name="password" required autocomplete="current-password"></label>

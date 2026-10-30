@@ -61,9 +61,30 @@
  mount();document.addEventListener('avela:content',event=>mount(event.detail?.root||document));
  // Explicitly restore default delivery values; one-time edits never save a profile.
  const delivery=document.querySelector('[data-checkout-delivery]');
- if(delivery){const source=delivery.querySelector('[data-use-default]');if(source){const initial=new Map(Object.entries(JSON.parse(source.dataset.defaultDelivery)));source.addEventListener('click',()=>{for(const [key,value] of initial){if(['_token','checkout_key','discount_code','discount_revision','payment_method','shipping_method'].includes(key))continue;const control=delivery.elements.namedItem(key);if(control&&'value' in control)control.value=key==='region'?(initial.get('province')||(value==='NCR'?'Metro Manila':value)):value;}delivery.elements.region.dispatchEvent(new Event('change',{bubbles:true}));window.AvelaToast?.('Your saved address is ready. You can still edit it for this order.');});}}
+ if(delivery){
+  const fill=values=>{const initial=new Map(Object.entries(values));for(const [key,value] of initial){if(!['country','first_name','last_name','address_line','barangay','postal_code','city','region','province','contact_no'].includes(key))continue;const control=delivery.elements.namedItem(key);if(control&&'value' in control)control.value=key==='region'?(initial.get('province')||(value==='NCR'?'Metro Manila':value)):value;}delivery.elements.region.dispatchEvent(new Event('change',{bubbles:true}));delivery.dispatchEvent(new Event('input',{bubbles:true}));window.AvelaToast?.('Your saved address is ready. You can still edit it for this order.');};
+  const choices=delivery.querySelector('[data-saved-address]');choices?.addEventListener('change',()=>{const item=choices.selectedOptions[0];if(item?.dataset.delivery)fill(JSON.parse(item.dataset.delivery));});
+ }
  // Bound the item region only; totals/actions remain outside its scrolling area.
  const list=document.querySelector('[data-summary-list]');
- if(list){const rows=[...list.children],summary=list.closest('.checkout-summary'),hint=document.querySelector('[data-summary-scroll]');const fit=()=>{const gap=parseFloat(getComputedStyle(list).rowGap)||0;const measured=rows.slice(0,5).reduce((sum,row)=>sum+row.getBoundingClientRect().height,0)+gap*Math.max(0,Math.min(rows.length,5)-1);const desktop=innerWidth>720,style=getComputedStyle(summary),reserved=[...summary.children].filter(n=>n!==list&&!n.hidden&&getComputedStyle(n).display!=='none').reduce((sum,n)=>{const c=getComputedStyle(n);return sum+n.getBoundingClientRect().height+parseFloat(c.marginTop)+parseFloat(c.marginBottom);},parseFloat(style.paddingTop)+parseFloat(style.paddingBottom)+parseFloat(style.borderTopWidth)+parseFloat(style.borderBottomWidth)),available=innerHeight-(parseFloat(style.top)||104)-16-reserved,short=desktop&&available<100;summary.classList.toggle('summary-flow',short);list.style.maxHeight=desktop&&!short?measured+'px':rows.length>5?Math.min(measured,Math.max(120,innerHeight-350))+'px':'none';if(hint)hint.hidden=list.scrollTop+list.clientHeight>=list.scrollHeight-2;};new ResizeObserver(fit).observe(summary);list.addEventListener('scroll',fit,{passive:true});window.addEventListener('resize',fit);window.visualViewport?.addEventListener('resize',fit);document.fonts.ready.then(fit);fit();}
+ if(list){
+  const summary=list.closest('.checkout-summary'),content=summary.querySelector('.checkout-summary-inner');
+  let scheduled=false;
+  const fit=()=>{
+   scheduled=false;
+   const number=value=>parseFloat(value)||0,style=getComputedStyle(content),rows=[...list.children];
+   const measured=rows.slice(0,5).reduce((sum,row)=>sum+row.getBoundingClientRect().height,0)+number(getComputedStyle(list).rowGap)*Math.max(0,Math.min(rows.length,5)-1)+number(getComputedStyle(list).paddingTop)+number(getComputedStyle(list).paddingBottom);
+   const reserved=[...content.children].filter(node=>node!==list&&!node.hidden&&getComputedStyle(node).display!=='none').reduce((sum,node)=>{const css=getComputedStyle(node);return sum+node.getBoundingClientRect().height+number(css.marginTop)+number(css.marginBottom);},number(style.paddingTop)+number(style.paddingBottom)+number(style.borderTopWidth)+number(style.borderBottomWidth));
+   const desktop=innerWidth>720,available=(window.visualViewport?.height||innerHeight)-number(style.top)-reserved,flow=desktop&&available<120;
+   summary.classList.toggle('summary-flow',flow);
+   const maxHeight=desktop&&!flow?Math.min(measured,Math.max(120,available)):rows.length>5?measured:null;
+   list.style.maxHeight=maxHeight===null?'none':maxHeight+'px';
+  };
+  const schedule=()=>{if(!scheduled){scheduled=true;requestAnimationFrame(fit);}};
+  new ResizeObserver(schedule).observe(content);
+  window.addEventListener('resize',schedule);window.visualViewport?.addEventListener('resize',schedule);
+  document.fonts.ready.then(schedule);fit();
+ }
+
  // Policies remain normal, shareable reading pages; Help contains the full text.
 })();

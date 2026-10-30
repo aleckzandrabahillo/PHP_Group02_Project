@@ -81,50 +81,27 @@ final class AuthService
             return ['ok' => true, 'next' => 'otp'];
         }
 
-        // Customer MFA is opt-in Authenticator only; staff retain their email challenge.
-        if($user['role']==='customer'){
-            $challenge=Database::transaction(function()use($user):array|false|null{
-                $current=$this->users->findById((int)$user['id'],true);
-                if(!User::canAuthenticate($current)||$current['role']!=='customer'
-                    ||!hash_equals((string)$current['password_hash'],(string)$user['password_hash']))return false;
-                $factor=$this->mfa->factor((int)$current['id'],true);
-                if(!$factor)return null;
-                $existing=Session::get('pending_totp');
-                if(is_array($existing)&&($existing['user_id']??0)===(int)$current['id']&&($existing['expires_at']??0)>=time()
-                    &&hash_equals($factor['credential_version'],(string)($existing['version']??''))
-                    &&hash_equals((string)($current['password_version']??''),(string)($existing['password_version']??'')))return $existing;
-                return $this->mfa->loginChallenge((int)$current['id']);
-            });
-            if($challenge===false)return $this->unavailableResult();
-            if(is_array($challenge)){
-                Session::forget('pending_flow');Session::put('pending_totp',$challenge);session_regenerate_id(true);
-                return ['ok'=>true,'next'=>'totp'];
-            }
-            if(!$this->finalizeLogin($user))return $this->unavailableResult();
-            return ['ok'=>true,'next'=>'dashboard'];
+        // An enabled authenticator is authoritative for every role. Until enrollment,
+        // password sign-in remains available; email proofs protect setup and changes.
+        $challenge=Database::transaction(function()use($user):array|false|null{
+            $current=$this->users->findById((int)$user['id'],true);
+            if(!User::canAuthenticate($current)||$current['role']!==$user['role']
+                ||!hash_equals((string)$current['password_hash'],(string)$user['password_hash']))return false;
+            $factor=$this->mfa->factor((int)$current['id'],true);
+            if(!$factor)return null;
+            $existing=Session::get('pending_totp');
+            if(is_array($existing)&&($existing['user_id']??0)===(int)$current['id']&&($existing['expires_at']??0)>=time()
+                &&hash_equals($factor['credential_version'],(string)($existing['version']??''))
+                &&hash_equals((string)($current['password_version']??''),(string)($existing['password_version']??'')))return $existing;
+            return $this->mfa->loginChallenge((int)$current['id']);
+        });
+        if($challenge===false)return $this->unavailableResult();
+        if(is_array($challenge)){
+            Session::forget('pending_flow');Session::put('pending_totp',$challenge);session_regenerate_id(true);
+            return ['ok'=>true,'next'=>'totp'];
         }
-
-        $requiresMfa = (bool) $user['mfa_enabled'] || in_array($user['role'], ['admin', 'catalog_manager'], true)
-            || $this->mfa->factor((int) $user['id']) !== null;
-        if ($requiresMfa) {
-            $challenge = Session::get('pending_totp');
-            $factor = $this->mfa->factor((int) $user['id']);
-            if (is_array($challenge) && ($challenge['user_id'] ?? 0) === (int) $user['id']
-                && ($challenge['expires_at'] ?? 0) >= time() && $factor
-                && hash_equals((string)($user['password_version']??''),(string)($challenge['password_version']??''))
-                && hash_equals($factor['credential_version'], (string) ($challenge['version'] ?? ''))) {
-                return ['ok' => true, 'next' => 'totp'];
-            }
-            Session::forget('pending_totp');
-            $issued = $this->otp->issue((int) $user['id'], (string) $user['email'], 'login');
-            if (!$issued['issued'] && !$issued['reusable']) return $this->cooldownResult($issued);
-            Session::put('pending_flow', ['user_id' => (int) $user['id'], 'purpose' => 'login', 'email' => $user['email'], 'sent_at' => time(), 'password_version' => $user['password_version'] ?? '']);
-            if (!$issued['issued']) Session::flash('warning', 'Use the verification code already sent to your email. ' . $this->cooldownResult($issued)['message']);
-            return ['ok' => true, 'next' => 'otp'];
-        }
-
-        if (!$this->finalizeLogin($user)) return $this->unavailableResult();
-        return ['ok' => true, 'next' => 'dashboard'];
+        if(!$this->finalizeLogin($user))return $this->unavailableResult();
+        return ['ok'=>true,'next'=>'dashboard'];
     }
 
     public function verifyPendingOtp(#[\SensitiveParameter] string $code): array
@@ -135,6 +112,7 @@ final class AuthService
         }
         $userId = (int) $flow['user_id'];
         $purpose = (string) $flow['purpose'];
+        if ($purpose !== 'activation') return $this->unavailableResult();
         $verification = Database::transaction(function () use ($userId, $purpose, $code, $flow): array {
             $user = $this->users->findById($userId, true);
             $eligible = $purpose === 'activation'
@@ -219,7 +197,7 @@ final class AuthService
             ? $user && $user['status'] === 'pending' && !User::isLocked($user)
             : $purpose === 'login' && User::canAuthenticate($user) && $user['role'] !== 'customer'
                 && hash_equals((string)($user['password_version']??''),(string)($flow['password_version']??''));
-        if (!$eligible) return $this->unavailableResult();
+        if ($purpose !== 'activation' || !$eligible) return $this->unavailableResult();
         $issued = $purpose === 'activation' && $user['role'] === 'customer'
             ? $this->activation->issue((int) $user['id']) : $this->otp->issue((int) $user['id'], (string) $user['email'], $purpose);
         if (!$issued['issued']) return $this->cooldownResult($issued);
@@ -234,8 +212,7 @@ final class AuthService
             $current = $this->users->findById((int) $user['id'], true);
             if (!User::canAuthenticate($current)
                 || !hash_equals((string)$current['password_hash'],(string)($user['password_hash']??''))
-                || ($current['role'] !== 'customer' && (bool) $current['mfa_enabled'])
-                || in_array($current['role'], ['admin', 'catalog_manager'], true)
+                || $current['role'] !== $user['role']
                 || $this->mfa->factor((int) $current['id']) !== null) return null;
             $this->users->resetFailures((int) $current['id']);
             $this->logs->auth((int) $current['id'], 'login', 'success');

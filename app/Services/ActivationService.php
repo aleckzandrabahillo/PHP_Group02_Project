@@ -59,22 +59,27 @@ final class ActivationService
 
     public function consume(#[\SensitiveParameter] mixed $token): bool
     {
-        if(!is_string($token)||!preg_match('/^[a-f0-9]{64}$/D',$token))return false;
-        return Database::transaction(function(PDO $pdo)use($token):bool{
+        return $this->consumeAccount($token) !== null;
+    }
+
+    public function consumeAccount(#[\SensitiveParameter] mixed $token): ?array
+    {
+        if(!is_string($token)||!preg_match('/^[a-f0-9]{64}$/D',$token))return null;
+        return Database::transaction(function(PDO $pdo)use($token):?array{
             // Domain separation rejects old combined code/link messages, without changing rows.
             $digest=self::digest($token);
             $q=$pdo->prepare('SELECT user_id FROM activation_tokens WHERE token_digest=?');$q->execute([$digest]);$id=$q->fetchColumn();
-            if(!$id)return false;
+            if(!$id)return null;
             $user=(new User())->findById((int)$id,true);
             $q=$pdo->prepare('SELECT id,expires_at,used_at FROM activation_tokens WHERE user_id=? AND token_digest=? FOR UPDATE');$q->execute([$id,$digest]);$row=$q->fetch();
             if(!$user||$user['role']!=='customer'||$user['status']!=='pending'||User::isLocked($user)
-                ||!$row||$row['used_at']!==null||strtotime($row['expires_at'])<=time())return false;
+                ||!$row||$row['used_at']!==null||strtotime($row['expires_at'])<=time())return null;
             (new User())->activate((int)$id);
             $pdo->prepare('UPDATE activation_tokens SET used_at=NOW() WHERE user_id=? AND used_at IS NULL')->execute([$id]);
             $pdo->prepare('UPDATE otp_codes SET used_at=NOW() WHERE user_id=? AND purpose="activation" AND used_at IS NULL')->execute([$id]);
             AuditService::record($pdo,(int)$id,'account_activated','user',(int)$id);
             $this->logs->auth((int)$id,'activation','success');
-            return true;
+            return (new User())->findById((int)$id);
         });
     }
 
