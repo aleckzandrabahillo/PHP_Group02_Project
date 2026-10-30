@@ -60,7 +60,7 @@ The underlying PHP helper accepts `<role> <email> <username> <full-name> --passw
 
 ## Demonstration data and assets
 
-The current owner-approved [fictional catalog](database/avela_catalog_20261030.json) contains 100 products, with 95 supplied images and five honest placeholders. Its [reviewed suitability metadata](database/avela_suitability_20261030.json) supports 76 cosmetic demonstration entries; 24 remain outside recommendations pending review. See the [catalog refresh guide](docs/CATALOG_REFRESH_20261030.md) and [team setup guide](docs/TEAM_SETUP_20261030.md). Git includes the catalog source and images, not anyone's database, accounts, orders or private settings. Catalog installation requires a separate, guarded local import.
+The current owner-approved [fictional catalog](database/avela_catalog_20261030.json) contains 100 products, with 95 supplied images and five honest placeholders. Its [reviewed suitability metadata](database/avela_suitability_20261030.json) supports 76 cosmetic demonstration entries; 24 remain outside recommendations pending review. See the [catalog refresh guide](docs/CATALOG_REFRESH.md) and [team setup guide](docs/TEAM_SETUP.md). Git includes the catalog source and images, not anyone's database, accounts, orders or private settings. Catalog installation requires a separate, guarded local import.
 
 The earlier [twenty-product manifest](database/demo_catalog.json) and [image manifest](database/demo_images.json) remain for historical compatibility and regression fixtures. Source assets alone do not assign database image paths. The current refresh archives older demonstration products rather than deleting their history or relationships.
 
@@ -84,6 +84,6 @@ Keep `.env`, logs, backups, sessions, recovery codes and user uploads private. S
 
 Aleckzandra Bahillo (@aleckzandrabahillo), Jasmine Iris Eva (@EvaIris5892), Alexzis Mae Tutor (@alexzismaetutor), Angela Nicole Zurbano (@zurbanoangelanicole).
 
-## Approved interface direction
+## Interface and architecture
 
-The owner-approved 28 October 2026 Site v8 handoff supplies the editorial presentation. The working PHP application remains the source of truth for accounts, security, catalog, checkout and hair personalization. See [feature parity](UI_PARITY_AUDIT.md), [29 October repair-brief results](UI_REVIEW_REPAIR_20261029.md). Earlier [handoff correction notes](UI_HANDOFF_CORRECTION_20261029.md) and [regression totals](UI_HANDOFF_CORRECTION_20261029.json) are historical evidence. The static preview is a design reference, not a replacement deployment.
+Avela uses an airy editorial storefront with locally hosted typography, approved imagery, accessible controls and a compact staff workspace. The PHP application remains authoritative for accounts, permissions, stock, checkout and hair personalization. See [design guidelines](DESIGN.md), [team setup](docs/TEAM_SETUP.md) and the focused feature/security documentation above. Local preview state never replaces authenticated application data or server validation.

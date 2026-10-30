@@ -1,4 +1,4 @@
-# Fictional catalog refresh — 30 October 2026
+# Fictional catalog refresh
 
 The owner approved the supplied Drive workbook as the new **fictional demonstration** catalog, using its reference prices as demo selling prices and an opening quantity of **20 units per product**. These are not verified live retail prices or physical stock.
 

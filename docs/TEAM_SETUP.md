@@ -1,4 +1,4 @@
-# Shared Avela update — 30 October 2026
+# Team setup
 
 The `codex/avela-team-updates-20261030` branch contains the integrated application, editorial UI, account/security updates, recommendations, Help policies, reviewed fictional catalog and product images. It preserves both reviewed parents: main `2b7082f13d0cdd5f9c621bf50b2cfbecf0b20e3a` and feature/main-development `1158429b3fc72d9560bfff55ab69d48594f49914`. PRs #35, #36, #13 and #5 are separate work; PayMongo is not included.
 
@@ -32,7 +32,7 @@ Use the URL configured in your `.env` consistently; register that hostname for r
 
 The [current manifest](../database/avela_catalog_20261030.json), [suitability metadata](../database/avela_suitability_20261030.json) and 95 product images are included. They describe a fictional coursework catalog with approved demonstration reference prices and an initial 20 units per new product; these are not verified retail prices or physical inventory.
 
-Read [Catalog refresh](CATALOG_REFRESH_20261030.md) before applying data changes. `php scripts/refresh_catalog.php` previews by default. Its output identifies the connected database, server port, data directory and source/catalog fingerprints. Review those values against **your intended local database**. Apply is a separate operator action requiring the full identity/fingerprint arguments and your own eligible staff actor; the permitted options are listed in the script. Never reuse another member's target values or run it against an unverified database. This publishing update does not run the importer on any teammate's installation.
+Read [Catalog refresh](CATALOG_REFRESH.md) before applying data changes. `php scripts/refresh_catalog.php` previews by default. Its output identifies the connected database, server port, data directory and source/catalog fingerprints. Review those values against **your intended local database**. Apply is a separate operator action requiring the full identity/fingerprint arguments and your own eligible staff actor; the permitted options are listed in the script. Never reuse another member's target values or run it against an unverified database. This publishing update does not run the importer on any teammate's installation.
 
 The importer archives old dummy products, keeps order/favorite/cart/routine relationships and does not replenish previously imported products on repeat runs. Existing bag items may need owner removal and old saved routines may need review. Five missing product photographs retain placeholders, and 24 entries are intentionally excluded from matching pending evidence review.
 
