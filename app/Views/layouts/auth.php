@@ -1,32 +1,29 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="avela-v3-document">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= e($pageTitle ?? 'Account') ?> · Avela</title>
-<link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
+<title>Avela</title>
 <?php if (!empty($recaptchaSiteKey)): ?><script src="https://www.google.com/recaptcha/api.js" async defer></script><?php endif; ?>
-<link rel="stylesheet" href="<?= e(asset('css/customer.css')) ?>">
-<link rel="stylesheet" href="<?= e(asset('css/experience.css')) ?>">
-<link rel="stylesheet" href="<?= e(asset('css/motion.css')) ?>">
-<link rel="stylesheet" href="<?= e(asset('css/refinement.css')) ?>">
+<link rel="icon" href="<?= e(asset('editorial-v2/favicon.svg')) ?>" type="image/svg+xml">
+<link rel="stylesheet" href="<?= e(asset('css/handoff-v3.css')) ?>">
+<link rel="stylesheet" href="<?= e(asset('css/handoff-functional.css')) ?>">
+<link rel="stylesheet" href="<?= e(asset('css/control-surfaces.css')) ?>">
 </head>
-<body class="customer-experience auth-body">
+<body class="avela-v3 auth-page <?= is_active_path('/register')?'sign-up-page':'' ?>">
 <a class="skip-link" href="#main-content">Skip to content</a>
-<a class="auth-logo" href="<?= e(url('/')) ?>"><?php require dirname(__DIR__) . '/partials/brand.php'; ?></a>
+<header class="site-header focus-header"><a class="wordmark" href="<?= e(url('/')) ?>" aria-label="Avela home"><?php require dirname(__DIR__) . '/partials/brand.php'; ?></a></header>
 <div class="auth-shell">
-  <aside class="auth-art">
-    <span class="eyebrow">PERSONAL HAIR CARE</span>
-    <h2>Care that starts with understanding your hair.</h2>
-    <p>Everyday essentials. A personal shortlist. Your care, at your own pace.</p>
-    <img class="auth-editorial" src="<?= e(asset('images/editorial/hair-editorial.jpg')) ?>" alt="" width="1200" height="1598" decoding="async">
-  </aside>
-  <main id="main-content" tabindex="-1" class="auth-panel">
+  <main id="main-content" tabindex="-1" class="auth-main auth-panel">
     <?php require dirname(__DIR__) . '/partials/flashes.php'; ?>
     <?= $content ?>
+    <?php if(is_active_path('/login')||is_active_path('/register')): ?><nav class="auth-privacy" aria-label="Privacy"><a href="<?= e(url('/privacy')) ?>">Privacy policy</a></nav><?php endif; ?>
 
-    <p class="auth-switch"><a href="<?= e(url('/privacy')) ?>">Privacy &amp; cookies</a></p>
   </main>
+  <aside class="auth-art">
+    <div class="auth-art-caption"><p class="eyebrow">ROOTED IN YOU.</p><h2>Your hair.<br>Your kind of care.</h2><p>Every texture. Every version of you.</p></div>
+    <img class="auth-editorial" src="<?= e(asset('editorial-v2/account-editorial.webp')) ?>" alt="" width="1024" height="1536" decoding="async">
+  </aside>
 </div>
 <script src="<?= e(asset('js/motion.js')) ?>" defer></script>
 <script src="<?= e(asset('js/app.js')) ?>" defer></script>
@@ -35,5 +32,6 @@
 <script src="<?= e(asset('js/refinement.js')) ?>" defer></script>
 <script src="<?= e(asset('js/collections.js')) ?>" defer></script>
 <script src="<?= e(asset('js/photo-actions.js')) ?>" defer></script>
+<script src="<?= e(asset('js/handoff-ui.js')) ?>" defer></script>
 </body>
 </html>

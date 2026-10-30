@@ -12,7 +12,7 @@ use PDO;
 /** Operator-only SMTP check. No activation/login proof is created or consumed. */
 final class MailTransportCheck
 {
-    public function run(string $actor, bool $send): array
+    public function run(string $actor, bool $send, bool $toSender = false): array
     {
         if (env('MAIL_DRIVER', 'smtp') !== 'smtp') {
             throw new DomainException('SMTP is not selected. Local log delivery is not real email delivery.');
@@ -24,12 +24,12 @@ final class MailTransportCheck
             return ['mode'=>'dry-run', 'configuration_valid'=>true, 'network_contacted'=>false,
                 'message_sent'=>false, 'inbox_receipt'=>'not verified'];
         }
-        return Database::transaction(function (PDO $pdo) use ($user): array {
+        return Database::transaction(function (PDO $pdo) use ($user,$toSender): array {
             $current = (new User())->findById((int)$user['id'], true);
             $this->eligible($current);
             $mail = (new MailService())->smtpMailer();
             try {
-                $mail->addAddress($current['email']);
+                $mail->addAddress($toSender ? $mail->From : $current['email']);
                 $mail->Subject = 'Avela SMTP configuration check';
                 $mail->Body = 'This is a requested Avela email-transport check. It is not an activation or sign-in message. '
                     . 'No verification code was issued and no account settings were changed. '
@@ -40,7 +40,7 @@ final class MailTransportCheck
                 throw new MailDeliveryException('The SMTP check could not send. Check provider access and private configuration; certificate checks remain required.');
             }
             AuditService::record($pdo, (int)$current['id'], 'mail.transport_test', 'mail', null,
-                ['result'=>'provider accepted; inbox receipt unverified']);
+                ['result'=>'provider accepted; inbox receipt unverified','destination'=>$toSender?'configured sender':'operator']);
             // Provider acceptance cannot establish inbox receipt, nor be recalled if commit fails.
             return ['mode'=>'send', 'configuration_valid'=>true, 'network_contacted'=>true,
                 'message_sent'=>true, 'inbox_receipt'=>'owner must verify in the authorized mailbox'];

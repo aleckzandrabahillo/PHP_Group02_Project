@@ -19,8 +19,8 @@ spl_autoload_register(static function (string $class) use ($root): void {
 try {
     $options = [];
     foreach (array_slice($argv, 1) as $arg) {
-        if (!preg_match('/^--(send|actor|expect-host|expect-port|expect-database|expect-server|expect-server-id|expect-datadir)(?:=(.+))?$/D', $arg, $m)
-            || isset($options[$m[1]]) || ($m[1] === 'send' ? isset($m[2]) : !isset($m[2]))) {
+        if (!preg_match('/^--(send|to-sender|actor|expect-host|expect-port|expect-database|expect-server|expect-server-id|expect-datadir)(?:=(.+))?$/D', $arg, $m)
+            || isset($options[$m[1]]) || (in_array($m[1],['send','to-sender'],true) ? isset($m[2]) : !isset($m[2]))) {
             throw new DomainException('Use exact identity guards and actor once; dry-run is default. No recipient or credential arguments are supported.');
         }
         $options[$m[1]] = $m[2] ?? true;
@@ -38,7 +38,7 @@ try {
         throw new DomainException('Exact host, port, database, server, server-ID and data-directory guards must match.');
     }
     require $root . '/vendor/autoload.php';
-    $result = (new App\Services\MailTransportCheck())->run((string)($options['actor'] ?? ''), isset($options['send']));
+    $result = (new App\Services\MailTransportCheck())->run((string)($options['actor'] ?? ''), isset($options['send']),isset($options['to-sender']));
     echo json_encode($result, JSON_THROW_ON_ERROR), PHP_EOL;
 } catch (DomainException|App\Services\MailDeliveryException $e) {
     fwrite(STDERR, 'MAIL CHECK STOPPED: ' . $e->getMessage() . PHP_EOL); exit(1);

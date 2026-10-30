@@ -12,30 +12,9 @@ $guidePaths = [
     'heat'=>'M9 4a3 3 0 0 1 6 0v10a5 5 0 1 1-6 0V4Zm3 5v9',
 ];
 ?>
-<div class="care-guide" data-care-guide>
-  <p class="care-rhythm"><?= e($careGuide['rhythm']) ?></p>
-  <div class="care-tabs" role="group" aria-label="Choose routine timing">
-    <button type="button" data-care-tab="wash" aria-pressed="true" aria-controls="<?= e($guideId) ?>-wash">Wash day</button>
-    <button type="button" data-care-tab="between" aria-pressed="false" aria-controls="<?= e($guideId) ?>-between">Between washes</button>
-  </div>
-  <?php foreach (['wash'=>'Your wash-day steps', 'between'=>'Between-wash care'] as $phase=>$phaseLabel): ?>
-  <section class="care-phase" id="<?= e($guideId.'-'.$phase) ?>" data-care-phase="<?= e($phase) ?>" aria-label="<?= e($phaseLabel) ?>">
-    <h3 class="care-phase-title"><?= e($phaseLabel) ?></h3>
-    <ol class="care-steps"><?php foreach($careGuide[$phase] as $index=>$step): ?>
-      <li class="care-step" data-care-step="<?= e($step['key']) ?>">
-        <details <?= $index===0?'open':'' ?>><summary><svg class="care-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="<?= e($guidePaths[$step['key']]??$guidePaths['condition']) ?>"/></svg><span><strong><?= e($step['title']) ?></strong><span><?= e($step['when']) ?></span></span><span class="care-toggle" aria-hidden="true"></span></summary>
-          <div class="care-instructions"><p><?= e($step['instruction']) ?></p><p class="care-for-you"><strong>For your hair</strong> <?= e($step['why']) ?></p>
-          <?php if($step['product']): $careProduct=$step['product'];$careImage=product_image_url($careProduct['image_path']??null); ?>
-            <a class="care-product" href="<?= e(url('/product?id='.(int)($careProduct['id']??$careProduct['product_id']))) ?>">
-              <span class="match-routine-photo"><?php if($careImage): ?><img src="<?= e($careImage) ?>" alt="" width="1200" height="1500" loading="lazy" decoding="async"><?php else:$visualCategory=$careProduct['category_name']??'';$placeholderLarge=false;require __DIR__.'/product_placeholder.php';endif; ?></span>
-              <span><small><?= $guideSaved?'In your saved routine':'Matched for this step' ?></small><strong><?= e($careProduct['name']) ?></strong><span class="match-step-price">₱<?= e(number_format((float)$careProduct['price'],2)) ?></span><?php if(isset($careProduct['available'])&&!$careProduct['available']): ?><span>Currently unavailable</span><?php endif; ?></span><span class="care-product-link">View product <span aria-hidden="true">→</span></span>
-            </a>
-          <?php elseif(in_array($step['key'],['cleanse','condition'],true)): ?><p class="care-unmatched">No <?= $step['key']==='cleanse'?'cleansing':'conditioning' ?> match is available for your recorded details. You can follow the care step with a suitable product you already use.</p><?php endif; ?>
-          </div>
-        </details>
-      </li>
-    <?php endforeach; ?></ol>
-  </section>
-  <?php endforeach; ?>
-  <details class="care-sources"><summary>About this guidance</summary><p>General care guidance adapted to your recorded answers; follow each product’s label for amounts, timing and treatment compatibility. Product matching uses catalog suitability, not verified effectiveness.</p><p>Sources: <a href="https://www.aad.org/public/everyday-care/hair-scalp-care/hair/healthy-hair-tips" target="_blank" rel="noopener noreferrer">American Academy of Dermatology</a> · <a href="https://www.hair.com/hair-care-routine.html" target="_blank" rel="noopener noreferrer">Hair.com routine guidance</a>.</p></details>
-</div>
+<?php require_once __DIR__.'/handoff_art.php'; ?>
+<div class="care-guide" data-care-guide><p class="care-rhythm"><?= e($careGuide['rhythm']) ?></p><div class="routine-view-tabs page-routine-tabs care-tabs" role="group" aria-label="Choose routine timing"><button type="button" data-care-tab="wash" aria-pressed="true" aria-controls="<?= e($guideId) ?>-wash">Wash day</button><button type="button" data-care-tab="between" aria-pressed="false" aria-controls="<?= e($guideId) ?>-between">Between washes</button></div>
+<?php foreach(['wash'=>'Your wash-day steps','between'=>'Between-wash care'] as $phase=>$phaseLabel): ?><section class="care-phase" id="<?= e($guideId.'-'.$phase) ?>" data-care-phase="<?= e($phase) ?>" aria-label="<?= e($phaseLabel) ?>"><h3 class="visually-hidden"><?= e($phaseLabel) ?></h3><ol class="routine-page-steps care-steps"><?php foreach($careGuide[$phase] as $index=>$step): ?><li class="care-step" data-care-step="<?= e($step['key']) ?>"><span class="care-step-count"><?= str_pad((string)($index+1),2,'0',STR_PAD_LEFT) ?></span><div class="care-step-text"><p class="eyebrow"><?= e($step['when']) ?></p><h2><?= e($step['title']) ?></h2><p><?= e($step['instruction']) ?></p><div class="care-step-reason"><span>WHY THIS STEP</span><p><?= e($step['why']) ?></p></div>
+<?php if($step['product']):$careProduct=$step['product'];$careImage=product_image_url($careProduct['image_path']??null); ?><a class="care-product" href="<?= e(url('/product?id='.(int)($careProduct['id']??$careProduct['product_id']))) ?>"><span class="care-product-photo"><?php if($careImage): ?><img src="<?= e($careImage) ?>" alt="" width="1200" height="1500" loading="lazy" decoding="async"><?php else:$visualCategory=$careProduct['category_name']??'';$placeholderLarge=false;require __DIR__.'/product_placeholder.php';endif; ?></span><span><small><?= $guideSaved?'In your saved routine':'Matched for this step' ?></small><strong><?= e($careProduct['name']) ?></strong><span>₱<?= e(number_format((float)$careProduct['price'],2)) ?></span><?php if(isset($careProduct['available'])&&!$careProduct['available']): ?><span>Currently unavailable</span><?php endif; ?></span></a>
+<?php elseif(in_array($step['key'],['cleanse','condition'],true)): ?><p class="care-unmatched">No <?= $step['key']==='cleanse'?'cleansing':'conditioning' ?> match is available for your recorded details. You can follow the care step with a suitable product you already use.</p><?php endif; ?></div><div class="care-step-art"><?= handoff_care_art(in_array($step['key'],['cleanse','condition'],true)?$step['key']:'finish') ?></div></li><?php endforeach; ?></ol></section><?php endforeach; ?>
+<?php if(!$guideSaved): ?><details class="care-sources"><summary>About this guidance</summary><p>General care guidance adapted to your recorded answers; follow each product’s label for amounts, timing and treatment compatibility. Product matching uses catalog suitability, not verified effectiveness.</p><p>Sources: <a href="https://www.aad.org/public/everyday-care/hair-scalp-care/hair/healthy-hair-tips" target="_blank" rel="noopener noreferrer">American Academy of Dermatology</a> · <a href="https://www.hair.com/hair-care-routine.html" target="_blank" rel="noopener noreferrer">Hair.com routine guidance</a>.</p></details><?php endif; ?></div>

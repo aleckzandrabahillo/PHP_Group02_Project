@@ -6,25 +6,5 @@ $savedTreatments=[];
 foreach($savedAnswers['treatments'] as $code)if(isset($choices['treatments'][$code]))$savedTreatments[]=$choices['treatments'][$code];
 $savedTimestamp=strtotime((string)($hairProfile['updated_at']??''));
 ?>
-<section class="saved-hair-profile" aria-labelledby="saved-profile-title">
-  <div class="saved-profile-content">
-    <header class="saved-profile-heading">
-      <p class="saved-profile-state">Your saved assessment<?php if($savedTimestamp!==false): ?><span>Updated <time datetime="<?= e(date('c',$savedTimestamp)) ?>"><?= e(date('j M Y',$savedTimestamp)) ?></time></span><?php endif; ?></p>
-      <h1 id="saved-profile-title">Your hair profile.</h1>
-      <p>The starting point for your Avela matches.</p>
-    </header>
-    <dl class="saved-profile-facts">
-      <?php foreach(['hair_texture'=>'Texture','scalp_type'=>'Scalp','hair_condition'=>'Lengths & ends'] as $field=>$label): ?>
-      <div><dt><?= e($label) ?></dt><dd><?= e($choices[$field][$hairProfile[$field]]??'Not specified') ?></dd></div>
-      <?php endforeach; ?>
-    </dl>
-    <?php if($savedConcerns): ?><div class="saved-profile-priorities"><h2>Your priorities</h2><p><?= e(implode(' · ',$savedConcerns)) ?></p></div><?php endif; ?>
-    <?php if($savedTreatments): ?><details class="saved-profile-details"><summary>Treatments & styling <span class="menu-chevron" aria-hidden="true">⌄</span></summary><p><?= e(implode(' · ',$savedTreatments)) ?></p></details><?php endif; ?>
-    <div class="saved-profile-actions">
-      <a class="btn btn-primary" href="<?= e(url('/recommendations')) ?>">View my results <span aria-hidden="true">→</span></a>
-      <a class="saved-profile-retake" href="<?= e(url('/assessment?edit=1')) ?>">Retake assessment</a>
-    </div>
-    <p class="saved-profile-note">Your current answers stay saved until you submit a new assessment.</p>
-  </div>
-  <div class="saved-profile-image"><img src="<?= e(asset('images/editorial/assessment-lather.jpg')) ?>" alt="" width="1200" height="800" decoding="async"></div>
-</section>
+<?php require_once __DIR__.'/handoff_art.php'; ?>
+<section class="account-shell"><?php require __DIR__.'/account_navigation.php'; ?><div class="account-main profile-main"><header class="profile-intro"><div><p class="eyebrow">A LITTLE PICTURE OF YOUR HAIR</p><h1 class="account-page-title">Hair Profile</h1></div><a class="button secondary compact-button" href="<?= e(url('/assessment?edit=1')) ?>">Retake assessment</a></header><div class="profile-composition"><div class="profile-texture"><p class="eyebrow">YOUR NATURAL PATTERN</p><?= handoff_texture($hairProfile['hair_texture']==='unsure'?'wavy':$hairProfile['hair_texture']) ?><h2><?= e($choices['hair_texture'][$hairProfile['hair_texture']]??'Not specified') ?></h2><p>Your texture is a starting point.</p></div><div class="profile-details"><div class="profile-details-top"><span>YOUR HAIR PROFILE</span><?php if($savedTimestamp!==false): ?><time datetime="<?= e(date('c',$savedTimestamp)) ?>">Updated <?= e(date('j M Y',$savedTimestamp)) ?></time><?php endif; ?></div><dl><?php foreach(['scalp_type'=>'Scalp','hair_condition'=>'Lengths & ends'] as $field=>$label): ?><div><dt><?= e($label) ?></dt><dd><?= e($choices[$field][$hairProfile[$field]]??'Not specified') ?></dd></div><?php endforeach; ?><div><dt>Treatments & styling</dt><dd><?= e($savedTreatments?implode(', ',$savedTreatments):'None recorded') ?></dd></div><div><dt>Everyday focus</dt><dd><?= e($savedConcerns?implode(', ',$savedConcerns):'No specific concerns recorded') ?></dd></div></dl></div></div><div class="profile-next"><div><h3>Bring a little structure.</h3><p>A routine with clear steps and reasons, shaped by your profile.</p></div><a class="button primary" href="<?= e(url('/recommendations')) ?>">View my results </a><a class="text-link" href="<?= e(url('/routine')) ?>">See my saved routine</a></div><p class="profile-privacy">Your profile is saved privately to your account. General cosmetic guidance, not medical advice.</p></div></section>

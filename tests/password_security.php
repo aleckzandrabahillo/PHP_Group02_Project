@@ -19,11 +19,22 @@ try{
  $admin=$make('admin');$policy=new App\Services\SecurityManagement();$defaults=['max_login_attempts'=>3,'lockout_minutes'=>15,'session_timeout_minutes'=>30,'password_min_length'=>12,'password_min_uppercase'=>1,'password_min_lowercase'=>1,'password_min_numbers'=>1,'password_min_special'=>1];$policy->savePolicy($admin['id'],$defaults);
  verifyHair('Password migration repeat adds nothing',(new App\Services\PasswordMigration())->run($pdo,false)['pending_additions']===0);
  verifyHair('Legacy unknown timestamp is never expired',!App\Services\PasswordService::expired(['password_changed_at'=>null]));
- verifyHair('Default expiry remains disabled',!App\Services\PasswordService::expired(['password_changed_at'=>'2000-01-01']));
- $envFile=$scratch.'/password-expiry.env';file_put_contents($envFile,"PASSWORD_EXPIRY_DAYS=90\n");App\Core\Env::load($envFile);
+ $envFile=$scratch.'/password-expiry.env';file_put_contents($envFile,"PASSWORD_EXPIRY_DAYS=0\n");App\Core\Env::load($envFile);
+ verifyHair('Existing explicit disabled setting is preserved',!App\Services\PasswordService::expired(['password_changed_at'=>'2000-01-01']));
+file_put_contents($envFile,"PASSWORD_EXPIRY_DAYS=90\n");App\Core\Env::load($envFile);
  verifyHair('Approved-period support identifies expired password',App\Services\PasswordService::expired(['password_changed_at'=>date('Y-m-d H:i:s',time()-91*86400)]));
+ verifyHair('90-day expiry includes the exact deadline',App\Services\PasswordService::expired(['password_changed_at'=>date('Y-m-d H:i:s',time()-90*86400)]));
+ verifyHair('Password one minute before deadline remains eligible',!App\Services\PasswordService::expired(['password_changed_at'=>date('Y-m-d H:i:s',time()-90*86400+60)]));
  verifyHair('Recent password remains eligible',!App\Services\PasswordService::expired(['password_changed_at'=>date('Y-m-d H:i:s')]));
- verifyHair('Legacy account stays compatible after enabling period',!App\Services\PasswordService::expired(['password_changed_at'=>null]));
+ verifyHair('Legacy account stays compatible before approved transition',!App\Services\PasswordService::expired(['password_changed_at'=>null]));
+ $legacyGraceDeadline=time()+90*86400;
+ file_put_contents($envFile,"PASSWORD_EXPIRY_DAYS=90\nPASSWORD_LEGACY_GRACE_END=".gmdate('Y-m-d\TH:i:sP',$legacyGraceDeadline)."\n");App\Core\Env::load($envFile);
+ verifyHair('Legacy account receives prospective 90-day grace without rewriting age',!App\Services\PasswordService::expired(['password_changed_at'=>null])&&App\Services\PasswordService::expiresAt(['password_changed_at'=>null])===$legacyGraceDeadline);
+ file_put_contents($envFile,"PASSWORD_LEGACY_GRACE_END=2000-01-01T00:00:00+00:00\n");App\Core\Env::load($envFile);
+ verifyHair('Legacy account expires after explicit grace deadline',App\Services\PasswordService::expired(['password_changed_at'=>null]));
+ verifyHair('Known current password ignores legacy grace date',!App\Services\PasswordService::expired(['password_changed_at'=>date('Y-m-d H:i:s')]));
+ foreach(['PASSWORD_EXPIRY_DAYS=unexpected',"PASSWORD_EXPIRY_DAYS=90\nPASSWORD_LEGACY_GRACE_END=not-a-date"] as $bad){file_put_contents($envFile,$bad."\n");App\Core\Env::load($envFile);$denied=false;try{App\Services\PasswordService::expired(['password_changed_at'=>null]);}catch(RuntimeException){$denied=true;}verifyHair('Invalid enabled expiry configuration fails closed',$denied);}
+ file_put_contents($envFile,"PASSWORD_EXPIRY_DAYS=90\nPASSWORD_LEGACY_GRACE_END=\n");App\Core\Env::load($envFile);
  file_put_contents($envFile,"PASSWORD_EXPIRY_DAYS=0\n");App\Core\Env::load($envFile);
  $a=$make();$b=$make();$qa=passwordClient($a['id']);$qb=passwordClient($b['id']);$new='Cd2!'.bin2hex(random_bytes(18));
  verifyHair('Guest change-password page protected',hairRequest('/account/password')['code']===302);
@@ -73,13 +84,16 @@ try{
  $success=0;$clean=true;foreach($workers as [$process,$pipes]){$output=stream_get_contents($pipes[1]);$error=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);$clean=$clean&&proc_close($process)===0&&$error==='';$success+=(int)($output==='changed');}
  verifyHair('Concurrent current-password submissions change exactly once',$clean&&$success===1&&(int)$pdo->query('SELECT COUNT(*) FROM audit_logs WHERE action="password_changed" AND target_id='.$race['id'])->fetchColumn()===1);
  $privateEnv=dirname(__DIR__).'/.env';$savedEnv=file_get_contents($privateEnv);$fresh=passwordClient($a['id']);
- try{file_put_contents($privateEnv,$savedEnv."\nPASSWORD_EXPIRY_DAYS=90\n");$pdo->prepare('UPDATE users SET password_changed_at=DATE_SUB(NOW(),INTERVAL 91 DAY) WHERE id=?')->execute([$a['id']]);$expired=hairRequest('/profile',$fresh);verifyHair('Configured expired session redirected to password change',$expired['code']===302&&in_array('Location: /account/password',$expired['headers'],true));verifyHair('Expired session can access the protected change form',hairRequest('/account/password',$fresh)['code']===200);}finally{file_put_contents($privateEnv,$savedEnv);$pdo->prepare('UPDATE users SET password_changed_at=NOW() WHERE id=?')->execute([$a['id']]);}
+ try{file_put_contents($privateEnv,$savedEnv."\nPASSWORD_EXPIRY_DAYS=90\n");$pdo->prepare('UPDATE users SET password_changed_at=DATE_SUB(NOW(),INTERVAL 91 DAY) WHERE id=?')->execute([$a['id']]);$expired=hairRequest('/profile',$fresh);verifyHair('Configured expired session redirected to password change',$expired['code']===302&&in_array('Location: /account/password',$expired['headers'],true));verifyHair('Expired session can access the protected change form',hairRequest('/account/password',$fresh)['code']===200);
+ $ordersBefore=$pdo->query('SELECT COUNT(*) FROM orders')->fetchColumn();$stockBefore=$pdo->query('SELECT SUM(stock_qty) FROM products')->fetchColumn();
+ $blocked=hairRequest('/checkout',$fresh,['_token'=>$fresh['csrf'],'payment_method'=>'cod']);
+ verifyHair('Expired session cannot place an order',$blocked['code']===302&&in_array('Location: /account/password',$blocked['headers'],true)&&$pdo->query('SELECT COUNT(*) FROM orders')->fetchColumn()===$ordersBefore&&$pdo->query('SELECT SUM(stock_qty) FROM products')->fetchColumn()===$stockBefore);}finally{file_put_contents($privateEnv,$savedEnv);$pdo->prepare('UPDATE users SET password_changed_at=NOW() WHERE id=?')->execute([$a['id']]);}
  $policy->savePolicy($admin['id'],array_replace($defaults,['password_min_uppercase'=>2,'password_min_lowercase'=>2,'password_min_numbers'=>2,'password_min_special'=>2]));
  verifyHair('Administrator stronger complexity enforced',App\Core\Validator::passwordError('Ab1!'.str_repeat('x',12))!==null&&App\Core\Validator::passwordError('ABab12!!'.str_repeat('x',12))===null);
  foreach(['password_min_uppercase','password_min_lowercase','password_min_numbers','password_min_special'] as $field){$denied=false;try{App\Services\SecurityPolicy::validate(array_replace($defaults,[$field=>0]));}catch(InvalidArgumentException){$denied=true;}verifyHair('Compulsory complexity cannot be disabled / '.$field,$denied);}
  $policy->savePolicy($admin['id'],$defaults);
  $register=hairRequest('/register')['body'];verifyHair('Registration checklist uses effective server policy',str_contains($register,'data-password-minimum="12"')&&str_contains($register,'data-password-uppercase="1"'));
- verifyHair('Explicit enrollment setup key hidden by default',str_contains(file_get_contents(dirname(__DIR__).'/app/Views/account/mfa.php'),'id="authenticator-setup-key" type="password"'));
+ verifyHair('Enrollment key is read-only and grouped without shortening',str_contains(file_get_contents(dirname(__DIR__).'/app/Views/account/mfa.php'),'readonly autocomplete="off"')&&str_contains(file_get_contents(dirname(__DIR__).'/app/Views/account/mfa.php'),"str_split($"."setupSecret, 4)"));
  verifyHair('Password audit contains no credential material',(int)$pdo->query('SELECT COUNT(*) FROM audit_logs WHERE action="password_changed" AND target_id='.$a['id'].' AND details NOT LIKE "%hash%"')->fetchColumn()===1);
  $result=['checks'=>$checks];if(isset($options['output']))file_put_contents($options['output'],json_encode($result,JSON_PRETTY_PRINT));ob_end_flush();exit(count(array_filter($checks,static fn($c)=>$c['status']==='FAIL'))?1:0);
 }catch(Throwable $e){fwrite(STDERR,'Password tests stopped: '.get_class($e).' / '.basename($e->getFile()).':'.$e->getLine()."; no proof values printed.\n");exit(1);}

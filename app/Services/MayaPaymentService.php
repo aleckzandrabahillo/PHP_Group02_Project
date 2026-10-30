@@ -117,8 +117,8 @@ final class MayaPaymentService
                 $this->pdo->prepare('UPDATE maya_payments SET state=?,stock_state=?,checkout_id=COALESCE(checkout_id,?),verified_at=NOW() WHERE order_id=?')
                     ->execute([$next,$stock,$proof['payment_id']??null,$orderId]);
                 AuditService::record($this->pdo,null,'payment.'.$next,'order',$orderId,['provider'=>'maya_sandbox','from'=>$current,'to'=>$next]);
-            } elseif($proof!==null&&$payment['checkout_id']===null){
-                $this->pdo->prepare('UPDATE maya_payments SET checkout_id=?,verified_at=NOW() WHERE order_id=?')->execute([$proof['payment_id'],$orderId]);
+            } elseif($proof!==null){
+                $this->pdo->prepare('UPDATE maya_payments SET checkout_id=COALESCE(checkout_id,?),verified_at=NOW() WHERE order_id=?')->execute([$proof['payment_id'],$orderId]);
             }
             if($eventId!==null)$this->pdo->prepare('UPDATE maya_webhook_inbox SET processed_at=NOW(),lease_until=NULL,last_error=NULL WHERE id=? AND order_id=?')->execute([$eventId,$orderId]);
         });
@@ -156,7 +156,7 @@ final class MayaPaymentService
             return $job;
         });
         if(!$job)return null;
-        try{$this->reconcile((int)$job['order_id'],(int)$job['id']);return true;}
+        try{$this->reconcile((int)$job['order_id'],(int)$job['id']);OrderNotification::deliver($this->pdo,(int)$job['order_id']);return true;}
         catch(Throwable){$this->pdo->prepare('UPDATE maya_webhook_inbox SET last_error="verification_unavailable" WHERE id=? AND processed_at IS NULL')->execute([$job['id']]);return false;}
     }
 

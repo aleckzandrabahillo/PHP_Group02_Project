@@ -1,0 +1,507 @@
+{
+  "verified_date": "2026-10-29",
+  "checks": [
+    {
+      "test": "Original staged integration entries preserved",
+      "status": "PASS"
+    },
+    {
+      "test": "Index bytes preserved since correction started",
+      "status": "PASS"
+    },
+    {
+      "test": "HEAD preserved",
+      "status": "PASS"
+    },
+    {
+      "test": "Uncommitted merge feature tip preserved",
+      "status": "PASS"
+    },
+    {
+      "test": "Core, services, models, middleware, configuration and database sources byte-identical",
+      "status": "PASS"
+    },
+    {
+      "test": "Authentication, MFA, password, payment, assessment and recommendation controllers unchanged",
+      "status": "PASS"
+    },
+    {
+      "test": "Customer controller change limited to guarded read-only cart presentation",
+      "status": "PASS"
+    },
+    {
+      "test": "All original route registrations retained",
+      "status": "PASS"
+    },
+    {
+      "test": "Live private configuration still matches original copied configuration",
+      "status": "PASS"
+    },
+    {
+      "test": "Original handoff manifest hashes and sizes verified",
+      "status": "PASS"
+    },
+    {
+      "test": "All current PHP and JavaScript syntax valid",
+      "status": "PASS"
+    },
+    {
+      "test": "Git diff whitespace check",
+      "status": "PASS"
+    },
+    {
+      "test": "Latest executed regression result for every suite passes",
+      "status": "PASS"
+    }
+  ],
+  "syntax_counts": {
+    "php": 274,
+    "javascript": 21
+  },
+  "original_routes_retained": 89,
+  "critical_source_changes": [],
+  "protected_controller_changes": [],
+  "handoff_verified": 79,
+  "handoff_mismatches": [],
+  "regression_suites": [
+    {
+      "suite": "staff_ui",
+      "pass": 27,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "security",
+      "pass": 77,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "customer_auth_flow",
+      "pass": 35,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "email_activation",
+      "pass": 36,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "mfa",
+      "pass": 55,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "password_security",
+      "pass": 56,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "persistent_locks",
+      "pass": 30,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "mail_routing",
+      "pass": 21,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "mail_readiness",
+      "pass": 31,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "profile_uploads",
+      "pass": 25,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "upload_scanning",
+      "pass": 6,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "pii_encryption",
+      "pass": 30,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "concerns",
+      "pass": 6,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "product_matching",
+      "pass": 29,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "nlp_process",
+      "pass": 23,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "hair_validation",
+      "pass": 36,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "delivery_validation",
+      "pass": 106,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "staff_pagination",
+      "pass": 39,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "mfa_setup",
+      "pass": 17,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "order_payment_ui",
+      "pass": 11,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "password_confirmation",
+      "pass": 18,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "checkout",
+      "pass": 98,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "catalog_module",
+      "pass": 133,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "admin_module",
+      "pass": 134,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "audit_security",
+      "pass": 41,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "hair_profiles",
+      "pass": 43,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "account_experience",
+      "pass": 69,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "customer_settings",
+      "pass": 50,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "customer_journey",
+      "pass": 56,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "customer_followup",
+      "pass": 49,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "checkout_refinement",
+      "pass": 46,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "privacy",
+      "pass": 22,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "create_staff",
+      "pass": 57,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "pii_storage",
+      "pass": 22,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "maya_sandbox",
+      "pass": 115,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "order_delivery",
+      "pass": 32,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "discounts",
+      "pass": 79,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "routine_guide",
+      "pass": 29,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "maya_hosted_mode",
+      "pass": 39,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "motion",
+      "pass": 28,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "staff_contrast",
+      "pass": 22,
+      "fail": 0,
+      "exit": 0
+    }
+  ],
+  "suite_count": 41,
+  "pass": 1878,
+  "fail": 0,
+  "localhost_http": {
+    "pass": 20,
+    "fail": 0,
+    "url": "http://localhost:18080/"
+  },
+  "browser_layout_checks": [
+    {
+      "label": "profile",
+      "brokenImages": 0,
+      "headings": 1,
+      "height": 844,
+      "overflow": false,
+      "path": "/profile",
+      "width": 390
+    },
+    {
+      "label": "assessment",
+      "brokenImages": 0,
+      "headings": 1,
+      "height": 844,
+      "overflow": false,
+      "path": "/assessment",
+      "width": 390
+    },
+    {
+      "label": "hair-profile",
+      "brokenImages": 0,
+      "headings": 1,
+      "height": 844,
+      "overflow": false,
+      "path": "/assessment",
+      "width": 390
+    },
+    {
+      "label": "routine",
+      "brokenImages": 0,
+      "headings": 1,
+      "height": 844,
+      "overflow": false,
+      "path": "/routine",
+      "width": 390
+    },
+    {
+      "label": "catalog",
+      "brokenImages": 0,
+      "headings": 1,
+      "height": 844,
+      "overflow": false,
+      "path": "/shop",
+      "width": 390
+    },
+    {
+      "label": "product",
+      "brokenImages": 0,
+      "headings": 1,
+      "height": 844,
+      "overflow": false,
+      "path": "/product",
+      "width": 390
+    },
+    {
+      "label": "checkout",
+      "brokenImages": 0,
+      "headings": 1,
+      "height": 844,
+      "overflow": false,
+      "path": "/checkout",
+      "width": 390
+    },
+    {
+      "label": "orders",
+      "brokenImages": 0,
+      "headings": 1,
+      "height": 844,
+      "overflow": false,
+      "path": "/orders",
+      "width": 390
+    },
+    {
+      "label": "favorites",
+      "brokenImages": 0,
+      "headings": 1,
+      "height": 844,
+      "overflow": false,
+      "path": "/favorites",
+      "width": 390
+    },
+    {
+      "label": "care-guide",
+      "brokenImages": 0,
+      "headings": 1,
+      "height": 844,
+      "overflow": false,
+      "path": "/care-guide",
+      "width": 390
+    },
+    {
+      "label": "care-note",
+      "brokenImages": 0,
+      "headings": 1,
+      "height": 844,
+      "overflow": false,
+      "path": "/care-guide/wash-day",
+      "width": 390
+    },
+    {
+      "label": "search",
+      "brokenImages": 0,
+      "headings": 1,
+      "height": 844,
+      "overflow": false,
+      "path": "/search",
+      "width": 390
+    },
+    {
+      "label": "tablet-home",
+      "brokenImages": 0,
+      "headings": 1,
+      "height": 1180,
+      "overflow": false,
+      "path": "/",
+      "width": 820
+    },
+    {
+      "label": "desktop-full-bag",
+      "brokenImages": 0,
+      "headings": 1,
+      "height": 950,
+      "overflow": false,
+      "path": "/cart",
+      "width": 1440
+    }
+  ],
+  "browser_interactions": {
+    "desktop_floating_shop": {
+      "viewport": 1920,
+      "header_top": 26,
+      "header_height": 65,
+      "panel_top": 101,
+      "decorative_photos": 2
+    },
+    "desktop_docked_shop": {
+      "header_top": 0,
+      "header_height": 80,
+      "panel_top": 80
+    },
+    "long_cart": {
+      "rows_before_removal": 8,
+      "desktop_drawer_width": 480,
+      "mobile_drawer_width": 390,
+      "scroll_regions": [
+        "drawer-body"
+      ],
+      "background_overflow": "hidden"
+    },
+    "quantity_update": {
+      "accepted_quantity": 3,
+      "line_total": "987.00",
+      "bag_count": 10,
+      "subtotal": "2642.00"
+    },
+    "empty_cart": {
+      "rows": 0,
+      "footer_hidden": true,
+      "explore_url": "/shop"
+    },
+    "escape_restores_focus": "Shopping bag",
+    "assessment_steps": 5,
+    "routine_art_after_condition_tab": [
+      "condition"
+    ],
+    "care_filter_notes": 2,
+    "authenticator_option_visible": true,
+    "captcha_frame_present": true
+  },
+  "limitations": [
+    "External CAPTCHA completion, live SMTP delivery, physical authenticator-device enrollment and actual Maya-provider checkout were not performed during this presentation correction. Existing isolated service/HTTP tests provide the listed evidence.",
+    "The static handoff contains preview-only identity/storage/catalog behavior and fewer fields. The PHP functional/security contracts remain authoritative.",
+    "The existing main/feature integration remains an uncommitted merge; this work creates no commit, push or deployment."
+  ],
+  "cleanup": {
+    "temporary_bridges_removed": 0,
+    "isolated_php_stopped": true,
+    "synthetic_database_gracefully_stopped": true,
+    "preview_cleanup_ok": true,
+    "normal_avela_still_running": true,
+    "existing_application_database_modified": false,
+    "all_correction_fixture_bridges_removed": 6,
+    "test_public_bridges_remaining": 0
+  }
+}

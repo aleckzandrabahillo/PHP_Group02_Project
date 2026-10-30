@@ -55,7 +55,7 @@ final class CheckoutFaultPDO extends PDO {
     }
 }
 try {
-    $o=getopt('',['expect-database:','expect-port:','expect-datadir:','base-url:','session-directory:','scratch-directory:','output:','worker:']);
+    $o=getopt('',['expect-database:','expect-port:','expect-datadir:','base-url:','session-directory:','scratch-directory:','output:','worker:','fixture:']);
     $pdo=App\Core\Database::connection();$s=$pdo->query('SELECT DATABASE() db,@@port port,@@datadir datadir')->fetch();
     $norm=static fn($x)=>strtolower(rtrim(str_replace('\\','/',$x),'/'));
     $base=$o['base-url']??'';$url=parse_url($base);
@@ -78,7 +78,10 @@ try {
         catch(InvalidArgumentException){echo json_encode(['ok'=>false]);}
         exit;
     }
-    verify('Disposable target guard and twenty-product catalog',(int)$pdo->query('SELECT COUNT(*) FROM products')->fetchColumn()===20);
+    $fixture=$o['fixture']??'demo20';
+    if(!in_array($fixture,['demo20','fresh6'],true))throw new RuntimeException('Unknown catalog fixture.');
+    $expectedCount=$fixture==='fresh6'?6:20;
+    verify('Disposable target guard and expected catalog fixture',(int)$pdo->query('SELECT COUNT(*) FROM products')->fetchColumn()===$expectedCount);
     $demoBefore=$pdo->query('SELECT * FROM products ORDER BY id')->fetchAll();
     $identity=[];$suffix='_'.bin2hex(random_bytes(4));foreach(['checkout_a','checkout_b','checkout_other','checkout_browser'] as $name){
         $name .= $suffix;
@@ -96,7 +99,8 @@ try {
         verify('Staff direct checkout POST denied',request('/checkout',$c,['_token'=>$c['csrf']])['code']===403);
     }
     verify('Empty bag redirects to bag',request('/checkout',$qa)['location']==='/cart');
-    $p=(int)$pdo->query("SELECT id FROM products WHERE sku='AVE-SMP-002'")->fetchColumn();
+    $productSku=$fixture==='fresh6'?'AVE-SMP-001':'AVE-SMP-002';
+    $q=$pdo->prepare('SELECT id FROM products WHERE sku=?');$q->execute([$productSku]);$p=(int)$q->fetchColumn();
     $p2=(int)$pdo->query("SELECT id FROM products WHERE sku='AVE-TOL-001'")->fetchColumn();
     $cart->add($a,$p,2);$cart->add($a,$p2,1);$f=form($qa);
     verify('Checkout form has CSRF, submission key and COD',strlen($f['checkout_key'])===64&&str_contains(request('/checkout',$qa)['body'],'Cash on delivery'));
@@ -250,7 +254,7 @@ try {
     verify('History page zero/array inputs are safe',request('/orders?page=0',$qo)['code']===200&&request('/orders?page[]=1',$qo)['code']===200);
     $legacyId=(int)$pdo->query('SELECT MAX(id) FROM orders WHERE user_id='.$other)->fetchColumn();
     $legacyPage=request('/orders/view?id='.$legacyId,$qo);
-    verify('Legacy orders retain status and explain absent snapshots',$legacyPage['code']===200&&str_contains($legacyPage['body'],'Shipped')&&str_contains($legacyPage['body'],'Recipient was not recorded'));
+    verify('Legacy orders retain status and explain absent snapshots',$legacyPage['code']===200&&str_contains($legacyPage['body'],'Order shipped')&&str_contains($legacyPage['body'],'Recipient was not recorded'));
     $beforeStatus=state($pdo);
     verify('Customers cannot submit order status changes',request('/orders',$qo,['_token'=>$qo['csrf'],'status'=>'delivered'])['code']===405&&state($pdo)===$beforeStatus);
     $logs=new App\Services\LogService();$otp=new App\Services\OtpService(new App\Services\MailService(),$logs);

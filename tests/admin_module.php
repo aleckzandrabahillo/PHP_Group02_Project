@@ -89,11 +89,11 @@ try {
     verifyHair('Staff password hashed and MFA preserved',password_verify($pass,$new['password_hash'])&&$new['password_hash']!==$pass&&(int)$new['mfa_enabled']===1&&$new['status']==='active'&&$new['activated_at']!==null);
     foreach(['full_name'=>str_repeat('x',121),'username'=>str_repeat('x',41),'email'=>str_repeat('x',185).'@example.invalid','role'=>'customer'] as $field=>$value)
         verifyHair('Schema/role bound enforced: '.$field,isset(\App\Core\StaffValidator::validate([...$valid,$field=>$value])['errors'][$field]));
-    $policyBeforeCreation=$pdo->query('SELECT setting_value FROM security_settings WHERE setting_key="password_min_uppercase"')->fetchColumn();
+    $policyBeforeCreation=App\Services\SecurityPolicy::values();
     try{
-        $pdo->exec('UPDATE security_settings SET setting_value="4" WHERE setting_key="password_min_uppercase"');
+        (new App\Services\SecurityManagement())->savePolicy($a,array_replace($policyBeforeCreation,['password_min_uppercase'=>4]));
         verifyHair('Staff creation follows customized password complexity',isset(\App\Core\StaffValidator::validate([...$valid,'password'=>'Abcd1234!'.str_repeat('a',55)])['errors']['password']));
-    }finally{$pdo->prepare('UPDATE security_settings SET setting_value=? WHERE setting_key="password_min_uppercase"')->execute([$policyBeforeCreation]);}
+    }finally{(new App\Services\SecurityManagement())->savePolicy($a,$policyBeforeCreation);}
     $audit=$pdo->query('SELECT actor_id,details FROM audit_logs WHERE action="staff.created" AND target_id='.(int)$new['id'].' ORDER BY id DESC LIMIT 1')->fetch();
     verifyHair('Staff creation audit identifies actor without credentials',(int)$audit['actor_id']===$a&&!str_contains($audit['details'],$pass)&&!str_contains($audit['details'],$new['password_hash']));
     verifyHair('Duplicate identifiers rejected',hairRequest('/admin/staff/create',$admin,['_token'=>$admin['csrf'],...$valid])['code']===422);
@@ -199,7 +199,15 @@ try {
     verifyHair('Processing order cancellation reconciles stock',$stock()===$n+2&&$status($order)==='cancelled');
     $order=$makeOrder();$workflow->advance($pdo,$a,$order,'pending','processing');$workflow->advance($pdo,$a,$order,'processing','shipped');$n=$stock();
     verifyHair('Shipped cancellation requires separate return process',adminDenied(fn()=>$workflow->advance($pdo,$a,$order,'shipped','cancelled'))&&$stock()===$n);
-    $workflow->advance($pdo,$a,$order,'shipped','delivered');
+    verifyHair('Only an Administrator can record dispatch',adminDenied(fn()=>$workflow->advance($pdo,$staff['catalog_manager'],$order,'shipped','out_for_delivery',0)));
+    $workflow->advance($pdo,$a,$order,'shipped','out_for_delivery',0);
+    $dispatch=(new App\Models\Order())->forAdministrator($order);
+    verifyHair('Dispatch is actual saved evidence without changing shipped enum',$status($order)==='shipped'&&!empty($dispatch['out_for_delivery_at'])&&$dispatch['delivery_event_id']>0);
+    verifyHair('Dispatch timeline maps real current stage',App\Services\OrderProgress::journey($dispatch)['stages'][2]['state']==='current');
+    verifyHair('Duplicate dispatch is rejected',adminDenied(fn()=>$workflow->advance($pdo,$a,$order,'shipped','out_for_delivery',$dispatch['delivery_event_id'])));
+    verifyHair('Stale delivery-event token cannot mark delivered',adminDenied(fn()=>$workflow->advance($pdo,$a,$order,'shipped','delivered',0))&&$status($order)==='shipped');
+    $workflow->advance($pdo,$a,$order,'shipped','delivered',$dispatch['delivery_event_id']);
+
     verifyHair('Delivered cancellation rejected',adminDenied(fn()=>$workflow->advance($pdo,$a,$order,'delivered','cancelled'))&&$stock()===$n);
     foreach(['legacy','payment','missing','overflow','proof'] as $case){
         $order=$makeOrder();$priorStock=$stock();

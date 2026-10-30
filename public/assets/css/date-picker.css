@@ -1,0 +1,24 @@
+/* Progressive calendar presentation; native inputs remain the submitted values. */
+.date-control{position:relative;display:block;min-width:0}
+.date-native{position:absolute!important;width:1px!important;height:1px!important;opacity:0;pointer-events:none;padding:0!important;overflow:hidden}
+:is(.avela-v3,.avela-staff) .date-trigger{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;min-height:48px;padding:12px 14px;border:1px solid #c7b9a9;border-radius:6px;background:#fffdf9;color:#352f2a;font:400 13px/1.5 Manrope,Arial,sans-serif;text-align:left;cursor:pointer}
+:is(.avela-v3,.avela-staff) .date-trigger svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.4;flex-shrink:0}
+:is(.avela-v3,.avela-staff) .date-trigger:focus-visible,.date-calendar button:focus-visible{outline:2px solid #51453d;outline-offset:2px}
+:is(.avela-v3,.avela-staff) .date-trigger:disabled{opacity:.5;cursor:not-allowed}
+.date-calendar{position:fixed;inset:auto;margin:0;box-sizing:border-box;width:min(320px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:18px;background:#fcfbf8;color:#352f2a;border:1px solid #d9d2c7;border-radius:8px;box-shadow:0 10px 30px #352f2a20;font:400 13px/1.5 Manrope,Arial,sans-serif}
+.date-calendar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;gap:8px}
+.date-calendar-head strong{font-size:14px;font-weight:500}
+.date-calendar-head button{width:34px;height:34px;border:1px solid #d9d2c7;border-radius:4px;background:transparent;color:inherit;cursor:pointer}
+.date-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;text-align:center}
+.date-calendar-grid>span{font-size:10px;color:#766c62;padding-bottom:7px}
+.date-calendar-grid button{min-width:0;aspect-ratio:1;border:0;border-radius:4px;background:none;font:inherit;color:inherit;cursor:pointer}
+.date-calendar-grid button:hover{background:#ebe7df}
+.date-calendar-grid button[aria-selected=true]{background:#51453d;color:#fcfbf8}
+.date-calendar-grid button[aria-current=date]{box-shadow:inset 0 0 0 1px #a79785}
+.date-calendar-grid button:disabled{opacity:.3;cursor:not-allowed}
+.date-calendar-footer{display:flex;align-items:center;gap:12px;justify-content:space-between;border-top:1px solid #d9d2c7;margin-top:16px;padding-top:14px}
+.date-calendar-footer button{border:0;background:transparent;color:inherit;font:inherit;min-height:36px;padding:6px;cursor:pointer}
+.date-calendar-footer button:last-child{background:#51453d;color:#fcfbf8;border-radius:4px;padding:8px 14px}
+.date-calendar-time{display:flex;gap:12px;align-items:center;margin-top:14px}
+.date-calendar-time input{min-width:0;width:100%;padding:9px;border:1px solid #d9d2c7;border-radius:4px;background:transparent;color:inherit;font:inherit}
+.date-calendar-error{color:#923c35;font-size:11px;line-height:1.7;margin:10px 0 0}

@@ -63,6 +63,7 @@ final class CheckoutService
             $total = self::decimal($totalCents);
             $stmt->execute([$userId, $values['delivery_address'], $values['full_name'], $customer['email'], $values['contact_no'], $maya ? 'manual' : 'cod', $bag['subtotal'], $total, $key]);
             $orderId = (int) $pdo->lastInsertId();
+            PiiStorage::write($pdo,'orders',$orderId,['contact_no_snapshot'=>$values['contact_no'],'delivery_address_snapshot'=>$values['delivery_address']]);
             OrderReference::create($pdo,$orderId);
             if ($maya) MayaPaymentService::reserve($pdo, $orderId, $totalCents);
             if ($discount) $discounts->reserve($pdo,$orderId,$userId,$discount,$maya);

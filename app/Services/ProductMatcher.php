@@ -9,7 +9,7 @@ final class ProductMatcher
 {
     public const VERSION = '1';
     private const ROLES = ['Shampoo' => 'cleanse', 'Conditioner' => 'condition', 'Treatment' => 'treat',
-        'Serum' => 'finish', 'Hair Oil' => 'finish', 'Hair Tools' => 'accessory'];
+        'Serum' => 'finish', 'Hair Oil' => 'finish', 'Styling' => 'finish', 'Hair Tools' => 'accessory'];
 
     public function rank(array $profile, array $products, array $textTreatments = []): array
     {

@@ -9,7 +9,7 @@
       <input type="hidden" name="id" value="<?= (int) $editId ?>">
       <input type="hidden" name="expected_stock" value="<?= e($form['expected_stock']) ?>">
     <?php endif; ?>
-    <div class="field-grid two">
+    <div class="field-grid two staff-product-fields">
       <?php foreach (['name' => ['Product name', 160], 'sku' => ['SKU', 50]] as $key => [$label, $limit]): ?>
         <label class="field <?= isset($errors[$key]) ? 'has-error' : '' ?>">
           <span><?= e($label) ?></span>
@@ -94,9 +94,9 @@
       <?php if (!$tags): ?><p class="muted">No suitability tags are currently available.</p><?php endif; ?>
       <small id="product-tags-error" class="field-error"><?= e($errors['tag_ids'] ?? '') ?></small>
     </fieldset>
-    <p class="muted small">Inactive products and products in inactive categories are hidden from the public store. Zero-stock active products remain visible as out of stock.</p>
+    <details class="staff-help"><summary>How availability works</summary><p>Inactive products and products in inactive categories are hidden from the public store. Zero-stock active products remain visible as out of stock.</p></details>
     <div class="catalog-actions">
-      <button class="btn btn-primary" type="submit"><?= $editId !== null ? 'Save Changes' : 'Create Product' ?></button>
+      <button class="btn btn-primary" type="submit"><?= $editId !== null ? 'Save changes' : 'Create product' ?></button>
       <a class="btn btn-secondary" href="<?= e(url('/catalog/products')) ?>">Cancel</a>
     </div>
   </form>

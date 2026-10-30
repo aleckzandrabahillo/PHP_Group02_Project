@@ -59,7 +59,10 @@ try{
  $pdo->prepare('UPDATE users SET locked_until=NULL,lock_requires_admin=0 WHERE id=?')->execute([$id]);
  $pdo->prepare('UPDATE users SET locked_until="2000-01-01",lock_requires_admin=1 WHERE id=?')->execute([$manager]);
  $server=$pdo->query('SELECT @@hostname hostname,@@server_id server_id')->fetch();$confirm=['host'=>'127.0.0.1','port'=>(int)$target['port'],'database'=>$target['db'],'server'=>$server['hostname'],'server_id'=>(int)$server['server_id'],'datadir'=>$target['datadir']];
- $denied=false;try{(new App\Services\DemoImageAssigner($pdo,dirname(__DIR__).'/public'))->run(App\Services\DemoImageAssigner::readManifest(dirname(__DIR__).'/database/demo_images.json'),false,$prefix.'_staff',$confirm);}catch(DomainException $e){$denied=str_contains($e->getMessage(),'unlocked');}verifyHair('Guarded image assignment rejects persisted locked staff',$denied);
+ $imageFixture=App\Services\DemoImageAssigner::readManifest(dirname(__DIR__).'/database/demo_images.json');
+ $imageFixture['images']=array_values(array_filter($imageFixture['images'],static fn($image)=>$image['sku']==='AVE-TOL-001'));
+ if(count($imageFixture['images'])!==1)throw new RuntimeException('Reviewed fresh-schema image fixture missing.');
+ $denied=false;try{(new App\Services\DemoImageAssigner($pdo,dirname(__DIR__).'/public'))->run($imageFixture,false,$prefix.'_staff',$confirm);}catch(DomainException $e){$denied=str_contains($e->getMessage(),'unlocked');}verifyHair('Guarded image assignment rejects persisted locked staff',$denied);
  $denied=false;try{(new App\Services\DemoCatalogImporter($pdo))->run(App\Services\DemoCatalogImporter::readManifest(dirname(__DIR__).'/database/demo_catalog.json'),true,$prefix.'_staff',$confirm);}catch(DomainException $e){$denied=str_contains($e->getMessage(),'unlocked');}verifyHair('Guarded catalog import rejects persisted locked staff',$denied);
  $pdo->prepare('UPDATE users SET locked_until=NULL,lock_requires_admin=0 WHERE id=?')->execute([$manager]);
  $pdo->exec("CREATE TRIGGER auth_history_fault BEFORE INSERT ON auth_logs FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Synthetic history fault'");

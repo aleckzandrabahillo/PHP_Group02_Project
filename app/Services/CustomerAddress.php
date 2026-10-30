@@ -27,6 +27,7 @@ final class CustomerAddress
    $revision=bin2hex(random_bytes(16));$pdo->prepare('INSERT INTO customer_delivery_addresses(user_id,country,first_name,last_name,address_line,barangay,postal_code,city,region,contact_no,revision,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,NOW(),NOW()) ON DUPLICATE KEY UPDATE country=VALUES(country),first_name=VALUES(first_name),last_name=VALUES(last_name),address_line=VALUES(address_line),barangay=VALUES(barangay),postal_code=VALUES(postal_code),city=VALUES(city),region=VALUES(region),contact_no=VALUES(contact_no),revision=VALUES(revision),updated_at=NOW()')->execute([$user,...$values,$revision]);
    if(DeliveryLocationMigration::installed($pdo))$pdo->prepare('UPDATE customer_delivery_addresses SET province=? WHERE user_id=?')->execute([$v['province']?:null,$user]);
    $pdo->prepare('UPDATE customer_profiles SET delivery_address=?,updated_at=NOW() WHERE user_id=?')->execute([$v['delivery_address'],$user]);
+   PiiStorage::write($pdo,'customer_profiles',$user,['delivery_address'=>$v['delivery_address']]);
    AuditService::record($pdo,$user,$current?'address.update':'address.create','user',$user,['fields'=>$fields]);$pdo->commit();return [...$v,'revision'=>$revision];
   }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
  }

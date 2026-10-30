@@ -62,6 +62,12 @@ final class Cart
             $item['line_total'] = $lineTotal;
             $item['can_adjust'] = $canAdjust;
             $item['is_available'] = $available;
+            $item['availability_message'] = $available ? '' : (
+                $stock < 1 ? 'Out of stock. Remove this item to continue to checkout.' : (
+                    !$canAdjust ? 'This item is no longer available. Remove it to continue to checkout.'
+                    : 'Only '.$stock.' left in stock. Reduce the quantity or remove this item to continue to checkout.'
+                )
+            );
             $subtotal += $lineTotal;
             $itemCount += $quantity;
             if (!$available) $checkoutReady = false;

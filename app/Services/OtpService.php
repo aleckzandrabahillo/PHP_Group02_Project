@@ -51,7 +51,7 @@ final class OtpService
             ]);
 
             if ($delivery) $delivery($email, $code);
-            else $this->mail->sendOtp($email, $code, $purpose);
+            else $this->mail->sendOtp($email, $code, $purpose, $userId);
             $this->logs->auth($userId, 'otp_sent', 'success', ['purpose' => $purpose]);
             return ['issued' => true, 'retry_after' => 0, 'reusable' => true];
         };

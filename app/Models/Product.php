@@ -634,8 +634,8 @@ final class Product
     {
         return match ($sort) {
             'name_asc' => 'p.name ASC, p.id DESC',
-            'price_asc' => 'p.price ASC, p.name ASC',
-            'price_desc' => 'p.price DESC, p.name ASC',
+            'price_asc' => 'p.price ASC, p.name ASC, p.id DESC',
+            'price_desc' => 'p.price DESC, p.name ASC, p.id DESC',
             default => 'p.created_at DESC, p.id DESC',
         };
     }

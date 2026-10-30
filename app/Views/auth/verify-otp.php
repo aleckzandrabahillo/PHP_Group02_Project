@@ -1,9 +1,9 @@
 <?php use App\Core\Session; $errors = Session::get('errors', []); ?>
 <div class="form-head">
-  <span class="eyebrow"><?= e($purpose === 'activation' ? 'ACCOUNT ACTIVATION' : 'SECURE SIGN IN') ?></span>
-  <h1><?= e($purpose === 'activation' ? 'Activate your account' : 'Enter your sign-in code') ?></h1>
+  <span class="eyebrow"><?= e($purpose === 'activation' ? 'VERIFY YOUR EMAIL' : 'SECURE SIGN IN') ?></span>
+  <h1><?= e($purpose === 'activation' ? 'Verify your email' : 'Enter your sign-in code') ?></h1>
   <p>We sent a 6-digit code to <strong><?= e($maskedEmail) ?></strong>.</p>
-  <?php if ($purpose === 'activation'): ?><p>You can also open the activation link in the same email. Either method activates your account once.</p><?php endif; ?>
+  <?php if ($purpose === 'activation'): ?><p>After you verify this code, we will send a separate activation link.</p><?php endif; ?>
 </div>
 
 <form method="post" action="<?= e(url('/verify-otp')) ?>" class="form-stack" novalidate>

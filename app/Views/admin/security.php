@@ -1,32 +1,12 @@
-<section class="page-head">
-  <div><span class="eyebrow">ADMINISTRATION</span><h1>Security</h1>
-    <p>Manage sign-in limits and review account locks. CAPTCHA and staff MFA remain required.</p></div>
-</section>
-
-<section class="panel security-panel" aria-labelledby="policy-title">
-  <h2 id="policy-title">Account and session policy</h2>
-  <form class="form-stack" method="post" action="<?= e(url('/admin/security')) ?>">
-    <?= csrf_field() ?><input type="hidden" name="action" value="save_policy">
-    <div class="field-grid two">
-      <?php foreach (['max_login_attempts'=>'Failed sign-in threshold', 'lockout_minutes'=>'Incident review interval (minutes)',
-        'session_timeout_minutes'=>'Inactive session timeout (minutes)', 'password_min_length'=>'Minimum password length',
-        'password_min_uppercase'=>'Required uppercase letters', 'password_min_lowercase'=>'Required lowercase letters',
-        'password_min_numbers'=>'Required numbers', 'password_min_special'=>'Required special characters'] as $key=>$label): ?>
-        <?php [$min, $max] = \App\Services\SecurityPolicy::RULES[$key]; ?>
-        <label class="field"><span><?= e($label) ?></span>
-          <input type="number" name="<?= e($key) ?>" value="<?= (int) $policy[$key] ?>" min="<?= $min ?>" max="<?= $max ?>" required <?= $key==='max_login_attempts'?'readonly aria-readonly="true"':'' ?>>
-          <small class="muted">Allowed range: <?= $min ?>–<?= $max ?>.</small>
-        </label>
-      <?php endforeach; ?>
-    </div>
-    <p class="muted small">New passwords always require uppercase, lowercase, a number and a special character. Changes do not invalidate existing passwords. Password expiration and mandatory TOTP role coverage remain pending project decisions.</p>
-    <div><button class="btn btn-primary" type="submit">Save security settings</button></div>
-  </form>
-</section>
-
+<section class="page-head"><div><h1>Security controls</h1><p>Sign-in rules, account locks and access history.</p></div></section>
+<section class="panel security-panel" aria-labelledby="policy-title"><div class="panel-head"><h2 id="policy-title">Account and session policy</h2></div>
+<form class="form-stack" method="post" action="<?= e(url('/admin/security')) ?>"><?= csrf_field() ?><input type="hidden" name="action" value="save_policy">
+<?php foreach(['Sign-in and sessions'=>['max_login_attempts'=>'Failed sign-in threshold','lockout_minutes'=>'Incident review interval (minutes)','session_timeout_minutes'=>'Inactive session timeout (minutes)'],'Password requirements'=>['password_min_length'=>'Minimum password length','password_min_uppercase'=>'Required uppercase letters','password_min_lowercase'=>'Required lowercase letters','password_min_numbers'=>'Required numbers','password_min_special'=>'Required special characters']] as $group=>$fields): ?>
+<fieldset class="staff-policy-group"><legend><?= e($group) ?></legend><div class="field-grid two"><?php foreach($fields as $key=>$label):[$min,$max]=\App\Services\SecurityPolicy::RULES[$key]; ?><label class="field"><span><?= e($label) ?></span><input type="number" name="<?= e($key) ?>" value="<?= (int)$policy[$key] ?>" min="<?= $min ?>" max="<?= $max ?>" required><small class="muted">Allowed range: <?= $min ?>–<?= $max ?>.</small></label><?php endforeach; ?></div></fieldset><?php endforeach; ?>
+<details class="staff-help"><summary>How these rules protect accounts</summary><p>CAPTCHA and staff email verification remain required. New passwords always require uppercase, lowercase, a number and a special character. Changes do not invalidate existing passwords. Password age is enforced separately. Each person manages 2-step verification in their own account.</p><p>Locks require Administrator release; the review interval never unlocks an account.</p></details><div><button class="btn btn-primary" type="submit">Save security settings</button></div></form></section>
 <section class="panel security-panel" aria-labelledby="locks-title">
   <h2 id="locks-title">Currently locked accounts</h2>
-  <p class="muted small">Unlocking clears the failed sign-in counter. It does not reactivate an inactive account or change its password or MFA. Locks require Administrator release; the review interval never unlocks an account. Up to 100 current locks are shown.</p>
+  <details class="staff-help"><summary>About unlocking an account</summary><p>Unlocking clears the failed sign-in counter. It does not reactivate an inactive account or change its password or 2-step verification. Locks require Administrator release; the review interval never unlocks an account. Up to 100 current locks are shown.</p></details>
   <?php if (!$lockedAccounts): ?><p class="security-empty">No accounts are currently locked.</p>
   <?php else: ?>
     <div class="security-table-wrap" tabindex="0" role="region" aria-label="Currently locked accounts table">
@@ -48,7 +28,7 @@
 
 <section class="panel security-panel" aria-labelledby="history-title">
   <h2 id="history-title">Lock history</h2>
-  <p class="muted small">Recorded from the security migration onward. Earlier incidents are not reconstructed.</p>
+  <details class="staff-help"><summary>About earlier incidents</summary><p>Earlier incidents recorded before lock history was enabled are not reconstructed.</p></details>
   <?php if (!$history): ?><p class="security-empty">No recorded lock incidents.</p>
   <?php else: ?>
     <div class="security-table-wrap" tabindex="0" role="region" aria-label="Lock history table">

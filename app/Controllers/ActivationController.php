@@ -31,6 +31,7 @@ final class ActivationController
         }
         $ok = $this->activation->consume($_POST['activation_token'] ?? null);
         if ($ok) {
+            Session::put('activation_setup_offer', true);
             $flow = Session::get('pending_flow');
             // Activation never signs in or changes an existing authenticated session.
             if (is_array($flow) && ($flow['purpose'] ?? '') === 'activation'

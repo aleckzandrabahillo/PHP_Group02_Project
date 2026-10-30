@@ -1,0 +1,471 @@
+{
+  "suite_count": 41,
+  "passed_regression_checks": 1870,
+  "failed_regression_checks": 0,
+  "regression_suites": [
+    {
+      "suite": "staff_ui",
+      "pass": 27,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 0.4
+    },
+    {
+      "suite": "security",
+      "pass": 77,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 5.8
+    },
+    {
+      "suite": "customer_auth_flow",
+      "pass": 33,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 4.1
+    },
+    {
+      "suite": "email_activation",
+      "pass": 36,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 16.0
+    },
+    {
+      "suite": "mfa",
+      "pass": 55,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 4.4
+    },
+    {
+      "suite": "password_security",
+      "pass": 56,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 6.9
+    },
+    {
+      "suite": "persistent_locks",
+      "pass": 30,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 2.5
+    },
+    {
+      "suite": "mail_routing",
+      "pass": 21,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 9.4
+    },
+    {
+      "suite": "mail_readiness",
+      "pass": 31,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 19.5
+    },
+    {
+      "suite": "profile_uploads",
+      "pass": 25,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 2.0
+    },
+    {
+      "suite": "upload_scanning",
+      "pass": 6,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 0.8
+    },
+    {
+      "suite": "pii_encryption",
+      "pass": 30,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 0.2
+    },
+    {
+      "suite": "concerns",
+      "pass": 6,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 0.9
+    },
+    {
+      "suite": "product_matching",
+      "pass": 29,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 0.3
+    },
+    {
+      "suite": "nlp_process",
+      "pass": 23,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 19.2
+    },
+    {
+      "suite": "hair_validation",
+      "pass": 36,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 0.7
+    },
+    {
+      "suite": "delivery_validation",
+      "pass": 106,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 0.2
+    },
+    {
+      "suite": "staff_pagination",
+      "pass": 39,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 0.1
+    },
+    {
+      "suite": "mfa_setup",
+      "pass": 17,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 0.3
+    },
+    {
+      "suite": "order_payment_ui",
+      "pass": 11,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 0.3
+    },
+    {
+      "suite": "password_confirmation",
+      "pass": 18,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 0.4
+    },
+    {
+      "suite": "checkout",
+      "pass": 98,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 11.7
+    },
+    {
+      "suite": "catalog_module",
+      "pass": 133,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 11.5
+    },
+    {
+      "suite": "admin_module",
+      "pass": 134,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 8.6
+    },
+    {
+      "suite": "audit_security",
+      "pass": 41,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 5.1
+    },
+    {
+      "suite": "hair_profiles",
+      "pass": 43,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 4.6
+    },
+    {
+      "suite": "account_experience",
+      "pass": 69,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 4.0
+    },
+    {
+      "suite": "customer_settings",
+      "pass": 50,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 3.7
+    },
+    {
+      "suite": "customer_journey",
+      "pass": 50,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 5.3
+    },
+    {
+      "suite": "customer_followup",
+      "pass": 49,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 6.0
+    },
+    {
+      "suite": "checkout_refinement",
+      "pass": 46,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 2.4
+    },
+    {
+      "suite": "privacy",
+      "pass": 22,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 0.8
+    },
+    {
+      "suite": "create_staff",
+      "pass": 57,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 2.4
+    },
+    {
+      "suite": "pii_storage",
+      "pass": 22,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 1.9
+    },
+    {
+      "suite": "maya_sandbox",
+      "pass": 115,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 5.0
+    },
+    {
+      "suite": "order_delivery",
+      "pass": 32,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 2.3
+    },
+    {
+      "suite": "discounts",
+      "pass": 79,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 4.2
+    },
+    {
+      "suite": "routine_guide",
+      "pass": 29,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 0.1
+    },
+    {
+      "suite": "maya_hosted_mode",
+      "pass": 39,
+      "fail": 0,
+      "exit": 0,
+      "seconds": 0.1
+    },
+    {
+      "suite": "motion",
+      "pass": 28,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "suite": "staff_contrast",
+      "pass": 22,
+      "fail": 0,
+      "exit": 0
+    }
+  ],
+  "php_syntax_files": 269,
+  "javascript_syntax_files": 20,
+  "original_routes_preserved": 89,
+  "handoff_files_verified": 79,
+  "checks": [
+    {
+      "test": "Original staged integration index is identical",
+      "status": "PASS"
+    },
+    {
+      "test": "Integration HEAD preserved",
+      "status": "PASS"
+    },
+    {
+      "test": "Integration MERGE_HEAD preserved",
+      "status": "PASS"
+    },
+    {
+      "test": "Services, models, core, middleware, config and database files byte-identical",
+      "status": "PASS"
+    },
+    {
+      "test": "Every original route registration preserved exactly",
+      "status": "PASS"
+    },
+    {
+      "test": "Original view form field names preserved",
+      "status": "PASS"
+    },
+    {
+      "test": "PHP and JavaScript syntax valid",
+      "status": "PASS"
+    },
+    {
+      "test": "Git whitespace check",
+      "status": "PASS"
+    },
+    {
+      "test": "All original handoff hashes remain unchanged",
+      "status": "PASS"
+    },
+    {
+      "test": "All exercised regression suites pass",
+      "status": "PASS"
+    }
+  ],
+  "http_checks": {
+    "pass": 20,
+    "fail": 0
+  },
+  "browser": {
+    "desktop": [
+      {
+        "broken": 0,
+        "overflow": false,
+        "path": "/assessment",
+        "title": "Your hair profile."
+      },
+      {
+        "broken": 0,
+        "overflow": false,
+        "path": "/recommendations",
+        "title": "Your care routine."
+      },
+      {
+        "broken": 0,
+        "overflow": false,
+        "path": "/routine",
+        "title": "Your saved routine"
+      },
+      {
+        "broken": 0,
+        "overflow": false,
+        "path": "/orders",
+        "title": "My orders"
+      }
+    ],
+    "mobile": [
+      {
+        "broken": 0,
+        "overflow": false,
+        "path": "/profile"
+      },
+      {
+        "broken": 0,
+        "overflow": false,
+        "path": "/assessment"
+      },
+      {
+        "broken": 0,
+        "overflow": false,
+        "path": "/recommendations"
+      },
+      {
+        "broken": 0,
+        "overflow": false,
+        "path": "/routine"
+      },
+      {
+        "broken": 0,
+        "overflow": false,
+        "path": "/orders"
+      }
+    ],
+    "tablet": [
+      {
+        "broken": 0,
+        "height": 1180,
+        "overflow": false,
+        "path": "/",
+        "width": 820
+      },
+      {
+        "broken": 0,
+        "height": 1180,
+        "overflow": false,
+        "path": "/shop",
+        "width": 820
+      },
+      {
+        "broken": 0,
+        "height": 1180,
+        "overflow": false,
+        "path": "/care-guide",
+        "width": 820
+      }
+    ],
+    "bagQa": {
+      "empty": true,
+      "focusTag": "H3",
+      "focusText": "Your bag is empty",
+      "widthStable": true
+    },
+    "bagCloseQa": {
+      "closed": true,
+      "focus": "Shopping bag",
+      "overflow": ""
+    },
+    "headerQa": {
+      "headerY": 0,
+      "heroHeight": 900,
+      "overflow": false,
+      "scrollY": 1705,
+      "solid": true
+    },
+    "menuQa": {
+      "open": "true",
+      "pageWidth": 1265,
+      "photoLinks": 0,
+      "photos": 2,
+      "viewportWidth": 1280
+    },
+    "glassQa": {
+      "headlineItalic": "italic",
+      "solid": false,
+      "top": 0,
+      "width": 1280,
+      "wordmark": "none"
+    },
+    "checkoutObserved": {
+      "quantity": 2,
+      "subtotal": 658,
+      "shipping": 80,
+      "total": 738
+    }
+  },
+  "limits": [
+    "Synthetic test provider/mail transports; no real charge or delivery claim",
+    "No exhaustive screen-reader audit",
+    "No cloud deployment readiness claim"
+  ],
+  "cleanup": {
+    "temporary_bridges_removed": 3,
+    "isolated_php_stopped": true,
+    "synthetic_database_gracefully_stopped": true,
+    "preview_cleanup_ok": true,
+    "normal_avela_still_running": true,
+    "existing_application_database_modified": false
+  }
+}

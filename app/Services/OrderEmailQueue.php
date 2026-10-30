@@ -25,11 +25,14 @@ final class OrderEmailQueue
             $this->pdo->commit();
         }catch(Throwable $e){if($this->pdo->inTransaction())$this->pdo->rollBack();throw $e;}
         try {
-            $q=$this->pdo->prepare('SELECT o.id,o.public_reference,o.contact_email_snapshot,o.recipient_name_snapshot,o.payment_method,o.total,o.created_at,COALESCE(d.shipping_fee,0) AS shipping_fee FROM orders o LEFT JOIN order_delivery_details d ON d.order_id=o.id WHERE o.id=?');$q->execute([$job['order_id']]);$order=$q->fetch();
+            $q=$this->pdo->prepare('SELECT o.id,o.public_reference,o.contact_email_snapshot,o.recipient_name_snapshot,o.payment_method,o.status,o.total,o.created_at,COALESCE(d.shipping_fee,0) AS shipping_fee FROM orders o LEFT JOIN order_delivery_details d ON d.order_id=o.id WHERE o.id=?');$q->execute([$job['order_id']]);$order=$q->fetch();
             if(!$order||!filter_var($order['contact_email_snapshot'],FILTER_VALIDATE_EMAIL))throw new \RuntimeException('Order email is unavailable.');
-            if($order['payment_method']==='manual'&&MayaMigration::installed($this->pdo)){
-                $payment=$this->pdo->prepare('SELECT state FROM maya_payments WHERE order_id=?');$payment->execute([$order['id']]);$state=$payment->fetchColumn();
-                if($state!==false){if($state!=='paid')throw new \RuntimeException('Payment confirmation pending.');$order['payment_method']='maya_sandbox';}
+            if($order['status']==='cancelled')throw new \RuntimeException('Order cancelled.');
+            if($order['payment_method']!=='cod'){
+                if($order['payment_method']!=='manual'||!MayaMigration::installed($this->pdo))throw new \RuntimeException('Payment confirmation unavailable.');
+                $payment=$this->pdo->prepare('SELECT state,verified_at,checkout_id,merchant_reference FROM maya_payments WHERE order_id=?');$payment->execute([$order['id']]);$proof=$payment->fetch();
+                if(!$proof||$proof['state']!=='paid'||empty($proof['verified_at'])||MayaPaymentService::simulatedReference($proof))throw new \RuntimeException('Payment confirmation pending.');
+                $order['payment_method']='maya_sandbox';$order['payment_verified']=true;
             }
             $q=$this->pdo->prepare('SELECT product_name_snapshot,quantity,unit_price_snapshot FROM order_items WHERE order_id=? ORDER BY id');$q->execute([$job['order_id']]);
             $items=$q->fetchAll();$order['discount']=null;

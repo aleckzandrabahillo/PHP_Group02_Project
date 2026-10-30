@@ -1,10 +1,12 @@
 <?php use App\Core\Session; $errors = Session::get('errors', []); ?>
+<p class="eyebrow">LET’S START WITH YOU</p>
 
 <div class="form-head">
-  <h1>Create your Avela account</h1>
+  <h1>A little more you.</h1>
 </div>
+<p class="auth-intro">Make room for your favorites and your kind of care.</p>
 
-<form method="post" action="<?= e(url('/register')) ?>" class="form-stack" novalidate>
+<form method="post" action="<?= e(url('/register')) ?>" class="form-stack auth-form" novalidate>
   <?= csrf_field() ?>
 
   <div class="field-grid two">
@@ -33,7 +35,7 @@
     <small class="field-error"><?= e($errors['contact_no'] ?? '') ?></small>
   </label>
 
-  <div class="field-grid two">
+  <div class="field-grid two password-fields">
     <label class="field <?= isset($errors['password']) ? 'has-error' : '' ?>">
       <span id="register-password-label">Password</span>
       <div class="password-wrap">
@@ -72,9 +74,7 @@
       data-sitekey="<?= e($recaptchaSiteKey ?? '') ?>">
     </div>
 
-    <small class="field-error">
-        <?= e($errors['captcha'] ?? '') ?>
-    </small>
+    <small class="field-error"><?= e($errors['captcha'] ?? '') ?></small>
 </div>
 
   <button class="btn btn-primary w-full" type="submit">Create account</button>

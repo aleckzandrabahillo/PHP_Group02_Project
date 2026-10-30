@@ -1,12 +1,12 @@
 # Authenticator enrollment
 
-Signed-in Customers, Catalog Managers and Administrators can manage their own authenticator at `/account/mfa`. Enrollment is optional while mandatory course role coverage is pending. Existing staff email OTP remains required. Enrolled accounts sign in with password → email OTP → TOTP or one-use recovery code. Activation and profile-email verification remain separate existing flows.
+Signed-in Customers, Catalog Managers and Administrators can manage their own authenticator at `/account/mfa`. The owner confirmed on 24 October that Customer enrollment is optional. Enrolled Customers sign in with password → Authenticator or a one-use recovery code; Customer login sends no email OTP. Customers without an active authenticator use password-only sign-in, including older email-only MFA flags. Removing a Customer authenticator disables their optional MFA and preserves session-version revocation. Staff retain password → email OTP, followed by Authenticator when enrolled. Registration and sensitive account changes remain separate verified flows. After activation, Login offers an optional choice to set up Google Authenticator after normal sign-in.
 
 ## Setup and recovery
 
 1. Confirm the current password to start setup; wait for the existing email-code cooldown if necessary.
-2. In Google Authenticator or a compatible app, add a **time-based** account using the private setup key and Avela username. Manual key entry is supported; no external QR service receives the key.
-3. Confirm both the email code and an authenticator code within five minutes.
+2. Open Google Authenticator or a compatible app on your phone and choose Add account.
+3. Copy the full setup key, displayed in groups of four, or open View QR code to scan a locally generated QR in a dialog. Copy removes display spaces; the generated secret is not shortened. Continue opens confirmation on the same page, with Back available. A shared countdown keeps the original five-minute deadline; expiry clears the key, QR and code fields and offers Start again. Without JavaScript, the full key and guarded confirmation form remain usable (Time based). The QR uses issuer Avela and your account username, not the store's Gmail address. Confirm both the email code and an authenticator code within five minutes. No external QR service receives the key; no provisioning URI is put in an image URL, query string, browser storage or diagnostic log. Expired setup is rejected by the server and removed from the page. Each user enrolls their own account; signing into Google Authenticator for optional sync does not need the store's Google account.
 4. Save the eight recovery codes privately. They are displayed once. Each replaces one TOTP after password and email verification.
 
 Codes use the standard six-digit SHA-1/30-second TOTP format with one adjacent time step of tolerance. Consumed steps cannot be reused, including simultaneous requests. Three incorrect authenticator attempts lock the account under the existing policy. Recovery codes cannot bypass inactive/locked status or email verification.

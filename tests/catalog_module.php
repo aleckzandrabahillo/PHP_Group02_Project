@@ -64,7 +64,7 @@ function catalogCleanup(PDO $pdo,string $prefix,array $orders,int $customer): vo
 }
 
 try {
-    $o=getopt('',['expect-database:','expect-port:','expect-datadir:','base-url:','session-directory:','scratch-directory:','output:','worker:','actor:','target:','quantity:','expected:','sku:']);
+    $o=getopt('',['expect-database:','expect-port:','expect-datadir:','base-url:','session-directory:','scratch-directory:','output:','worker:','actor:','target:','quantity:','expected:','sku:','fixture:']);
     $pdo=App\Core\Database::connection();$id=$pdo->query('SELECT DATABASE() db,@@port port,@@hostname host,@@server_id sid,@@datadir dir')->fetch();
     $base=$o['base-url']??'';$url=parse_url($base);$sessions=realpath($o['session-directory']??'');
     $norm=static fn($s)=>strtolower(rtrim(str_replace('\\','/',$s),'/'));
@@ -76,7 +76,9 @@ try {
     if(isset($o['worker']))catalogWorker($o);
     ini_set('session.save_path',$sessions);$checks=[];$model=new App\Models\Product();$users=new App\Models\User();$prefix='cat_'.bin2hex(random_bytes(5));$orders=[];
     $productsBefore=$pdo->query('SELECT * FROM products ORDER BY id')->fetchAll();
-    verifyHair('Verified isolated twenty-product starting catalog',count($productsBefore)===20);
+    $fixture=$o['fixture']??'demo20';
+    if(!in_array($fixture,['demo20','fresh6'],true))throw new RuntimeException('Unknown catalog fixture.');
+    verifyHair('Verified isolated expected starting catalog',count($productsBefore)===($fixture==='fresh6'?6:20));
     $originalOrders=$pdo->query('SELECT * FROM orders ORDER BY id')->fetchAll();
     $originalReviews=$pdo->query('SELECT * FROM product_reviews ORDER BY id')->fetchAll();
     $originalTags=$pdo->query('SELECT * FROM product_tags ORDER BY product_id,tag_id')->fetchAll();
@@ -245,7 +247,7 @@ try {
     verifyHair('One exact active staff navigation label',substr_count(hairRequest('/catalog/inventory',$staff)['body'],'aria-current="page"')===1);
 
     catalogCleanup($pdo,$prefix,$orders,$customer);
-    verifyHair('Original twenty products, stock and image paths preserved',$productsBefore===$pdo->query('SELECT * FROM products ORDER BY id')->fetchAll());
+    verifyHair('Original products, stock and image paths preserved',$productsBefore===$pdo->query('SELECT * FROM products ORDER BY id')->fetchAll());
     verifyHair('Original order history preserved',$originalOrders===$pdo->query('SELECT * FROM orders ORDER BY id')->fetchAll());
     verifyHair('Original reviews preserved',$originalReviews===$pdo->query('SELECT * FROM product_reviews ORDER BY id')->fetchAll());
     verifyHair('Original suitability links preserved',$originalTags===$pdo->query('SELECT * FROM product_tags ORDER BY product_id,tag_id')->fetchAll());

@@ -21,7 +21,7 @@ $path=$staffMode?'/admin/staff':'/admin/users';$self=(int)(auth_user()['id']??0)
  <select id="role-<?= (int)$item['id'] ?>" name="role"><?php foreach($roles as $role=>$label): ?><option value="<?= e($role) ?>" <?= $item['role']===$role?'selected':'' ?>><?= e($label) ?></option><?php endforeach; ?></select>
  <button class="btn btn-secondary btn-sm" type="submit">Save role</button>
 </form><?php endif; ?></td><?php endif; ?>
-<td><?= e(ucfirst($item['status'])) ?><?= $locked?' · Locked':'' ?></td>
+<td><?= staff_status($locked?'Locked':$item['status']) ?><?= $locked&&$item['status']!=='active'?' · '.e(ucfirst($item['status'])):'' ?></td>
 <td><div class="admin-account-actions"><?php if($isSelf): ?><span class="muted small">Your current account</span><?php else: ?>
  <?php if($locked && is_string($item['locked_until'])): ?><form method="post" action="<?= e(url('/admin/users/unlock')) ?>">
  <?= csrf_field() ?><input type="hidden" name="id" value="<?= (int)$item['id'] ?>"><input type="hidden" name="context" value="<?= $staffMode?'staff':'users' ?>"><input type="hidden" name="expected_lock" value="<?= e($item['locked_until']) ?>">
@@ -32,7 +32,4 @@ $path=$staffMode?'/admin/staff':'/admin/users';$self=(int)(auth_user()['id']??0)
 <?php endif; ?></div></td></tr>
 <?php endforeach; ?></tbody></table></div>
 <?php endif; ?>
-<nav class="order-pagination" aria-label="<?= $staffMode?'Staff':'Customer' ?> account pages">
-<?php foreach(['Previous'=>$listing['page']-1,'Next'=>$listing['page']+1] as $label=>$page):if($page<1||$page>$listing['pages'])continue; ?>
-<a href="<?= e(url($path.'?'.http_build_query($filters+['page'=>$page]))) ?>"><?= e($label) ?></a>
-<?php endforeach; ?><span>Page <?= (int)$listing['page'] ?> of <?= (int)$listing['pages'] ?></span></nav>
+<?= pagination_nav((int)$listing['page'],(int)$listing['pages'],static fn(int $n):string=>url($path.'?'.http_build_query($filters+['page'=>$n])),($staffMode?'Staff':'Customer').' account pages') ?>

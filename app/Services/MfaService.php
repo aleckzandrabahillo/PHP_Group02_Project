@@ -33,16 +33,16 @@ final class MfaService
     public function beginEnrollment(int $userId, #[\SensitiveParameter] string $password): array
     {
         $user = $this->users->findById($userId);
-        if (!User::canAuthenticate($user) || $this->factor($userId)) throw new DomainException('An active account without an authenticator is required.');
+        if (!User::canAuthenticate($user) || $this->factor($userId)) throw new DomainException('Sign in to an active account with 2-step verification turned off.');
         $cipher = new MfaCipher();
-        if (!$cipher->configured()) throw new DomainException('Authenticator enrollment is unavailable until the private encryption key is configured.');
+        if (!$cipher->configured()) throw new DomainException('2-step verification is currently unavailable. Please contact Avela.');
         if (!password_verify($password, $user['password_hash'])) {
             $this->users->recordFailure($userId);
             $this->logs->auth($userId, 'mfa_enrollment', 'failure', ['reason'=>'password']);
             throw new DomainException('The password could not be confirmed.');
         }
         $issued = $this->otp->issue($userId, $user['email'], 'login');
-        if (!$issued['issued'] && !$issued['reusable']) throw new DomainException('Please wait for the email-code cooldown before starting enrollment.');
+        if (!$issued['issued'] && !$issued['reusable']) throw new DomainException('Please wait a moment before requesting another setup email.');
         // Keep an existing pending secret when cooldown reuses its email challenge.
         $pending = Session::get('mfa_setup_flow');
         if (!$issued['issued'] && is_array($pending) && ($pending['user_id'] ?? 0) === $userId && ($pending['expires_at'] ?? 0) >= time()) return $pending;
@@ -63,20 +63,30 @@ final class MfaService
         return (new MfaCipher())->decrypt($userId,$flow['secret']);
     }
 
+    /** Provision only the password-verified, unexpired setup owned by this session. */
+    public function setupUri(int $userId): ?string
+    {
+        $secret=$this->setupSecret($userId);
+        if($secret===null)return null;
+        $account=$this->users->findById($userId);
+        return TOTP::createFromSecret($secret)->withIssuer('Avela')
+            ->withLabel(str_replace(':','-',(string)$account['username']))->getProvisioningUri();
+    }
+
     public function confirmEnrollment(int $userId, #[\SensitiveParameter] string $emailCode, #[\SensitiveParameter] string $code): array
     {
         $secret=$this->setupSecret($userId);
-        if ($secret===null) throw new DomainException('Enrollment expired. Start again.');
+        if ($secret===null) throw new DomainException('Your setup time has ended. Start again.');
         $codes=Database::transaction(function(PDO $pdo) use($userId,$secret,$emailCode,$code):array {
             $user=$this->users->findById($userId,true);
             if (!User::canAuthenticate($user) || $this->factor($userId,true)
-                || !hash_equals((string)($user['password_version']??''),(string)(Session::get('mfa_setup_flow')['password_version']??''))) throw new DomainException('Account enrollment is unavailable.');
+                || !hash_equals((string)($user['password_version']??''),(string)(Session::get('mfa_setup_flow')['password_version']??''))) throw new DomainException('2-step verification setup is unavailable.');
             $step=$this->matchingStep($secret,$code,-1);
             if ($step===null) {
                 $this->users->recordFailure($userId);
-                return ['ok'=>false,'message'=>'The authenticator code could not be confirmed.'];
+                return ['ok'=>false,'message'=>'The code from your app could not be confirmed.'];
             }
-            if (!$this->otp->verify($userId,'login',$emailCode)['ok']) return ['ok'=>false,'message'=>'The email code could not be confirmed. Request a new enrollment if it expired.'];
+            if (!$this->otp->verify($userId,'login',$emailCode)['ok']) return ['ok'=>false,'message'=>'The email code could not be confirmed. Start setup again if it has expired.'];
             $cipher=new MfaCipher();$plain=[];$hashes=[];
             for($i=0;$i<8;$i++) {
                 $raw=strtoupper(bin2hex(random_bytes(16)));$plain[]=implode('-',str_split($raw,4));
@@ -103,13 +113,13 @@ final class MfaService
     public function loginChallenge(int $userId): array
     {
         $factor=$this->factor($userId);
-        if (!$factor) throw new DomainException('Authenticator unavailable.');
+        if (!$factor) throw new DomainException('2-step verification is unavailable.');
         return ['user_id'=>$userId,'expires_at'=>time()+300,'version'=>$factor['credential_version'],'password_version'=>$this->users->findById($userId)['password_version']??''];
     }
 
     public function verifyLogin(array $flow, #[\SensitiveParameter] string $code): array
     {
-        if (($flow['expires_at']??0)<time() || !isset($flow['user_id'],$flow['version'])) return ['ok'=>false,'message'=>'The sign-in challenge expired. Sign in again.','expired'=>true];
+        if (($flow['expires_at']??0)<time() || !isset($flow['user_id'],$flow['version'])) return ['ok'=>false,'message'=>'Your sign-in time has ended. Sign in again.','expired'=>true];
         return Database::transaction(function(PDO $pdo) use($flow,$code):array {
             $id=(int)$flow['user_id'];$user=$this->users->findById($id,true);$factor=$this->factor($id,true);
             if (!User::canAuthenticate($user) || !$factor || !hash_equals($factor['credential_version'],$flow['version'])
@@ -132,24 +142,24 @@ final class MfaService
     {
         $result=Database::transaction(function(PDO $pdo) use($userId,$password,$code):bool {
             $user=$this->users->findById($userId,true);$factor=$this->factor($userId,true);
-            if (!User::canAuthenticate($user) || !$factor) throw new DomainException('Authenticator unavailable.');
+            if (!User::canAuthenticate($user) || !$factor) throw new DomainException('2-step verification is unavailable.');
             if (!password_verify($password,$user['password_hash']) || !$this->consume($pdo,$factor,$code)) {
                 $this->users->recordFailure($userId);return false;
             }
             $pdo->prepare('UPDATE user_authenticators SET secret_encrypted=NULL,recovery_hashes_json="[]",enabled_at=NULL,last_used_step=-1,credential_version=? WHERE user_id=?')
                 ->execute([bin2hex(random_bytes(32)),$userId]);
-            $pdo->prepare('UPDATE users SET failed_attempts=0,locked_until=NULL,lock_requires_admin=0,updated_at=NOW() WHERE id=?')->execute([$userId]);
-            // Keep email MFA enabled, including for customers who opted into MFA.
+            $pdo->prepare('UPDATE users SET failed_attempts=0,locked_until=NULL,lock_requires_admin=0,mfa_enabled=CASE WHEN role="customer" THEN 0 ELSE mfa_enabled END,updated_at=NOW() WHERE id=?')->execute([$userId]);
+            // Removing optional Customer Authenticator disables Customer MFA. Staff retain email MFA.
             $this->audit($pdo,$userId,'authenticator_removed');return true;
         });
-        if (!$result) throw new DomainException('Password and current authenticator/recovery code could not be confirmed.');
+        if (!$result) throw new DomainException('Your password and app or recovery code could not be confirmed.');
         Session::forget('mfa_recovery_codes');Session::forget('mfa_setup_flow');session_regenerate_id(true);
     }
 
     /** Private-console recovery only; never creates an authenticated session or bypasses a web login lock. */
     public function administratorRecovery(PDO $pdo, int $id, #[\SensitiveParameter] string $password, #[\SensitiveParameter] string $code): bool
     {
-        if (!$pdo->inTransaction()) throw new DomainException('Recovery requires an atomic operation.');
+        if (!$pdo->inTransaction()) throw new DomainException('Your recovery code could not be checked. Please try again.');
         $user=$this->users->findById($id,true);
         if (!$user || $user['role']!=='admin' || $user['status']!=='active' || !password_verify($password,$user['password_hash'])) return false;
         $factor=$this->factor($id,true);
@@ -195,7 +205,7 @@ final class MfaService
 
     private function audit(PDO $pdo, int $userId, string $action): void
     {
-        $pdo->prepare('INSERT INTO audit_logs (actor_id,action,target_type,target_id,details) VALUES (?, ?, "user", ?, "Authenticator account security")')
+        $pdo->prepare('INSERT INTO audit_logs (actor_id,action,target_type,target_id,details) VALUES (?, ?, "user", ?, "2-step verification account security")')
             ->execute([$userId,$action,$userId]);
     }
 }

@@ -1,9 +1,4 @@
-<?php $footerAccountPath = match (auth_user()['role'] ?? '') { 'customer' => '/profile', 'catalog_manager' => '/catalog/profile', 'admin' => '/admin/profile', default => '/login' }; ?>
-<footer class="store-footer">
-  <div class="editorial-footer-top">
-    <div><a href="<?= e(url('/')) ?>" aria-label="Avela home"><?php require __DIR__ . '/brand.php'; ?></a><p>Individual hair. Considered care.</p></div>
-    <nav aria-label="Explore Avela"><span class="eyebrow">EXPLORE</span><a href="<?= e(url('/shop')) ?>">Shop all care</a><a href="<?= e(url('/about')) ?>">About Avela</a><a href="<?= e(url('/search')) ?>">Search</a></nav>
-    <nav aria-label="Your Avela"><span class="eyebrow">YOUR AVELA</span><a href="<?= e(url($footerAccountPath)) ?>">Your account</a><?php if (in_array(auth_user()['role'] ?? '', ['', 'customer'], true)): ?><a href="<?= e(url('/favorites')) ?>">Favorites</a><a href="<?= e(url('/orders')) ?>">Orders</a><?php endif; ?></nav>
-  </div>
-  <div class="editorial-footer-bottom"><small>© <?= date('Y') ?> Avela</small><a href="<?= e(url('/privacy')) ?>">Privacy &amp; cookies</a><a href="<?= e(asset('images/editorial/credits.html')) ?>">Image &amp; wordmark credits</a></div>
-</footer>
+<footer class="site-footer">
+<div class="footer-top"><a class="wordmark footer-wordmark" href="<?= e(url('/')) ?>" aria-label="Avela home"><?php require __DIR__.'/brand.php'; ?></a><p>Hair care, made personal.</p><nav class="site-footer-links" aria-label="Explore Avela"><a href="<?= e(url('/shop')) ?>">Shop</a><a href="<?= e(url('/assessment')) ?>">Hair assessment</a><a href="<?= e(url('/care-guide')) ?>">Care guide</a><a href="<?= e(url('/about')) ?>">Our approach</a></nav></div>
+<nav class="footer-links footer-care-links" aria-label="Care and privacy"><a href="<?= e(url('/assessment')) ?>">Hair profile</a><a href="<?= e(url('/routine')) ?>">My routine</a><a href="<?= e(url('/help-faq#privacy-policy')) ?>">Privacy policy</a><a href="<?= e(url('/help-faq')) ?>">Help &amp; policies</a><a href="<?= e(asset('editorial-v2/credits.html')) ?>">Care references</a></nav>
+<div class="footer-bottom"><span>© <?= date('Y') ?> Avela</span><span>A little care goes a long way.</span><span>Made with you in mind.</span></div></footer>

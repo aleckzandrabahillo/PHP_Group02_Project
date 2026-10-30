@@ -8,6 +8,10 @@ use App\Services\MayaPaymentService;
 use App\Services\MayaMigration;
 use App\Services\MayaSandboxConfig;
 
+function mayaFixtureEnv(string $key,string $value): void {
+    $file=tempnam(sys_get_temp_dir(),'avela-maya-setting-');
+    try{file_put_contents($file,$key.'='.json_encode($value)."\n");App\Core\Env::load($file);}finally{unlink($file);}
+}
 function mayaReject(callable $call): bool {try{$call();return false;}catch(InvalidArgumentException|RuntimeException|DomainException){return true;}}
 function mayaUuid(string $hex): string {return substr($hex,0,8).'-'.substr($hex,8,4).'-'.substr($hex,12,4).'-'.substr($hex,16,4).'-'.substr($hex,20,12);}
 function mayaRows(PDO $pdo,string $table): array {$rows=$pdo->query('SELECT * FROM '.$table)->fetchAll();$hash=array_map(fn($r)=>hash('sha256',json_encode($r,JSON_THROW_ON_ERROR)),$rows);sort($hash);return $hash;}
@@ -58,8 +62,8 @@ try{
     $client=new MayaSandboxClient($public,$secret,$origin,$transport);$service=new MayaPaymentService($pdo,$client);
     verifyHair('Maya schema repeat-safe with no additions',(new MayaMigration())->run($pdo,false)['pending_additions']===0);
     verifyHair('Explicit sandbox readiness available',MayaSandboxConfig::available());
-    foreach(['MAYA_SANDBOX_ENABLED','MAYA_WEBHOOK_READY','MAYA_RECONCILIATION_READY'] as $flag){$_ENV[$flag]='false';verifyHair('Missing readiness fails closed '.$flag,!MayaSandboxConfig::available());unset($_ENV[$flag]);}
-    $_ENV['MAYA_ENVIRONMENT']='production';verifyHair('Production mode rejected',!MayaSandboxConfig::available());unset($_ENV['MAYA_ENVIRONMENT']);
+    foreach(['MAYA_SANDBOX_ENABLED','MAYA_WEBHOOK_READY','MAYA_RECONCILIATION_READY'] as $flag){mayaFixtureEnv($flag,'false');verifyHair('Missing readiness fails closed '.$flag,!MayaSandboxConfig::available());mayaFixtureEnv($flag,'true');}
+    mayaFixtureEnv('MAYA_ENVIRONMENT','production');verifyHair('Production mode rejected',!MayaSandboxConfig::available());mayaFixtureEnv('MAYA_ENVIRONMENT','sandbox');
     foreach(['','your-maya-key','pk-'.str_repeat('a',300),"pk-bad\nkey"] as $key)verifyHair('Missing/invalid credentials rejected',mayaReject(fn()=>new MayaSandboxClient($key,$secret,$origin,$transport)));
     $_ENV['MAYA_SANDBOX_PUBLIC_KEY']='pk-'.bin2hex(random_bytes(20));verifyHair('Conflicting legacy key rejected',!MayaSandboxConfig::available());unset($_ENV['MAYA_SANDBOX_PUBLIC_KEY']);
 

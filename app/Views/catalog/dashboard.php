@@ -1,57 +1,8 @@
-<section class="page-head">
-  <div>
-    <span class="eyebrow">CATALOG OVERVIEW</span>
-    <h1>Welcome, <?= e($profile['full_name'] ?? 'Catalog Manager') ?>.</h1>
-    <p>Review products, categories, stock levels, and catalog availability.</p>
-  </div>
-</section>
-
-
-<div class="metric-grid five">
-  <div class="metric-card"><span>Total products</span><strong><?= e($stats['products']) ?></strong></div>
-  <div class="metric-card"><span>Active / inactive</span><strong><?= (int)$analytics['stock']['active'] ?> / <?= (int)$analytics['stock']['inactive'] ?></strong></div>
-  <div class="metric-card"><span>Low stock</span><strong><?= (int)$analytics['stock']['low_stock'] ?></strong></div>
-  <div class="metric-card"><span>Out of stock</span><strong><?= (int)$analytics['stock']['out_of_stock'] ?></strong></div>
-  <div class="metric-card"><span>Categories</span><strong><?= e($stats['categories']) ?></strong></div>
-</div>
-
+<section class="page-head"><div><h1>Catalog overview</h1><p><?= (int)$analytics['stock']['low_stock']+(int)$analytics['stock']['out_of_stock'] ?> active products need stock attention.</p></div><a class="btn btn-primary" href="<?= e(url('/catalog/products?form=add#product-form')) ?>"><?= staff_icon('plus') ?>Add product</a></section>
+<div class="staff-metric-strip"><div class="staff-metric"><span>Total products</span><strong><?= number_format((int)$stats['products']) ?></strong><small><?= (int)$analytics['stock']['inactive'] ?> archived</small></div><div class="staff-metric"><span>Active products</span><strong><?= number_format((int)$analytics['stock']['active']) ?></strong></div><div class="staff-metric"><span>Low / out of stock</span><strong><?= (int)$analytics['stock']['low_stock'] ?> / <?= (int)$analytics['stock']['out_of_stock'] ?></strong></div><div class="staff-metric"><span>Categories</span><strong><?= number_format((int)$stats['categories']) ?></strong></div></div>
+<div class="staff-quick-actions"><a href="<?= e(url('/catalog/products')) ?>"><?= staff_icon('catalog') ?>Products and images</a><a href="<?= e(url('/catalog/inventory')) ?>"><?= staff_icon('inventory') ?>Stock and restocking</a><a href="<?= e(url('/catalog/categories')) ?>"><?= staff_icon('tag') ?>Categories</a><a href="<?= e(url('/catalog/discounts')) ?>"><?= staff_icon('tag') ?>Discounts</a></div>
 <?php $catalogReport=true;require dirname(__DIR__).'/partials/dashboard_analytics.php'; ?>
-<section class="panel" aria-labelledby="catalog-actions-title">
-  <h2 id="catalog-actions-title">Manage the catalog</h2>
-  <div class="quick-links">
-    <a href="<?= e(url('/catalog/products')) ?>">Products and images</a>
-    <a href="<?= e(url('/catalog/inventory')) ?>">Stock and restocking</a>
-    <a href="<?= e(url('/catalog/categories')) ?>">Categories</a>
-  </div>
-</section>
-
-<section class="panel" aria-labelledby="catalog-activity-title">
-  <h2 id="catalog-activity-title">Recent catalog activity</h2>
-  <?php if (!$activity): ?>
-    <p class="muted">No catalog changes recorded yet.</p>
-  <?php else: ?>
-    <?php $activityLabels = [
-        'product.create' => 'Created product', 'product.update' => 'Updated product',
-        'product.archive' => 'Archived product', 'product.reactivate' => 'Reactivated product',
-        'product.delete' => 'Deleted unused product', 'inventory.set' => 'Adjusted stock',
-        'inventory.restock' => 'Restocked product', 'category.create' => 'Created category',
-        'category.update' => 'Updated category', 'category.archive' => 'Archived category',
-        'category.delete' => 'Deleted unused category',
-    ]; ?>
-    <div class="catalog-activity-table" role="region" aria-label="Recent catalog changes" tabindex="0">
-      <table>
-        <thead><tr><th scope="col">Time</th><th scope="col">Staff</th><th scope="col">Action</th><th scope="col">Record</th></tr></thead>
-        <tbody>
-          <?php foreach ($activity as $event): ?>
-            <tr>
-              <td><time><?= e($event['created_at']) ?></time></td>
-              <td><?= e($event['actor_name']) ?></td>
-              <td><?= e($activityLabels[$event['action']] ?? 'Catalog update') ?></td>
-              <td><?= e(ucfirst($event['target_type'])) ?> #<?= (int) $event['target_id'] ?></td>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-  <?php endif; ?>
-</section>
+<section class="panel" aria-labelledby="catalog-activity-title"><div class="panel-head"><h2 id="catalog-activity-title">Recent catalog activity</h2></div>
+<?php if(!$activity): ?><p class="analytics-empty">No catalog changes recorded yet.</p><?php else: ?>
+<?php $activityLabels=['product.create'=>'Created product','product.update'=>'Updated product','product.archive'=>'Archived product','product.reactivate'=>'Reactivated product','product.delete'=>'Deleted unused product','inventory.set'=>'Adjusted stock','inventory.restock'=>'Restocked product','category.create'=>'Created category','category.update'=>'Updated category','category.archive'=>'Archived category','category.delete'=>'Deleted unused category']; ?>
+<div class="catalog-activity-table" role="region" aria-label="Recent catalog changes" tabindex="0"><table><thead><tr><th scope="col">Action</th><th scope="col">Staff</th><th scope="col">Record</th><th scope="col">Time</th></tr></thead><tbody><?php foreach($activity as $event): ?><tr><td><?= e($activityLabels[$event['action']]??'Catalog update') ?></td><td><?= e($event['actor_name']) ?></td><td><?= e(ucfirst($event['target_type'])) ?> #<?= (int)$event['target_id'] ?></td><td><time><?= e($event['created_at']) ?></time></td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?></section>

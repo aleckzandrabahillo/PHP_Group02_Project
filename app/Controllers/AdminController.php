@@ -71,7 +71,7 @@ final class AdminController
             catch(\Throwable){$errors['account']='The staff account was not created. Check availability and try again.';}
         }
         if($errors){http_response_code(422);$safe=$checked['values'];unset($safe['password']);$this->accountList(true,['formValues'=>$safe,'formErrors'=>$errors]);return;}
-        \App\Core\Session::flash('success','Staff account created. Normal email OTP or authenticator verification remains required.');
+        \App\Core\Session::flash('success','Staff account created. Email verification and any enabled 2-step verification are required at sign-in.');
         \App\Core\Response::redirect('/admin/staff');
     }
 
@@ -137,7 +137,8 @@ final class AdminController
         $id=is_string($_POST['order_id']??null)?filter_var($_POST['order_id'],FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]):false;
         try{
             if(!$id||!is_string($_POST['expected_status']??null)||!is_string($_POST['status']??null))throw new \InvalidArgumentException('Choose an order and its next status.');
-            (new \App\Services\OrderWorkflow())->advance(\App\Core\Database::connection(),(int)$user['id'],$id,$_POST['expected_status'],$_POST['status']);
+            $deliveryRevision=null;if(isset($_POST['expected_delivery_event'])){$deliveryRevision=is_string($_POST['expected_delivery_event'])?filter_var($_POST['expected_delivery_event'],FILTER_VALIDATE_INT,['options'=>['min_range'=>0]]):false;if($deliveryRevision===false)throw new \InvalidArgumentException('Refresh the delivery update.');}
+            (new \App\Services\OrderWorkflow())->advance(\App\Core\Database::connection(),(int)$user['id'],$id,$_POST['expected_status'],$_POST['status'],$deliveryRevision);
             \App\Core\Session::flash('success','Order status updated.');
         }catch(\InvalidArgumentException $e){\App\Core\Session::flash('error',$e->getMessage());}
         catch(\Throwable){\App\Core\Session::flash('error','The order was not changed. Please try again.');}

@@ -1,5 +1,7 @@
 (() => {
- const dialog=document.querySelector('#address-dialog');if(!dialog)return;
+ const mounted=new WeakSet();
+ function mount(){
+ const dialog=document.querySelector('#address-dialog');if(!dialog||mounted.has(dialog))return;mounted.add(dialog);
  const form=dialog.querySelector('form'),submit=form.querySelector('[type=submit]'),error=dialog.querySelector('[data-address-error]');let busy=false,opener=null,oldOverflow='',saved=new FormData(form);
  const reset=()=>{for(const [name,value] of saved){const control=form.elements.namedItem(name);if(control&&'value' in control)control.value=value;}error.hidden=true;form.querySelectorAll('[data-address-field]').forEach(node=>node.textContent='');form.querySelectorAll('[aria-invalid]').forEach(node=>node.removeAttribute('aria-invalid'));form.querySelectorAll('select').forEach(control=>control.dispatchEvent(new Event('change',{bubbles:true})));};
  dialog.addEventListener('keydown',event=>{if(event.key!=='Tab')return;const controls=[...dialog.querySelectorAll('button:not([disabled]),input:not([type=hidden]):not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex="0"]')].filter(node=>node.getClientRects().length&&node.tabIndex>=0);const first=controls[0],last=controls.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}});
@@ -18,4 +20,6 @@
   }catch(failure){error.textContent=failure.userSafe?failure.message:'Your address could not be saved. Please try again.';error.hidden=false;error.focus();}
   finally{clearTimeout(deadline);busy=false;submit.disabled=false;submit.textContent='Save address';form.removeAttribute('aria-busy');}
  });
+ }
+ mount();document.addEventListener('avela:content',mount);
 })();
